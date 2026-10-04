@@ -26,3 +26,4 @@ function(owl_add_test name)
 endfunction()
 
 owl_add_test(test_owl_text owl_core)
+owl_add_test(test_owl_model owl_core)
