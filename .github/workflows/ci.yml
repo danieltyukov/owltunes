@@ -14,3 +14,12 @@ jobs:
         run: python3 -m unittest discover -s tools/tests -v
       - name: Style check
         run: python3 tools/check_style.py
+
+  host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Host unit tests
+        run: tools/test_host.sh
