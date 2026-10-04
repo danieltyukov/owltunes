@@ -4,6 +4,7 @@ set(OWL_UI_SRCS
     src/owl_ui_widgets.c
     src/owl_eyes.c
     src/page_now_playing.c
+    src/page_list.c
     fonts/owl_font_14.c
     fonts/owl_font_20.c
     fonts/owl_font_28.c)

@@ -108,6 +108,36 @@ static void ad_break(sim_world_t *w)
     sim_load_player(w, "player_ad.json");
 }
 
+static void library(sim_world_t *w)
+{
+    now_playing(w);
+    sim_input(w, OWL_IN_SWIPE_UP, 0);
+}
+
+static void playlists(sim_world_t *w)
+{
+    library(w);
+    sim_input(w, OWL_IN_TAP, 0); /* cursor 0 = Playlists */
+    sim_load_list(w, OWL_LIST_PLAYLISTS, "playlists.json", NULL);
+    owl_app_set_list(&w->app, &w->list);
+    sim_input(w, OWL_IN_RING, 1);
+}
+
+static void devices(sim_world_t *w)
+{
+    library(w);
+    sim_input(w, OWL_IN_RING, OWL_LIB_DEVICES);
+    sim_input(w, OWL_IN_TAP, 0);
+    sim_load_list(w, OWL_LIST_DEVICES, "devices.json", NULL);
+    owl_app_set_list(&w->app, &w->list);
+}
+
+static void loading(sim_world_t *w)
+{
+    library(w);
+    sim_input(w, OWL_IN_TAP, 0); /* the playlists request has not answered yet */
+}
+
 static const sim_scenario_t SCENARIOS[] = {
     {"no_device", no_device},
     {"now_playing", now_playing},
@@ -115,6 +145,10 @@ static const sim_scenario_t SCENARIOS[] = {
     {"now_playing_volume", now_playing_volume},
     {"offline", offline},
     {"ad_break", ad_break},
+    {"library", library},
+    {"playlists", playlists},
+    {"devices", devices},
+    {"loading", loading},
 };
 
 size_t sim_scenario_count(void)

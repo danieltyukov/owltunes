@@ -58,3 +58,15 @@ typedef struct {
 void owl_np_create(owl_np_page_t *pg, lv_obj_t *parent);
 void owl_np_render(owl_np_page_t *pg, const owl_app_t *app, const owl_player_t *p, const owl_ui_inputs_t *in,
                    int64_t now_ms);
+
+typedef struct {
+    lv_obj_t *root;
+    lv_obj_t *heading;
+    lv_obj_t *rows[5]; /* rows[2] is the selected row */
+    lv_obj_t *sub;     /* subtitle of the selected row */
+    lv_obj_t *position;
+    lv_obj_t *empty;
+} owl_list_ui_t;
+
+void owl_list_ui_create(owl_list_ui_t *pg, lv_obj_t *parent);
+void owl_list_ui_render(owl_list_ui_t *pg, const owl_app_t *app);

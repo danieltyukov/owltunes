@@ -32,7 +32,8 @@ target_compile_definitions(owl_sim PRIVATE OWL_FIXTURE_DIR="${OWL_COMPONENTS}/sp
 enable_testing()
 # Keep in the same order as SCENARIOS in src/sim_scenarios.c; the scenario_list test enforces it.
 set(OWL_SIM_SCENARIOS
-    no_device now_playing now_playing_unicode now_playing_volume offline ad_break)
+    no_device now_playing now_playing_unicode now_playing_volume offline ad_break
+    library playlists devices loading)
 string(REPLACE ";" "," OWL_SIM_SCENARIO_ARG "${OWL_SIM_SCENARIOS}")
 add_test(NAME scenario_list COMMAND owl_sim verify-list "${OWL_SIM_SCENARIO_ARG}")
 foreach(scenario ${OWL_SIM_SCENARIOS})
