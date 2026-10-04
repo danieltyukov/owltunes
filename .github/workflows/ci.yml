@@ -1,0 +1,16 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  style:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Style checker tests
+        run: python3 -m unittest discover -s tools/tests -v
+      - name: Style check
+        run: python3 tools/check_style.py
