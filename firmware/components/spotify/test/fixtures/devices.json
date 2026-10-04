@@ -1,0 +1,7 @@
+{
+  "devices": [
+    {"id": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678", "is_active": true, "is_private_session": false, "is_restricted": false, "name": "Pixel 9", "supports_volume": false, "type": "Smartphone", "volume_percent": 64},
+    {"id": "f00dfeed0123456789abcdef0123456789abcdef", "is_active": false, "is_private_session": false, "is_restricted": false, "name": "Study Laptop", "supports_volume": true, "type": "Computer", "volume_percent": 40},
+    {"id": "0badc0de0123456789abcdef0123456789abcdef", "is_active": false, "is_private_session": false, "is_restricted": true, "name": "Kitchen Speaker", "supports_volume": true, "type": "Speaker", "volume_percent": null}
+  ]
+}

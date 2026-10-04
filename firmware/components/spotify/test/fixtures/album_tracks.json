@@ -1,0 +1,12 @@
+{
+  "href": "https://api.spotify.com/v1/albums/2up3OPMp9Tb4dAKM2erWXQ/tracks?offset=0&limit=50",
+  "limit": 50,
+  "next": null,
+  "offset": 0,
+  "previous": null,
+  "total": 2,
+  "items": [
+    {"artists": [{"name": "The Barn Owls"}], "duration_ms": 215000, "name": "Night Flight", "track_number": 1, "type": "track", "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"},
+    {"artists": [{"name": "The Barn Owls"}], "duration_ms": 199000, "name": "Silent Wings", "track_number": 2, "type": "track", "uri": "spotify:track:0eGsygTp906u18L0Oimnem"}
+  ]
+}

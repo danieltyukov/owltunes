@@ -1,0 +1,13 @@
+{
+  "href": "https://api.spotify.com/v1/playlists/3cEYpjA9oz9GiPac4AsH4n/items?offset=0&limit=50",
+  "limit": 50,
+  "next": null,
+  "offset": 0,
+  "previous": null,
+  "total": 3,
+  "items": [
+    {"added_at": "2026-09-01T00:00:00Z", "is_local": false, "item": {"album": {"name": "Moonlit Barn", "images": [{"url": "https://i.scdn.co/image/ab67616d00001e02moonlitbarn300", "height": 300, "width": 300}]}, "artists": [{"name": "The Barn Owls"}], "duration_ms": 215000, "name": "Night Flight", "type": "track", "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}},
+    {"added_at": "2026-09-02T00:00:00Z", "is_local": true, "item": {"album": {"name": "Demos", "images": []}, "artists": [{"name": "The Barn Owls"}], "duration_ms": 201000, "name": "Barn Demo", "type": "track", "uri": "spotify:local:The+Barn+Owls:Demos:Barn+Demo:201"}},
+    {"added_at": "2026-09-03T00:00:00Z", "is_local": false, "item": null}
+  ]
+}

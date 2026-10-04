@@ -1,0 +1,22 @@
+{
+  "href": "https://api.spotify.com/v1/me/albums?offset=0&limit=50",
+  "limit": 50,
+  "next": null,
+  "offset": 0,
+  "previous": null,
+  "total": 1,
+  "items": [
+    {
+      "added_at": "2026-08-01T10:00:00Z",
+      "album": {
+        "album_type": "album",
+        "artists": [{"name": "The Barn Owls"}],
+        "images": [{"url": "https://i.scdn.co/image/ab67616d00001e02moonlitbarn300", "height": 300, "width": 300}],
+        "name": "Moonlit Barn",
+        "total_tracks": 11,
+        "type": "album",
+        "uri": "spotify:album:2up3OPMp9Tb4dAKM2erWXQ"
+      }
+    }
+  ]
+}

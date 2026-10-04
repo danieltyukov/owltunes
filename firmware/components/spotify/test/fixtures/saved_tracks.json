@@ -1,0 +1,32 @@
+{
+  "href": "https://api.spotify.com/v1/me/tracks?offset=0&limit=50",
+  "limit": 50,
+  "next": "https://api.spotify.com/v1/me/tracks?offset=50&limit=50",
+  "offset": 0,
+  "previous": null,
+  "total": 120,
+  "items": [
+    {
+      "added_at": "2026-09-30T20:11:00Z",
+      "track": {
+        "album": {"name": "Moonlit Barn", "images": [{"url": "https://i.scdn.co/image/ab67616d00001e02moonlitbarn300", "height": 300, "width": 300}]},
+        "artists": [{"name": "The Barn Owls"}, {"name": "Luna Feathers"}],
+        "duration_ms": 215000,
+        "name": "Night Flight",
+        "type": "track",
+        "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"
+      }
+    },
+    {
+      "added_at": "2026-09-28T08:01:00Z",
+      "track": {
+        "album": {"name": "Feather Light", "images": [{"url": "https://i.scdn.co/image/featherlight300", "height": 300, "width": 300}]},
+        "artists": [{"name": "Luna Feathers"}],
+        "duration_ms": 188000,
+        "name": "Hoot Loop",
+        "type": "track",
+        "uri": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh"
+      }
+    }
+  ]
+}

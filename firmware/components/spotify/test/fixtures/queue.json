@@ -1,0 +1,7 @@
+{
+  "currently_playing": {"artists": [{"name": "The Barn Owls"}], "duration_ms": 215000, "name": "Night Flight", "type": "track", "uri": "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"},
+  "queue": [
+    {"artists": [{"name": "Luna Feathers"}], "duration_ms": 188000, "name": "Hoot Loop", "type": "track", "uri": "spotify:track:4iV5W9uYEdYUVa79Axb7Rh"},
+    {"type": "episode", "name": "Owls After Dark", "uri": "spotify:episode:5Xt5DXGzch68nYYamXrNxZ", "duration_ms": 1800000, "images": [{"url": "https://i.scdn.co/image/episode300", "height": 300, "width": 300}], "show": {"name": "Night Birds Podcast"}}
+  ]
+}

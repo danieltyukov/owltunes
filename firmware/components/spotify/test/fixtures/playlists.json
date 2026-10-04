@@ -1,0 +1,52 @@
+{
+  "href": "https://api.spotify.com/v1/me/playlists?offset=0&limit=50",
+  "limit": 50,
+  "next": null,
+  "offset": 0,
+  "previous": null,
+  "total": 3,
+  "items": [
+    {
+      "collaborative": false,
+      "description": "Songs for late walks",
+      "id": "3cEYpjA9oz9GiPac4AsH4n",
+      "images": [
+        {"url": "https://mosaic.scdn.co/640/nightflightmix", "height": 640, "width": 640},
+        {"url": "https://mosaic.scdn.co/300/nightflightmix", "height": 300, "width": 300}
+      ],
+      "name": "Night Flight Mix",
+      "owner": {"id": "owlfan", "display_name": "Owl Fan"},
+      "public": true,
+      "snapshot_id": "MTAsZGVmYXVsdA==",
+      "items": {"href": "https://api.spotify.com/v1/playlists/3cEYpjA9oz9GiPac4AsH4n/items", "total": 42},
+      "type": "playlist",
+      "uri": "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n"
+    },
+    {
+      "collaborative": true,
+      "description": "",
+      "id": "1wPw7n0lU8cLKk8qJx6lRZ",
+      "images": [{"url": "https://i.scdn.co/image/barnparty", "height": null, "width": null}],
+      "name": "Barn Party",
+      "owner": {"id": "hootbuddy", "display_name": "Hoot Buddy"},
+      "public": false,
+      "snapshot_id": "Myw4ZGE=",
+      "items": {"href": "https://api.spotify.com/v1/playlists/1wPw7n0lU8cLKk8qJx6lRZ/items", "total": 17},
+      "type": "playlist",
+      "uri": "spotify:playlist:1wPw7n0lU8cLKk8qJx6lRZ"
+    },
+    {
+      "collaborative": false,
+      "description": "Calm owl jazz",
+      "id": "37i9dQZF1DXbITWG1ZJKYt",
+      "images": null,
+      "name": "Owl Jazz",
+      "owner": {"id": "jazzowls", "display_name": "Jazz Owls"},
+      "public": true,
+      "snapshot_id": "ZGVmYXVsdA==",
+      "tracks": {"href": "https://api.spotify.com/v1/playlists/37i9dQZF1DXbITWG1ZJKYt/tracks", "total": 80},
+      "type": "playlist",
+      "uri": "spotify:playlist:37i9dQZF1DXbITWG1ZJKYt"
+    }
+  ]
+}
