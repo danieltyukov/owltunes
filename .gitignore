@@ -1,32 +1,90 @@
-# Prerequisites
-*.d
+# ---------------------------------------------------------------------------
+# Private material: purchasing BOM, order plans, quotes, receipts.
+# Never committed; see docs/design for what is public.
+# ---------------------------------------------------------------------------
+private/
 
-# Compiled Object files
-*.slo
-*.lo
+# Local agent and harness configuration (kept on the maintainer's machine)
+.mcp.json
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+eim_config.toml
+
+# ---------------------------------------------------------------------------
+# KiCad 9/10
+# ---------------------------------------------------------------------------
+*-backups/
+_autosave-*
+\#auto_saved_files\#
+~*.lck
+fp-info-cache
+*.kicad_prl
+.history/
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*-bak
+*.bak
+*-cache.lib
+*.dsn
+*.ses
+hardware/**/snapshots/
+hardware/**/production/
+hardware/**/jlcpcb/
+hardware/**/analysis/
+hardware/**/datasheets/*.pdf
+
+# FreeCAD
+*.FCBak
+*.FCStd[0-9]
+
+# ---------------------------------------------------------------------------
+# Build outputs (ESP-IDF, LVGL simulator, enclosure exports, fab files)
+# ---------------------------------------------------------------------------
+build/
+managed_components/
+sdkconfig
+sdkconfig.old
+.pio/
+
+# C/C++ objects and binaries
+*.d
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+*.a
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
 *.exe
 *.out
-*.app
+
+# Python (build123d, tooling)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# Web setup page
+node_modules/
+dist/
+.vite/
+coverage/
+.env
+.env.*
+!.env.example
+npm-debug.log*
+
+# Android companion (v2)
+.gradle/
+local.properties
+*.apk
+*.aab
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
