@@ -1,0 +1,24 @@
+/* LVGL configuration for the desktop simulator. Unset options keep LVGL's defaults. */
+#ifndef LV_CONF_H
+#define LV_CONF_H
+
+#define LV_COLOR_FORMAT_DEFAULT LV_COLOR_FORMAT_XRGB8888
+#define LV_USE_STDLIB_MALLOC LV_STDLIB_CLIB
+#define LV_USE_STDLIB_STRING LV_STDLIB_CLIB
+#define LV_USE_STDLIB_SPRINTF LV_STDLIB_CLIB
+#define LV_USE_OS LV_OS_NONE
+#define LV_USE_LOG 0
+#define LV_USE_SNAPSHOT 1
+
+#define LV_FONT_MONTSERRAT_14 1
+#define LV_FONT_MONTSERRAT_20 1
+#define LV_FONT_MONTSERRAT_28 1
+#define LV_FONT_MONTSERRAT_40 1
+#define LV_FONT_DEFAULT LV_FONT_DEFAULT_MONTSERRAT_20
+
+#ifndef OWL_SIM_SDL
+#define OWL_SIM_SDL 0
+#endif
+#define LV_USE_SDL OWL_SIM_SDL
+
+#endif /* LV_CONF_H */

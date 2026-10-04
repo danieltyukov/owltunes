@@ -23,3 +23,18 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ninja-build
       - name: Host unit tests
         run: tools/test_host.sh
+
+  simulator:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Golden image tests
+        run: tools/sim.sh
+      - name: Upload rendered screens on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-screens
+          path: build/sim/out
