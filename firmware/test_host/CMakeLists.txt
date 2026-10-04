@@ -14,6 +14,8 @@ owl_fetch_cjson()
 set(OWL_COMPONENTS ${CMAKE_CURRENT_LIST_DIR}/../components)
 add_subdirectory(${OWL_COMPONENTS}/owl_core ${CMAKE_BINARY_DIR}/owl_core)
 owl_strict_warnings(owl_core)
+add_subdirectory(${OWL_COMPONENTS}/spotify ${CMAKE_BINARY_DIR}/spotify)
+owl_strict_warnings(spotify)
 
 enable_testing()
 
@@ -31,3 +33,4 @@ owl_add_test(test_owl_cmd owl_core)
 owl_add_test(test_owl_poll owl_core)
 owl_add_test(test_owl_gesture owl_core)
 owl_add_test(test_owl_app owl_core)
+owl_add_test(test_spotify_request spotify owl_core)
