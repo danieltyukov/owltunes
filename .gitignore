@@ -83,6 +83,9 @@ local.properties
 *.apk
 *.aab
 
+# Browser automation scratch (Playwright MCP)
+.playwright-mcp/
+
 # Editors and OS
 .vscode/
 .idea/
