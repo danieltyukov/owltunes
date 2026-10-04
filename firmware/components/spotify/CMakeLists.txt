@@ -1,6 +1,9 @@
 # Spotify Web API layer: request building and JSON parsing. Transport lives in the firmware.
 set(SPOTIFY_SRCS
-    src/spotify_request.c)
+    src/spotify_request.c
+    src/spotify_json.c
+    src/spotify_parse_player.c
+)
 
 if(ESP_PLATFORM)
     idf_component_register(SRCS ${SPOTIFY_SRCS}
