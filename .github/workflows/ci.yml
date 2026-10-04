@@ -38,3 +38,14 @@ jobs:
         with:
           name: simulator-screens
           path: build/sim/out
+
+  firmware:
+    runs-on: ubuntu-24.04
+    container: espressif/idf:v6.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ESP32-S3 firmware
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh"
+          tools/firmware.sh build

@@ -1,0 +1,14 @@
+menu "OwlTunes"
+
+    choice OWL_BOARD
+        prompt "Board"
+        default OWL_BOARD_QEMU
+        help
+            Hardware the firmware runs on. The dev kits and the OwlTunes board are added in
+            the bring-up phase.
+
+        config OWL_BOARD_QEMU
+            bool "QEMU emulator (virtual RGB panel)"
+    endchoice
+
+endmenu

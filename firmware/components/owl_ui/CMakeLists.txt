@@ -14,7 +14,7 @@ if(ESP_PLATFORM)
     idf_component_register(SRCS ${OWL_UI_SRCS}
                            INCLUDE_DIRS include
                            PRIV_INCLUDE_DIRS src
-                           REQUIRES owl_core)
+                           REQUIRES owl_core lvgl__lvgl)
 else()
     add_library(owl_ui STATIC ${OWL_UI_SRCS})
     target_include_directories(owl_ui PUBLIC include PRIVATE src)
