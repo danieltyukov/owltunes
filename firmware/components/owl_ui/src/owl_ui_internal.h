@@ -70,3 +70,14 @@ typedef struct {
 
 void owl_list_ui_create(owl_list_ui_t *pg, lv_obj_t *parent);
 void owl_list_ui_render(owl_list_ui_t *pg, const owl_app_t *app);
+
+typedef struct {
+    lv_obj_t *root;
+    lv_obj_t *slot[OWL_PRESET_COUNT];
+    lv_obj_t *slot_label[OWL_PRESET_COUNT];
+    lv_obj_t *name;
+    lv_obj_t *hint;
+} owl_presets_ui_t;
+
+void owl_presets_ui_create(owl_presets_ui_t *pg, lv_obj_t *parent);
+void owl_presets_ui_render(owl_presets_ui_t *pg, const owl_app_t *app);

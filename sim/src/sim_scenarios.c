@@ -138,6 +138,32 @@ static void loading(sim_world_t *w)
     sim_input(w, OWL_IN_TAP, 0); /* the playlists request has not answered yet */
 }
 
+static void assign(sim_world_t *w, int slot, const char *uri, const char *label)
+{
+    w->app.presets[slot].assigned = true;
+    snprintf(w->app.presets[slot].uri, sizeof w->app.presets[slot].uri, "%s", uri);
+    snprintf(w->app.presets[slot].label, sizeof w->app.presets[slot].label, "%s", label);
+}
+
+static void presets_wheel(sim_world_t *w)
+{
+    now_playing(w);
+    assign(w, 0, "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n", "Night Flight Mix");
+    assign(w, 1, "spotify:playlist:37i9dQZF1DXbITWG1ZJKYt", "Owl Jazz");
+    assign(w, 4, "spotify:album:2up3OPMp9Tb4dAKM2erWXQ", "Moonlit Barn");
+    sim_input(w, OWL_IN_EAR_LEFT_HOLD, 0);
+    sim_input(w, OWL_IN_RING, 1);
+}
+
+static void presets_screen(sim_world_t *w)
+{
+    library(w);
+    assign(w, 0, "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n", "Night Flight Mix");
+    sim_input(w, OWL_IN_RING, OWL_LIB_PRESETS);
+    sim_input(w, OWL_IN_TAP, 0);
+    sim_input(w, OWL_IN_RING, 3); /* an empty slot */
+}
+
 static const sim_scenario_t SCENARIOS[] = {
     {"no_device", no_device},
     {"now_playing", now_playing},
@@ -149,6 +175,8 @@ static const sim_scenario_t SCENARIOS[] = {
     {"playlists", playlists},
     {"devices", devices},
     {"loading", loading},
+    {"presets_wheel", presets_wheel},
+    {"presets_screen", presets_screen},
 };
 
 size_t sim_scenario_count(void)
