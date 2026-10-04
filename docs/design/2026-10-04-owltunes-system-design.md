@@ -297,7 +297,7 @@ corner radius Spotify specifies for small screens. The last 32 images are cached
 |---|---|
 | No internet | BLE-only mode; status glyph; physical controls keep working |
 | No active Spotify device | "Open Spotify on your phone" screen with an owl animation; when a device reappears, offer one-press transfer |
-| Device refuses volume | Volume through BLE HID if the phone is paired, otherwise ring falls back to seek preview |
+| Device refuses volume | Volume through BLE HID if the phone is paired, otherwise the ring seeks in 5 s steps |
 | Refresh token expired (6 months) or revoked | Show a re-authorisation QR code; everything else keeps working |
 | Refresh token rotated | Persist the new token atomically before it is used |
 | TLS or certificate change | Full CA bundle (no pinning), OTA updates |

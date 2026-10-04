@@ -6,6 +6,7 @@ set(OWL_CORE_SRCS
     src/owl_cmdq.c
     src/owl_poll.c
     src/owl_gesture.c
+    src/owl_app.c
 )
 
 if(ESP_PLATFORM)
