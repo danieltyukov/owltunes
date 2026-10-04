@@ -103,6 +103,9 @@ void sj_parse_track(const cJSON *item, owl_track_t *t)
         return;
     }
     t->kind = (type == NULL || strcmp(type, "track") == 0) ? OWL_ITEM_TRACK : OWL_ITEM_UNKNOWN;
+    if (sj_bool(item, "is_local", false)) {
+        t->kind = OWL_ITEM_UNKNOWN; /* local files cannot be liked, queued or played by URI */
+    }
     sj_join_names(sj_arr(item, "artists"), t->subtitle, sizeof t->subtitle);
     const cJSON *album = sj_obj(item, "album");
     if (album != NULL) {

@@ -370,6 +370,39 @@ static void test_restricted_device_refuses_commands(void)
     TEST_ASSERT_EQUAL(OWL_HAPTIC_BUZZ, fx.haptic);
 }
 
+static void test_like_refuses_local_files(void)
+{
+    reset_playing();
+    strcpy(player.track.uri, "spotify:local:The+Barn+Owls:Demos:Barn+Demo:201");
+    press(OWL_IN_EAR_RIGHT_HOLD);
+    TEST_ASSERT_EQUAL_UINT8(0, fx.n_cmds);
+    TEST_ASSERT_FALSE(player.liked);
+    TEST_ASSERT_EQUAL(OWL_HAPTIC_BUZZ, fx.haptic);
+}
+
+static void test_context_name_survives_playing_from_a_track(void)
+{
+    reset_playing();
+    open_library_entry(OWL_LIB_PLAYLISTS);
+    owl_list_page_init(&page, OWL_LIST_PLAYLISTS, NULL);
+    add_item(&page, "Night Flight Mix", PLAYLIST_A, true);
+    owl_app_set_list(&app, &page);
+    press(OWL_IN_TAP);
+    TEST_ASSERT_EQUAL_STRING("Night Flight Mix", owl_app_frame(&app)->title);
+
+    static owl_list_page_t tracks;
+    owl_list_page_init(&tracks, OWL_LIST_PLAYLIST_ITEMS, PLAYLIST_A);
+    add_item(&tracks, "One", "spotify:track:1111111111111111111111", false);
+    owl_app_set_list(&app, &tracks);
+    press(OWL_IN_TAP);
+    TEST_ASSERT_EQUAL(OWL_CMD_PLAY_CONTEXT, fx.cmds[0].type);
+    TEST_ASSERT_EQUAL_STRING("Night Flight Mix", player.context_name);
+
+    open_library_entry(OWL_LIB_PRESETS);
+    press(OWL_IN_LONG_PRESS);
+    TEST_ASSERT_EQUAL_STRING("Night Flight Mix", app.presets[0].label);
+}
+
 static void test_library_labels(void)
 {
     TEST_ASSERT_EQUAL_STRING("Playlists", owl_lib_entry_label(OWL_LIB_PLAYLISTS));
@@ -402,6 +435,8 @@ int main(void)
     RUN_TEST(test_ble_link_sends_media_keys);
     RUN_TEST(test_no_device_tap_opens_devices);
     RUN_TEST(test_restricted_device_refuses_commands);
+    RUN_TEST(test_like_refuses_local_files);
+    RUN_TEST(test_context_name_survives_playing_from_a_track);
     RUN_TEST(test_library_labels);
     return UNITY_END();
 }

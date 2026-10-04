@@ -123,6 +123,19 @@ static void test_progress_past_duration_is_clamped(void)
     TEST_ASSERT_EQUAL_STRING("", player.track.art_url);
 }
 
+static void test_local_file_is_not_a_likeable_track(void)
+{
+    static const char json[] =
+        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_playing\":true,\"progress_ms\":0,"
+        "\"item\":{\"type\":\"track\",\"is_local\":true,\"name\":\"Barn Demo\","
+        "\"uri\":\"spotify:local:The+Barn+Owls:Demos:Barn+Demo:201\",\"duration_ms\":201000}}";
+    owl_player_init(&player);
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_player(json, sizeof json - 1, NOW, &player));
+    TEST_ASSERT_TRUE(player.has_track);
+    TEST_ASSERT_EQUAL_STRING("Barn Demo", player.track.title);
+    TEST_ASSERT_EQUAL(OWL_ITEM_UNKNOWN, player.track.kind);
+}
+
 static void test_classify_errors(void)
 {
     spotify_error_t e;
@@ -181,6 +194,7 @@ int main(void)
     RUN_TEST(test_bad_json_leaves_player_unchanged);
     RUN_TEST(test_like_state_and_context_name_survive_a_poll);
     RUN_TEST(test_progress_past_duration_is_clamped);
+    RUN_TEST(test_local_file_is_not_a_likeable_track);
     RUN_TEST(test_classify_errors);
     return UNITY_END();
 }

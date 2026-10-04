@@ -288,8 +288,8 @@ the level reported to trigger the quota lockout.
 ### 9.5 Album art
 
 The owl requests Spotify's 300 px image, decodes the JPEG to RGB565 in PSRAM and displays it as an
-uncropped rounded square (about 320 px, the largest square inside the 466 px circle) with the 4 px
-corner radius Spotify specifies for small screens. The last 32 images are cached as JPEG files on LittleFS, keyed by URL hash.
+uncropped rounded square of 216 px, centred above the title and artist so both fit inside the circle,
+with the 4 px corner radius Spotify specifies for small screens. The last 32 images are cached as JPEG files on LittleFS, keyed by URL hash.
 
 ### 9.6 Error handling
 

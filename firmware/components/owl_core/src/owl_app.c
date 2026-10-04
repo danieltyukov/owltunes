@@ -39,7 +39,7 @@ static owl_nav_frame_t *frame(owl_app_t *app)
 
 /* ---- navigation ---------------------------------------------------------------------------- */
 
-static void push(owl_app_t *app, owl_screen_t screen, owl_list_kind_t kind, const char *uri)
+static void push(owl_app_t *app, owl_screen_t screen, owl_list_kind_t kind, const char *uri, const char *title)
 {
     if (app->depth == OWL_NAV_DEPTH) {
         /* Drop the oldest frame above Now Playing so navigation never fails. */
@@ -51,6 +51,7 @@ static void push(owl_app_t *app, owl_screen_t screen, owl_list_kind_t kind, cons
     f->screen = screen;
     f->list_kind = kind;
     owl_utf8_copy(f->uri, sizeof f->uri, uri);
+    owl_utf8_copy(f->title, sizeof f->title, title);
     if (screen == OWL_SCREEN_BROWSE) {
         app->list = NULL;
     }
@@ -63,9 +64,9 @@ static void request(owl_effects_t *fx, owl_list_kind_t kind, const char *uri)
     fx->fetch.offset = 0;
 }
 
-static void open_list(owl_app_t *app, owl_effects_t *fx, owl_list_kind_t kind, const char *uri)
+static void open_list(owl_app_t *app, owl_effects_t *fx, owl_list_kind_t kind, const char *uri, const char *title)
 {
-    push(app, OWL_SCREEN_BROWSE, kind, uri);
+    push(app, OWL_SCREEN_BROWSE, kind, uri, title);
     request(fx, kind, uri);
     fx->haptic = OWL_HAPTIC_CONFIRM;
 }
@@ -153,7 +154,8 @@ static void skip(owl_app_t *app, owl_player_t *p, owl_effects_t *fx, bool forwar
 
 static void toggle_like(owl_app_t *app, owl_player_t *p, owl_effects_t *fx)
 {
-    if (app->link != OWL_LINK_API || !p->has_track || p->track.kind != OWL_ITEM_TRACK) {
+    if (app->link != OWL_LINK_API || !p->has_track || p->track.kind != OWL_ITEM_TRACK ||
+        strncmp(p->track.uri, "spotify:track:", 14) != 0) {
         fx->haptic = OWL_HAPTIC_BUZZ;
         return;
     }
@@ -270,22 +272,22 @@ static void select_library(owl_app_t *app, owl_effects_t *fx)
 {
     switch ((owl_lib_entry_t)frame(app)->cursor) {
     case OWL_LIB_PLAYLISTS:
-        open_list(app, fx, OWL_LIST_PLAYLISTS, NULL);
+        open_list(app, fx, OWL_LIST_PLAYLISTS, NULL, NULL);
         break;
     case OWL_LIB_LIKED:
-        open_list(app, fx, OWL_LIST_SAVED_TRACKS, NULL);
+        open_list(app, fx, OWL_LIST_SAVED_TRACKS, NULL, NULL);
         break;
     case OWL_LIB_ALBUMS:
-        open_list(app, fx, OWL_LIST_ALBUMS, NULL);
+        open_list(app, fx, OWL_LIST_ALBUMS, NULL, NULL);
         break;
     case OWL_LIB_RECENT:
-        open_list(app, fx, OWL_LIST_RECENT, NULL);
+        open_list(app, fx, OWL_LIST_RECENT, NULL, NULL);
         break;
     case OWL_LIB_DEVICES:
-        open_list(app, fx, OWL_LIST_DEVICES, NULL);
+        open_list(app, fx, OWL_LIST_DEVICES, NULL, NULL);
         break;
     case OWL_LIB_PRESETS:
-        push(app, OWL_SCREEN_PRESETS, OWL_LIST_NONE, NULL);
+        push(app, OWL_SCREEN_PRESETS, OWL_LIST_NONE, NULL, NULL);
         fx->haptic = OWL_HAPTIC_CONFIRM;
         break;
     default:
@@ -306,17 +308,17 @@ static void select_browse(owl_app_t *app, owl_player_t *p, owl_effects_t *fx)
     switch (list->kind) {
     case OWL_LIST_PLAYLISTS:
         if (it->browsable) {
-            open_list(app, fx, OWL_LIST_PLAYLIST_ITEMS, it->uri);
+            open_list(app, fx, OWL_LIST_PLAYLIST_ITEMS, it->uri, it->title);
         } else {
             play_context(app, p, fx, it->uri, NULL, it->title);
         }
         break;
     case OWL_LIST_ALBUMS:
-        open_list(app, fx, OWL_LIST_ALBUM_TRACKS, it->uri);
+        open_list(app, fx, OWL_LIST_ALBUM_TRACKS, it->uri, it->title);
         break;
     case OWL_LIST_PLAYLIST_ITEMS:
     case OWL_LIST_ALBUM_TRACKS:
-        play_context(app, p, fx, list->source_uri, it->uri, NULL);
+        play_context(app, p, fx, list->source_uri, it->uri, frame(app)->title);
         break;
     case OWL_LIST_SAVED_TRACKS:
     case OWL_LIST_RECENT:
@@ -344,7 +346,7 @@ static void open_wheel(owl_app_t *app, owl_effects_t *fx)
     if (app->wheel_open) {
         return;
     }
-    push(app, OWL_SCREEN_PRESETS, OWL_LIST_NONE, NULL);
+    push(app, OWL_SCREEN_PRESETS, OWL_LIST_NONE, NULL, NULL);
     app->wheel_open = true;
     fx->haptic = OWL_HAPTIC_PRESET;
 }
@@ -445,7 +447,7 @@ void owl_app_handle(owl_app_t *app, owl_player_t *player, const owl_input_t *in,
     case OWL_IN_TAP:
         if (screen == OWL_SCREEN_NOW_PLAYING) {
             if (app->link == OWL_LINK_API && player->status == OWL_PLAYER_NO_DEVICE) {
-                open_list(app, fx, OWL_LIST_DEVICES, NULL);
+                open_list(app, fx, OWL_LIST_DEVICES, NULL, NULL);
             } else {
                 toggle_play(app, player, fx);
             }
@@ -479,7 +481,7 @@ void owl_app_handle(owl_app_t *app, owl_player_t *player, const owl_input_t *in,
             break;
         }
         if (app->link == OWL_LINK_API) {
-            push(app, OWL_SCREEN_LIBRARY, OWL_LIST_NONE, NULL);
+            push(app, OWL_SCREEN_LIBRARY, OWL_LIST_NONE, NULL, NULL);
             fx->haptic = OWL_HAPTIC_CONFIRM;
         } else {
             fx->haptic = OWL_HAPTIC_BUZZ;

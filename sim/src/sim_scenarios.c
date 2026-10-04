@@ -138,6 +138,14 @@ static void loading(sim_world_t *w)
     sim_input(w, OWL_IN_TAP, 0); /* the playlists request has not answered yet */
 }
 
+static void playlist_items(sim_world_t *w)
+{
+    playlists(w); /* cursor 1 = Barn Party, a collaborative playlist that opens */
+    sim_input(w, OWL_IN_TAP, 0);
+    sim_load_list(w, OWL_LIST_PLAYLIST_ITEMS, "playlist_items.json", "spotify:playlist:1wPw7n0lU8cLKk8qJx6lRZ");
+    owl_app_set_list(&w->app, &w->list);
+}
+
 static void assign(sim_world_t *w, int slot, const char *uri, const char *label)
 {
     w->app.presets[slot].assigned = true;
@@ -177,6 +185,7 @@ static const sim_scenario_t SCENARIOS[] = {
     {"loading", loading},
     {"presets_wheel", presets_wheel},
     {"presets_screen", presets_screen},
+    {"playlist_items", playlist_items},
 };
 
 size_t sim_scenario_count(void)

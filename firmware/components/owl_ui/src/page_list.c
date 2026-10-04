@@ -19,7 +19,8 @@ void owl_list_ui_create(owl_list_ui_t *pg, lv_obj_t *parent)
     pg->position = owl_ui_ring(pg->root, 4, OWL_COLOR_BARK, OWL_COLOR_AMBER);
     lv_arc_set_rotation(pg->position, 0);
     lv_arc_set_bg_angles(pg->position, 320, 40);
-    pg->heading = owl_ui_label(pg->root, &owl_font_14, OWL_COLOR_AMBER, 0);
+    /* Narrow: the top of the circle is about 160 px wide here, and headings can be playlist names. */
+    pg->heading = owl_ui_label(pg->root, &owl_font_14, OWL_COLOR_AMBER, 160);
     lv_obj_set_style_text_letter_space(pg->heading, 2, 0);
     lv_obj_align(pg->heading, LV_ALIGN_CENTER, 0, -196);
     for (int k = 0; k < 5; k++) {
@@ -36,6 +37,9 @@ static const char *heading_for(const owl_nav_frame_t *f)
 {
     if (f->screen == OWL_SCREEN_LIBRARY) {
         return "LIBRARY";
+    }
+    if (f->title[0] != '\0') {
+        return f->title; /* the playlist or album being listed */
     }
     switch (f->list_kind) {
     case OWL_LIST_PLAYLISTS:

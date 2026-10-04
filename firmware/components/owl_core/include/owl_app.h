@@ -96,6 +96,7 @@ typedef struct {
     owl_screen_t screen;
     owl_list_kind_t list_kind; /* OWL_SCREEN_BROWSE: what the list shows */
     char uri[OWL_URI_LEN];     /* OWL_SCREEN_BROWSE: the playlist or album being listed */
+    char title[OWL_NAME_LEN];  /* OWL_SCREEN_BROWSE: its name, for the heading and presets */
     int16_t cursor;
 } owl_nav_frame_t;
 
