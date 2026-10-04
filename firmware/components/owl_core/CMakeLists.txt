@@ -2,6 +2,8 @@
 set(OWL_CORE_SRCS
     src/owl_text.c
     src/owl_model.c
+    src/owl_cmd.c
+    src/owl_cmdq.c
 )
 
 if(ESP_PLATFORM)
