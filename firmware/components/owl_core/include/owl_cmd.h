@@ -31,10 +31,10 @@ typedef enum {
 /* One Spotify player or library command. */
 typedef struct {
     owl_cmd_type_t type;
-    int32_t value;                            /* SEEK ms, VOLUME percent, SHUFFLE 0/1, REPEAT owl_repeat_t */
-    char uri[OWL_URI_LEN];                    /* LIKE/UNLIKE/QUEUE_ADD item, PLAY_CONTEXT context, TRANSFER device id */
-    char offset_uri[OWL_URI_LEN];             /* PLAY_CONTEXT: track to start at, empty for the start */
-    uint8_t n_uris;                           /* PLAY_URIS */
+    int32_t value;                /* SEEK ms, VOLUME percent, SHUFFLE 0/1, REPEAT owl_repeat_t */
+    char uri[OWL_URI_LEN];        /* LIKE/UNLIKE/QUEUE_ADD item, PLAY_CONTEXT context, TRANSFER device id */
+    char offset_uri[OWL_URI_LEN]; /* PLAY_CONTEXT: track to start at, empty for the start */
+    uint8_t n_uris;               /* PLAY_URIS */
     char uris[OWL_CMD_MAX_URIS][OWL_URI_LEN]; /* PLAY_URIS */
 } owl_cmd_t;
 

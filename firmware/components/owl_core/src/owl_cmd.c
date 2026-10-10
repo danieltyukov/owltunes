@@ -65,7 +65,8 @@ void owl_player_apply_optimistic(owl_player_t *p, const owl_cmd_t *cmd, int64_t 
         break;
     case OWL_CMD_PLAY_CONTEXT:
     case OWL_CMD_PLAY_URIS:
-        owl_utf8_copy(p->context_uri, sizeof p->context_uri, cmd->type == OWL_CMD_PLAY_CONTEXT ? cmd->uri : "");
+        owl_utf8_copy(p->context_uri, sizeof p->context_uri,
+                      cmd->type == OWL_CMD_PLAY_CONTEXT ? cmd->uri : "");
         restart_at(p, 0, now_ms);
         if (p->has_device) {
             p->status = OWL_PLAYER_PLAYING;

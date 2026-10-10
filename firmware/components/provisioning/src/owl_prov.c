@@ -16,7 +16,8 @@ void owl_prov_init(owl_prov_t *p, const owl_settings_t *saved, const char *name,
                    owl_random_fn random)
 {
     memset(p, 0, sizeof *p);
-    if (saved != NULL && saved->version == OWL_SETTINGS_VERSION && saved->n_networks <= OWL_PROV_MAX_NETWORKS) {
+    if (saved != NULL && saved->version == OWL_SETTINGS_VERSION &&
+        saved->n_networks <= OWL_PROV_MAX_NETWORKS) {
         p->settings = *saved;
     } else {
         owl_settings_defaults(&p->settings);
@@ -153,7 +154,8 @@ static void respond_error(int id, const char *code, char *out, size_t cap)
     respond(obj, id, out, cap);
 }
 
-bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key, const char *value)
+bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
+                    const char *value)
 {
     cJSON *obj = cJSON_CreateObject();
     cJSON_AddStringToObject(obj, "event", event);
@@ -250,7 +252,8 @@ static const char *cmd_spotify_client(owl_prov_t *p, const cJSON *req)
     if (!spotify_redirect_uri_valid(redirect_uri)) {
         return "bad_redirect_uri";
     }
-    if (strcmp(client_id, p->settings.client_id) != 0 || strcmp(redirect_uri, p->settings.redirect_uri) != 0) {
+    if (strcmp(client_id, p->settings.client_id) != 0 ||
+        strcmp(redirect_uri, p->settings.redirect_uri) != 0) {
         /* Tokens belong to one client and redirect URI; a new pair needs a new login. */
         p->settings.refresh_token[0] = '\0';
         end_session(p);
@@ -270,7 +273,8 @@ static void cmd_spotify_begin(owl_prov_t *p, int id, int64_t now_ms, char *out, 
     }
     end_session(p);
     spotify_pkce_new(&p->session, p->random, p->network_up ? p->ip : NULL);
-    if (!spotify_authorize_url(p->settings.client_id, p->settings.redirect_uri, &p->session, url, sizeof url)) {
+    if (!spotify_authorize_url(p->settings.client_id, p->settings.redirect_uri, &p->session, url,
+                               sizeof url)) {
         end_session(p);
         respond_error(id, "too_long", out, cap);
         return;

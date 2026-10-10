@@ -106,18 +106,19 @@ static void test_playlist_items_skip_removed_and_disable_local(void)
 
 static void test_old_playlist_item_field_name_still_works(void)
 {
-    static const char json[] = "{\"items\":[{\"is_local\":false,\"track\":{\"type\":\"track\",\"name\":\"Legacy\","
-                               "\"uri\":\"spotify:track:aaa\",\"artists\":[{\"name\":\"Old Owl\"}]}}],\"next\":null}";
-    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK,
-                      spotify_parse_list(OWL_LIST_PLAYLIST_ITEMS, json, sizeof json - 1, ME, PLAYLIST_A, &page));
+    static const char json[] =
+        "{\"items\":[{\"is_local\":false,\"track\":{\"type\":\"track\",\"name\":\"Legacy\","
+        "\"uri\":\"spotify:track:aaa\",\"artists\":[{\"name\":\"Old Owl\"}]}}],\"next\":null}";
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_list(OWL_LIST_PLAYLIST_ITEMS, json, sizeof json - 1, ME,
+                                                           PLAYLIST_A, &page));
     TEST_ASSERT_EQUAL_UINT16(1, page.count);
     TEST_ASSERT_EQUAL_STRING("Legacy", page.items[0].title);
 }
 
 static void test_album_tracks(void)
 {
-    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK,
-                      parse(OWL_LIST_ALBUM_TRACKS, "album_tracks.json", "spotify:album:2up3OPMp9Tb4dAKM2erWXQ"));
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, parse(OWL_LIST_ALBUM_TRACKS, "album_tracks.json",
+                                              "spotify:album:2up3OPMp9Tb4dAKM2erWXQ"));
     TEST_ASSERT_EQUAL_UINT16(2, page.count);
     TEST_ASSERT_EQUAL_STRING("Silent Wings", page.items[1].title);
     TEST_ASSERT_EQUAL_STRING("spotify:album:2up3OPMp9Tb4dAKM2erWXQ", page.source_uri);
@@ -125,7 +126,8 @@ static void test_album_tracks(void)
 
 static void test_missing_array_is_bad_shape(void)
 {
-    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_BAD_SHAPE, spotify_parse_list(OWL_LIST_DEVICES, "{}", 2, ME, NULL, &page));
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_BAD_SHAPE,
+                      spotify_parse_list(OWL_LIST_DEVICES, "{}", 2, ME, NULL, &page));
     TEST_ASSERT_EQUAL(SPOTIFY_PARSE_BAD_JSON, spotify_parse_list(OWL_LIST_DEVICES, "{", 1, ME, NULL, &page));
     TEST_ASSERT_EQUAL(SPOTIFY_PARSE_BAD_SHAPE, spotify_parse_list(OWL_LIST_NONE, "{}", 2, ME, NULL, &page));
 }
@@ -135,9 +137,10 @@ static void test_oversized_device_list_is_capped(void)
     static char json[16384];
     size_t used = (size_t)snprintf(json, sizeof json, "{\"devices\":[");
     for (int i = 0; i < 60; i++) {
-        used += (size_t)snprintf(json + used, sizeof json - used,
-                                 "%s{\"id\":\"dev%02d\",\"name\":\"Speaker %d\",\"type\":\"Speaker\",\"is_active\":false}",
-                                 i ? "," : "", i, i);
+        used += (size_t)snprintf(
+            json + used, sizeof json - used,
+            "%s{\"id\":\"dev%02d\",\"name\":\"Speaker %d\",\"type\":\"Speaker\",\"is_active\":false}",
+            i ? "," : "", i, i);
     }
     used += (size_t)snprintf(json + used, sizeof json - used, "]}");
     TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_list(OWL_LIST_DEVICES, json, used, ME, NULL, &page));
@@ -151,7 +154,8 @@ static void test_song_count_and_owner_wording(void)
 {
     static const char json[] =
         "{\"items\":[{\"name\":\"Solo\",\"uri\":\"spotify:playlist:a\",\"owner\":{\"id\":\"owlfan\"},"
-        "\"items\":{\"total\":1}},{\"name\":\"Anon\",\"uri\":\"spotify:playlist:b\",\"owner\":{}}],\"total\":2}";
+        "\"items\":{\"total\":1}},{\"name\":\"Anon\",\"uri\":\"spotify:playlist:b\",\"owner\":{}}],\"total\":"
+        "2}";
     TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK,
                       spotify_parse_list(OWL_LIST_PLAYLISTS, json, sizeof json - 1, ME, NULL, &page));
     TEST_ASSERT_EQUAL_UINT16(2, page.count);

@@ -108,14 +108,17 @@ static void test_authorize_url(void)
 static void test_token_bodies(void)
 {
     char body[1024];
-    TEST_ASSERT_TRUE(spotify_token_body_for_code(CLIENT, REDIRECT, "AQDcode", VERIFIER_0_63, body, sizeof body));
+    TEST_ASSERT_TRUE(
+        spotify_token_body_for_code(CLIENT, REDIRECT, "AQDcode", VERIFIER_0_63, body, sizeof body));
     TEST_ASSERT_EQUAL_STRING("grant_type=authorization_code&code=AQDcode"
                              "&redirect_uri=https%3A%2F%2Fdanieltyukov.github.io%2Fowltunes%2Fcallback%2F"
                              "&client_id=" CLIENT "&code_verifier=" VERIFIER_0_63,
                              body);
-    TEST_ASSERT_FALSE(spotify_token_body_for_code(CLIENT, REDIRECT, "bad&code", VERIFIER_0_63, body, sizeof body));
+    TEST_ASSERT_FALSE(
+        spotify_token_body_for_code(CLIENT, REDIRECT, "bad&code", VERIFIER_0_63, body, sizeof body));
     TEST_ASSERT_TRUE(spotify_token_body_for_refresh(CLIENT, "AQB/refresh+token", body, sizeof body));
-    TEST_ASSERT_EQUAL_STRING("grant_type=refresh_token&refresh_token=AQB%2Frefresh%2Btoken&client_id=" CLIENT, body);
+    TEST_ASSERT_EQUAL_STRING("grant_type=refresh_token&refresh_token=AQB%2Frefresh%2Btoken&client_id=" CLIENT,
+                             body);
 }
 
 static spotify_token_t token;
@@ -130,8 +133,9 @@ static void test_successful_exchange_stores_tokens(void)
 {
     memset(&token, 0, sizeof token);
     TEST_ASSERT_EQUAL(SPOTIFY_TOKEN_OK,
-                      parse(200, "{\"access_token\":\"BQAccess\",\"token_type\":\"Bearer\",\"expires_in\":3600,"
-                                 "\"refresh_token\":\"AQRefresh1\",\"scope\":\"user-read-playback-state\"}"));
+                      parse(200,
+                            "{\"access_token\":\"BQAccess\",\"token_type\":\"Bearer\",\"expires_in\":3600,"
+                            "\"refresh_token\":\"AQRefresh1\",\"scope\":\"user-read-playback-state\"}"));
     TEST_ASSERT_EQUAL_STRING("BQAccess", token.access_token);
     TEST_ASSERT_EQUAL_STRING("AQRefresh1", token.refresh_token);
     TEST_ASSERT_EQUAL_INT64(1000 + 3600000, token.expires_at_ms);
@@ -149,8 +153,9 @@ static void test_refresh_without_new_token_keeps_old_one(void)
 
 static void test_invalid_grant_means_log_in_again(void)
 {
-    TEST_ASSERT_EQUAL(SPOTIFY_TOKEN_LOG_IN_AGAIN,
-                      parse(400, "{\"error\":\"invalid_grant\",\"error_description\":\"Refresh token revoked\"}"));
+    TEST_ASSERT_EQUAL(
+        SPOTIFY_TOKEN_LOG_IN_AGAIN,
+        parse(400, "{\"error\":\"invalid_grant\",\"error_description\":\"Refresh token revoked\"}"));
     TEST_ASSERT_EQUAL_STRING("invalid_grant", error);
 }
 

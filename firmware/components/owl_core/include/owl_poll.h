@@ -18,13 +18,13 @@ extern "C" {
 
 typedef struct {
     int64_t now_ms;
-    bool asleep;               /* deep sleep is imminent: never poll */
-    bool screen_on;            /* false in hot standby */
+    bool asleep;    /* deep sleep is imminent: never poll */
+    bool screen_on; /* false in hot standby */
     owl_player_status_t status;
-    uint32_t remaining_ms;     /* owl_player_remaining_ms(); 0 when unknown */
-    int64_t last_poll_ms;      /* -1 before the first poll */
-    int64_t last_command_ms;   /* -1 when no command has been sent */
-    int64_t blocked_until_ms;  /* rate limit or quota lockout: no polling before this, 0 for none */
+    uint32_t remaining_ms;    /* owl_player_remaining_ms(); 0 when unknown */
+    int64_t last_poll_ms;     /* -1 before the first poll */
+    int64_t last_command_ms;  /* -1 when no command has been sent */
+    int64_t blocked_until_ms; /* rate limit or quota lockout: no polling before this, 0 for none */
 } owl_poll_inputs_t;
 
 /* Milliseconds until the next playback-state poll, or OWL_POLL_NEVER. Implements the budget in

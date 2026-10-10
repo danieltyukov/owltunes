@@ -10,7 +10,13 @@ extern "C" {
 #define OWL_BTN_HOLD_MS 450
 #define OWL_BTN_DOUBLE_MS 300
 
-typedef enum { OWL_BTN_NONE, OWL_BTN_SHORT, OWL_BTN_DOUBLE, OWL_BTN_HOLD, OWL_BTN_HOLD_RELEASE } owl_btn_event_t;
+typedef enum {
+    OWL_BTN_NONE,
+    OWL_BTN_SHORT,
+    OWL_BTN_DOUBLE,
+    OWL_BTN_HOLD,
+    OWL_BTN_HOLD_RELEASE
+} owl_btn_event_t;
 
 typedef struct {
     bool double_enabled;

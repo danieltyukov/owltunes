@@ -18,8 +18,9 @@ spotify_parse_result_t spotify_parse_player(const char *json, size_t len, int64_
 
 /* Parse a list response of the given kind (Task 10). my_user_id marks owned playlists browsable;
  * source_uri is stored on item lists. */
-spotify_parse_result_t spotify_parse_list(owl_list_kind_t kind, const char *json, size_t len, const char *my_user_id,
-                                          const char *source_uri, owl_list_page_t *out);
+spotify_parse_result_t spotify_parse_list(owl_list_kind_t kind, const char *json, size_t len,
+                                          const char *my_user_id, const char *source_uri,
+                                          owl_list_page_t *out);
 
 typedef enum {
     SPOTIFY_ERROR_NONE,

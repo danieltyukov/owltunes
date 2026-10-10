@@ -38,7 +38,12 @@ typedef struct {
 
 typedef enum { OWL_REPEAT_OFF, OWL_REPEAT_CONTEXT, OWL_REPEAT_TRACK } owl_repeat_t;
 
-typedef enum { OWL_PLAYER_UNKNOWN, OWL_PLAYER_NO_DEVICE, OWL_PLAYER_PAUSED, OWL_PLAYER_PLAYING } owl_player_status_t;
+typedef enum {
+    OWL_PLAYER_UNKNOWN,
+    OWL_PLAYER_NO_DEVICE,
+    OWL_PLAYER_PAUSED,
+    OWL_PLAYER_PLAYING
+} owl_player_status_t;
 
 typedef struct {
     owl_player_status_t status;

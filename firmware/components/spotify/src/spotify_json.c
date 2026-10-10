@@ -22,7 +22,8 @@ int64_t sj_int(const cJSON *obj, const char *key, int64_t fallback)
     const cJSON *v = cJSON_GetObjectItemCaseSensitive(obj, key);
     /* Casting a double outside int64_t's range (or 1e999, which cJSON reads as infinity) is
      * undefined; JSON integers beyond +-2^53 are not exact anyway. */
-    if (!cJSON_IsNumber(v) || !(v->valuedouble >= -9007199254740992.0 && v->valuedouble <= 9007199254740992.0)) {
+    if (!cJSON_IsNumber(v) ||
+        !(v->valuedouble >= -9007199254740992.0 && v->valuedouble <= 9007199254740992.0)) {
         return fallback;
     }
     return (int64_t)v->valuedouble;

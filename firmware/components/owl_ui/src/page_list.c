@@ -111,7 +111,8 @@ void owl_list_ui_render(owl_list_ui_t *pg, const owl_app_t *app)
         char title[OWL_NAME_LEN];
         const char *subtitle;
         bool disabled;
-        bool present = !loading && row_text(app, f->cursor + k - 2, title, sizeof title, &subtitle, &disabled);
+        bool present =
+            !loading && row_text(app, f->cursor + k - 2, title, sizeof title, &subtitle, &disabled);
         owl_ui_show(pg->rows[k], present);
         if (!present) {
             continue;

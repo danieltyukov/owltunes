@@ -42,7 +42,7 @@ static provisioning_view_t s_view;
 static bool s_linking;
 static bool s_relink;
 static char s_error[64];
-static bool s_save_pending; /* a save failed and must be retried */
+static bool s_save_pending;         /* a save failed and must be retried */
 static int64_t s_verify_at_ms = -1; /* when to check the saved login with Spotify; -1: not due */
 static char s_out[OWL_PROV_LINE_MAX + 64];
 
@@ -133,8 +133,8 @@ static void exchange_code(void)
     publish_view();
     emit("spotify", "linking", NULL, NULL);
     memset(&token, 0, sizeof token);
-    spotify_token_result_t result = spotify_link_exchange(&s_prov.settings, s_prov.code, s_prov.session.verifier,
-                                                          now_ms(), &token, error, sizeof error);
+    spotify_token_result_t result = spotify_link_exchange(
+        &s_prov.settings, s_prov.code, s_prov.session.verifier, now_ms(), &token, error, sizeof error);
     bool ok = result == SPOTIFY_TOKEN_OK && token.refresh_token[0] != '\0';
     if (result == SPOTIFY_TOKEN_OK && !ok) {
         owl_utf8_copy(error, sizeof error, "no_refresh_token");
@@ -160,7 +160,8 @@ static void verify_saved_login(void)
     char error[48];
     memset(&token, 0, sizeof token);
     owl_utf8_copy(token.refresh_token, sizeof token.refresh_token, s_prov.settings.refresh_token);
-    spotify_token_result_t result = spotify_link_refresh(&s_prov.settings, now_ms(), &token, error, sizeof error);
+    spotify_token_result_t result =
+        spotify_link_refresh(&s_prov.settings, now_ms(), &token, error, sizeof error);
     bool dropped = owl_prov_apply_refresh(&s_prov, result, token.refresh_token);
     memset(&token, 0, sizeof token);
     if (result == SPOTIFY_TOKEN_OK) {
@@ -312,5 +313,6 @@ void provisioning_start(const char *name, const char *fw)
     publish_view();
     xTaskCreate(protocol_task, "provisioning", 10240, NULL, 4, NULL);
     owl_console_start(post_line);
-    ESP_LOGI(TAG, "%s %s, setup state %s", name, fw, owl_prov_setup_state_name(owl_prov_setup_state(&s_prov)));
+    ESP_LOGI(TAG, "%s %s, setup state %s", name, fw,
+             owl_prov_setup_state_name(owl_prov_setup_state(&s_prov)));
 }

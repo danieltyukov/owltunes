@@ -152,7 +152,8 @@ static void test_opposite_toggle_does_not_cancel_across_other_commands(void)
 {
     owl_cmdq_t q;
     owl_cmdq_init(&q);
-    owl_cmd_t play = cmd(OWL_CMD_PLAY, 0, NULL), next = cmd(OWL_CMD_NEXT, 0, NULL), pause = cmd(OWL_CMD_PAUSE, 0, NULL);
+    owl_cmd_t play = cmd(OWL_CMD_PLAY, 0, NULL), next = cmd(OWL_CMD_NEXT, 0, NULL),
+              pause = cmd(OWL_CMD_PAUSE, 0, NULL);
     owl_cmdq_push(&q, &play);
     owl_cmdq_push(&q, &next);
     owl_cmdq_push(&q, &pause);

@@ -122,15 +122,18 @@ void spotify_classify_error(int http_status, const char *body, size_t len, int32
     if (http_status == 401) {
         out->kind = SPOTIFY_ERROR_AUTH_EXPIRED;
     } else if (http_status == 429) {
-        out->kind = strcmp(reason, "QUOTA_EXCEEDED") == 0 ? SPOTIFY_ERROR_QUOTA_EXCEEDED : SPOTIFY_ERROR_RATE_LIMITED;
+        out->kind =
+            strcmp(reason, "QUOTA_EXCEEDED") == 0 ? SPOTIFY_ERROR_QUOTA_EXCEEDED : SPOTIFY_ERROR_RATE_LIMITED;
         if (out->retry_after_s <= 0) {
             out->retry_after_s = 5;
         }
     } else if (http_status == 404) {
-        bool no_device = strcmp(reason, "NO_ACTIVE_DEVICE") == 0 || strstr(out->message, "No active device") != NULL;
+        bool no_device =
+            strcmp(reason, "NO_ACTIVE_DEVICE") == 0 || strstr(out->message, "No active device") != NULL;
         out->kind = no_device ? SPOTIFY_ERROR_NO_ACTIVE_DEVICE : SPOTIFY_ERROR_NOT_FOUND;
     } else if (http_status == 403) {
-        out->kind = strcmp(reason, "PREMIUM_REQUIRED") == 0 ? SPOTIFY_ERROR_PREMIUM_REQUIRED : SPOTIFY_ERROR_FORBIDDEN;
+        out->kind = strcmp(reason, "PREMIUM_REQUIRED") == 0 ? SPOTIFY_ERROR_PREMIUM_REQUIRED
+                                                            : SPOTIFY_ERROR_FORBIDDEN;
     } else if (http_status >= 500) {
         out->kind = SPOTIFY_ERROR_SERVER;
     } else {

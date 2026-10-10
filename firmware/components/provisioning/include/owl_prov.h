@@ -25,7 +25,8 @@ typedef struct {
     char password[OWL_WIFI_PASSWORD_LEN];
 } owl_wifi_network_t;
 
-/* Everything that survives a reboot, stored as one blob. Bump OWL_SETTINGS_VERSION when the layout changes. */
+/* Everything that survives a reboot, stored as one blob. Bump OWL_SETTINGS_VERSION when the layout changes.
+ */
 typedef struct {
     uint32_t version;
     uint8_t n_networks;
@@ -41,7 +42,11 @@ typedef enum {
     OWL_PROV_DO_EXCHANGE = 1u << 2,  /* a login code waits in owl_prov_t.code */
 } owl_prov_action_t;
 
-typedef enum { OWL_SETUP_STATE_NEEDS_WIFI, OWL_SETUP_STATE_NEEDS_SPOTIFY, OWL_SETUP_STATE_READY } owl_setup_state_t;
+typedef enum {
+    OWL_SETUP_STATE_NEEDS_WIFI,
+    OWL_SETUP_STATE_NEEDS_SPOTIFY,
+    OWL_SETUP_STATE_READY
+} owl_setup_state_t;
 
 typedef struct {
     owl_settings_t settings;
@@ -83,7 +88,8 @@ void owl_prov_finish_exchange(owl_prov_t *p, bool ok, const char *refresh_token)
 bool owl_prov_apply_refresh(owl_prov_t *p, spotify_token_result_t result, const char *refresh_token);
 
 /* Format an event line such as {"event":"spotify","state":"failed","error":"invalid_client"}. */
-bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key, const char *value);
+bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
+                    const char *value);
 
 #ifdef __cplusplus
 }

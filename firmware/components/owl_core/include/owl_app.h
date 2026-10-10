@@ -17,7 +17,12 @@ extern "C" {
 #define OWL_SEEK_STEP_MS 5000
 #define OWL_VOLUME_OVERLAY_MS 1200
 
-typedef enum { OWL_SCREEN_NOW_PLAYING, OWL_SCREEN_LIBRARY, OWL_SCREEN_BROWSE, OWL_SCREEN_PRESETS } owl_screen_t;
+typedef enum {
+    OWL_SCREEN_NOW_PLAYING,
+    OWL_SCREEN_LIBRARY,
+    OWL_SCREEN_BROWSE,
+    OWL_SCREEN_PRESETS
+} owl_screen_t;
 
 /* How the owl reaches Spotify right now. */
 typedef enum {
@@ -68,7 +73,14 @@ typedef enum {
     OWL_HAPTIC_PRESET,
 } owl_haptic_t;
 
-typedef enum { OWL_KEY_NONE, OWL_KEY_PLAY_PAUSE, OWL_KEY_NEXT, OWL_KEY_PREV, OWL_KEY_VOL_UP, OWL_KEY_VOL_DOWN } owl_media_key_t;
+typedef enum {
+    OWL_KEY_NONE,
+    OWL_KEY_PLAY_PAUSE,
+    OWL_KEY_NEXT,
+    OWL_KEY_PREV,
+    OWL_KEY_VOL_UP,
+    OWL_KEY_VOL_DOWN
+} owl_media_key_t;
 
 typedef struct {
     owl_list_kind_t kind; /* OWL_LIST_NONE when nothing needs fetching */

@@ -142,7 +142,8 @@ static void playlist_items(sim_world_t *w)
 {
     playlists(w); /* cursor 1 = Barn Party, a collaborative playlist that opens */
     sim_input(w, OWL_IN_TAP, 0);
-    sim_load_list(w, OWL_LIST_PLAYLIST_ITEMS, "playlist_items.json", "spotify:playlist:1wPw7n0lU8cLKk8qJx6lRZ");
+    sim_load_list(w, OWL_LIST_PLAYLIST_ITEMS, "playlist_items.json",
+                  "spotify:playlist:1wPw7n0lU8cLKk8qJx6lRZ");
     owl_app_set_list(&w->app, &w->list);
 }
 

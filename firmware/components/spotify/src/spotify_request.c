@@ -40,7 +40,7 @@ static bool safe_token(const char *s)
 }
 
 __attribute__((format(printf, 3, 4))) static bool set_path(spotify_request_t *out, spotify_method_t method,
-                                                             const char *fmt, ...)
+                                                           const char *fmt, ...)
 {
     out->method = method;
     va_list args;
@@ -59,7 +59,8 @@ __attribute__((format(printf, 2, 3))) static bool set_body(spotify_request_t *ou
     return n > 0 && (size_t)n < sizeof out->body;
 }
 
-static bool uri_query(spotify_request_t *out, spotify_method_t method, const char *path_prefix, const char *uri)
+static bool uri_query(spotify_request_t *out, spotify_method_t method, const char *path_prefix,
+                      const char *uri)
 {
     char enc[3 * OWL_URI_LEN];
     if (!safe_token(uri) || owl_url_encode(enc, sizeof enc, uri) == OWL_TEXT_OVERFLOW) {
@@ -104,7 +105,8 @@ bool spotify_request_for_command(const owl_cmd_t *cmd, spotify_request_t *out)
     case OWL_CMD_PREV:
         return set_path(out, SPOTIFY_POST, "/v1/me/player/previous");
     case OWL_CMD_SEEK:
-        return cmd->value >= 0 && set_path(out, SPOTIFY_PUT, "/v1/me/player/seek?position_ms=%ld", (long)cmd->value);
+        return cmd->value >= 0 &&
+               set_path(out, SPOTIFY_PUT, "/v1/me/player/seek?position_ms=%ld", (long)cmd->value);
     case OWL_CMD_VOLUME:
         return cmd->value >= 0 && cmd->value <= 100 &&
                set_path(out, SPOTIFY_PUT, "/v1/me/player/volume?volume_percent=%ld", (long)cmd->value);
@@ -130,7 +132,8 @@ bool spotify_request_for_command(const owl_cmd_t *cmd, spotify_request_t *out)
             return false;
         }
         if (cmd->offset_uri[0]) {
-            return set_body(out, "{\"context_uri\":\"%s\",\"offset\":{\"uri\":\"%s\"}}", cmd->uri, cmd->offset_uri);
+            return set_body(out, "{\"context_uri\":\"%s\",\"offset\":{\"uri\":\"%s\"}}", cmd->uri,
+                            cmd->offset_uri);
         }
         return set_body(out, "{\"context_uri\":\"%s\"}", cmd->uri);
     case OWL_CMD_PLAY_URIS:
@@ -176,8 +179,8 @@ bool spotify_request_for_fetch(const owl_fetch_t *fetch, spotify_request_t *out)
         return set_path(out, SPOTIFY_GET, "/v1/me/player/devices");
     case OWL_LIST_PLAYLIST_ITEMS:
         return uri_id(fetch->uri, "playlist", id, sizeof id) &&
-               set_path(out, SPOTIFY_GET, "/v1/playlists/%s/items?limit=50&offset=%lu&additional_types=episode", id,
-                        offset);
+               set_path(out, SPOTIFY_GET,
+                        "/v1/playlists/%s/items?limit=50&offset=%lu&additional_types=episode", id, offset);
     case OWL_LIST_ALBUM_TRACKS:
         return uri_id(fetch->uri, "album", id, sizeof id) &&
                set_path(out, SPOTIFY_GET, "/v1/albums/%s/tracks?limit=50&offset=%lu", id, offset);

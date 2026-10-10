@@ -42,7 +42,8 @@ static void dispatch(owl_input_kind_t kind, int32_t steps)
     s_world.now_ms = (int64_t)lv_tick_get();
     owl_app_handle(&s_world.app, &s_world.player, &in, s_world.now_ms, &fx);
     for (uint8_t i = 0; i < fx.n_cmds; i++) {
-        printf("command type=%d value=%ld uri=%s\n", (int)fx.cmds[i].type, (long)fx.cmds[i].value, fx.cmds[i].uri);
+        printf("command type=%d value=%ld uri=%s\n", (int)fx.cmds[i].type, (long)fx.cmds[i].value,
+               fx.cmds[i].uri);
     }
     if (fx.key != OWL_KEY_NONE) {
         printf("media key %d x%u\n", (int)fx.key, (unsigned)fx.key_repeat);

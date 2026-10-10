@@ -57,14 +57,16 @@ void app_main(void)
     demo_state_load(&app, &player, esp_timer_get_time() / 1000);
 
     owl_ui_t *ui = owl_ui_create(disp);
-    owl_ui_inputs_t inputs = {.art = NULL, .battery_percent = 100, .charging = true, .wifi = false, .ble = false};
+    owl_ui_inputs_t inputs = {
+        .art = NULL, .battery_percent = 100, .charging = true, .wifi = false, .ble = false};
     provisioning_view_t view;
 
     bool announced = false;
     while (true) {
         provisioning_view(&view);
         inputs.wifi = view.network_up;
-        inputs.setup = (owl_ui_setup_t){view.mode, setup_url, name, view.error[0] != '\0' ? view.error : NULL};
+        inputs.setup =
+            (owl_ui_setup_t){view.mode, setup_url, name, view.error[0] != '\0' ? view.error : NULL};
         owl_ui_render(ui, &app, &player, &inputs, esp_timer_get_time() / 1000);
         uint32_t wait = lv_timer_handler();
         if (!announced) {

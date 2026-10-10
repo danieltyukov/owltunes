@@ -67,7 +67,8 @@ static void test_play_context_with_and_without_offset(void)
     owl_cmd_t c;
     owl_cmd_set(&c, OWL_CMD_PLAY_CONTEXT, 0, "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n");
     TEST_ASSERT_TRUE(spotify_request_for_command(&c, &req));
-    expect(SPOTIFY_PUT, "/v1/me/player/play", "{\"context_uri\":\"spotify:playlist:3cEYpjA9oz9GiPac4AsH4n\"}");
+    expect(SPOTIFY_PUT, "/v1/me/player/play",
+           "{\"context_uri\":\"spotify:playlist:3cEYpjA9oz9GiPac4AsH4n\"}");
     strcpy(c.offset_uri, "spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
     TEST_ASSERT_TRUE(spotify_request_for_command(&c, &req));
     expect(SPOTIFY_PUT, "/v1/me/player/play",
@@ -105,7 +106,8 @@ static void test_play_uris_fits_the_maximum(void)
 static void test_transfer_body(void)
 {
     TEST_ASSERT_TRUE(build(OWL_CMD_TRANSFER, 0, "f00dfeed0123456789abcdef0123456789abcdef"));
-    expect(SPOTIFY_PUT, "/v1/me/player", "{\"device_ids\":[\"f00dfeed0123456789abcdef0123456789abcdef\"],\"play\":true}");
+    expect(SPOTIFY_PUT, "/v1/me/player",
+           "{\"device_ids\":[\"f00dfeed0123456789abcdef0123456789abcdef\"],\"play\":true}");
 }
 
 static void test_unsafe_uris_are_rejected(void)
@@ -144,7 +146,8 @@ static void test_fetch_items_need_a_matching_uri(void)
     owl_fetch_t f = {.kind = OWL_LIST_PLAYLIST_ITEMS};
     strcpy(f.uri, "spotify:playlist:3cEYpjA9oz9GiPac4AsH4n");
     TEST_ASSERT_TRUE(spotify_request_for_fetch(&f, &req));
-    expect(SPOTIFY_GET, "/v1/playlists/3cEYpjA9oz9GiPac4AsH4n/items?limit=50&offset=0&additional_types=episode", "");
+    expect(SPOTIFY_GET,
+           "/v1/playlists/3cEYpjA9oz9GiPac4AsH4n/items?limit=50&offset=0&additional_types=episode", "");
     f.kind = OWL_LIST_ALBUM_TRACKS;
     strcpy(f.uri, "spotify:album:2up3OPMp9Tb4dAKM2erWXQ");
     TEST_ASSERT_TRUE(spotify_request_for_fetch(&f, &req));

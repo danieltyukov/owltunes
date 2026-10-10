@@ -39,7 +39,8 @@ static owl_nav_frame_t *frame(owl_app_t *app)
 
 /* ---- navigation ---------------------------------------------------------------------------- */
 
-static void push(owl_app_t *app, owl_screen_t screen, owl_list_kind_t kind, const char *uri, const char *title)
+static void push(owl_app_t *app, owl_screen_t screen, owl_list_kind_t kind, const char *uri,
+                 const char *title)
 {
     if (app->depth == OWL_NAV_DEPTH) {
         /* Drop the oldest frame above Now Playing so navigation never fails. */
@@ -64,7 +65,8 @@ static void request(owl_effects_t *fx, owl_list_kind_t kind, const char *uri)
     fx->fetch.offset = 0;
 }
 
-static void open_list(owl_app_t *app, owl_effects_t *fx, owl_list_kind_t kind, const char *uri, const char *title)
+static void open_list(owl_app_t *app, owl_effects_t *fx, owl_list_kind_t kind, const char *uri,
+                      const char *title)
 {
     push(app, OWL_SCREEN_BROWSE, kind, uri, title);
     request(fx, kind, uri);

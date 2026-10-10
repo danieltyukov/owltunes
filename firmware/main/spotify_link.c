@@ -34,8 +34,8 @@ static esp_err_t on_http_event(esp_http_client_event_t *evt)
 }
 
 /* POST a form body to the token endpoint and parse the answer. Tokens are never logged. */
-static spotify_token_result_t post_token(const char *body, int64_t now_ms, spotify_token_t *token, char *error,
-                                         size_t error_cap)
+static spotify_token_result_t post_token(const char *body, int64_t now_ms, spotify_token_t *token,
+                                         char *error, size_t error_cap)
 {
     response_t response = {.data = malloc(RESPONSE_MAX)};
     esp_http_client_config_t config = {
@@ -67,7 +67,8 @@ static spotify_token_result_t post_token(const char *body, int64_t now_ms, spoti
         owl_utf8_copy(error, error_cap, "too_long");
         result = SPOTIFY_TOKEN_BAD_RESPONSE;
     } else {
-        result = spotify_parse_token_response(status, response.data, response.len, now_ms, token, error, error_cap);
+        result = spotify_parse_token_response(status, response.data, response.len, now_ms, token, error,
+                                              error_cap);
         ESP_LOGI(TAG, "token endpoint answered %d %s", status, error[0] != '\0' ? error : "ok");
     }
     memset(response.data, 0, RESPONSE_MAX); /* it held tokens */
@@ -75,8 +76,8 @@ static spotify_token_result_t post_token(const char *body, int64_t now_ms, spoti
     return result;
 }
 
-static spotify_token_result_t post_body(char *body, bool built, int64_t now_ms, spotify_token_t *token, char *error,
-                                        size_t error_cap)
+static spotify_token_result_t post_body(char *body, bool built, int64_t now_ms, spotify_token_t *token,
+                                        char *error, size_t error_cap)
 {
     spotify_token_result_t result = SPOTIFY_TOKEN_BAD_RESPONSE;
     owl_utf8_copy(error, error_cap, "bad_request");
@@ -91,11 +92,12 @@ static spotify_token_result_t post_body(char *body, bool built, int64_t now_ms, 
 }
 
 spotify_token_result_t spotify_link_exchange(const owl_settings_t *s, const char *code, const char *verifier,
-                                             int64_t now_ms, spotify_token_t *token, char *error, size_t error_cap)
+                                             int64_t now_ms, spotify_token_t *token, char *error,
+                                             size_t error_cap)
 {
     char *body = malloc(REQUEST_MAX);
-    bool built = body != NULL &&
-                 spotify_token_body_for_code(s->client_id, s->redirect_uri, code, verifier, body, REQUEST_MAX);
+    bool built = body != NULL && spotify_token_body_for_code(s->client_id, s->redirect_uri, code, verifier,
+                                                             body, REQUEST_MAX);
     return post_body(body, built, now_ms, token, error, error_cap);
 }
 
@@ -103,6 +105,7 @@ spotify_token_result_t spotify_link_refresh(const owl_settings_t *s, int64_t now
                                             char *error, size_t error_cap)
 {
     char *body = malloc(REQUEST_MAX);
-    bool built = body != NULL && spotify_token_body_for_refresh(s->client_id, token->refresh_token, body, REQUEST_MAX);
+    bool built =
+        body != NULL && spotify_token_body_for_refresh(s->client_id, token->refresh_token, body, REQUEST_MAX);
     return post_body(body, built, now_ms, token, error, error_cap);
 }

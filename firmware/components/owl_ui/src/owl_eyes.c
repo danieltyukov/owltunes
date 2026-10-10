@@ -60,7 +60,7 @@ void owl_eyes_set(lv_obj_t *eyes, owl_mood_t mood, int32_t gaze_x, int32_t gaze_
 {
     /* Percentage of each eye covered by the lid, per mood. */
     static const uint8_t lid_percent[] = {
-        [OWL_MOOD_AWAKE] = 0, [OWL_MOOD_DROWSY] = 45, [OWL_MOOD_SCANNING] = 12,
+        [OWL_MOOD_AWAKE] = 0,   [OWL_MOOD_DROWSY] = 45,  [OWL_MOOD_SCANNING] = 12,
         [OWL_MOOD_SLEEPY] = 62, [OWL_MOOD_ASLEEP] = 100,
     };
     owl_eyes_t *e = lv_obj_get_user_data(eyes);

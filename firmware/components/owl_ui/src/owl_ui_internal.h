@@ -33,7 +33,13 @@ const char *owl_ui_battery_symbol(uint8_t percent, bool charging);
 /* Full-circle arc around the screen edge, range 0..1000, no knob. */
 lv_obj_t *owl_ui_ring(lv_obj_t *parent, int32_t width, lv_color_t track, lv_color_t fill);
 
-typedef enum { OWL_MOOD_AWAKE, OWL_MOOD_DROWSY, OWL_MOOD_SCANNING, OWL_MOOD_SLEEPY, OWL_MOOD_ASLEEP } owl_mood_t;
+typedef enum {
+    OWL_MOOD_AWAKE,
+    OWL_MOOD_DROWSY,
+    OWL_MOOD_SCANNING,
+    OWL_MOOD_SLEEPY,
+    OWL_MOOD_ASLEEP
+} owl_mood_t;
 
 lv_obj_t *owl_eyes_create(lv_obj_t *parent);
 /* gaze_x, gaze_y: -100..100, where the pupils look. */

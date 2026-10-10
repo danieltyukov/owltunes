@@ -68,7 +68,8 @@ static void linkable(void)
 {
     fresh();
     owl_prov_set_network(&prov, true, "192.168.1.23");
-    send("{\"id\":1,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT "\",\"redirect_uri\":\"" REDIRECT "\"}");
+    send("{\"id\":1,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT "\",\"redirect_uri\":\"" REDIRECT
+         "\"}");
     TEST_ASSERT_TRUE(ok());
     owl_prov_take_actions(&prov);
 }
@@ -152,11 +153,13 @@ static void test_spotify_client_validates_and_resets_link_on_change(void)
 {
     linkable();
     strcpy(prov.settings.refresh_token, "AQOld");
-    send("{\"id\":2,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT "\",\"redirect_uri\":\"" REDIRECT "\"}");
+    send("{\"id\":2,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT "\",\"redirect_uri\":\"" REDIRECT
+         "\"}");
     TEST_ASSERT_EQUAL_STRING("AQOld", prov.settings.refresh_token);
     send("{\"id\":3,\"cmd\":\"spotify_client\",\"client_id\":\"abc\",\"redirect_uri\":\"" REDIRECT "\"}");
     expect_error("bad_client_id");
-    send("{\"id\":4,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT "\",\"redirect_uri\":\"http://evil.example/\"}");
+    send("{\"id\":4,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT
+         "\",\"redirect_uri\":\"http://evil.example/\"}");
     expect_error("bad_redirect_uri");
     send("{\"id\":5,\"cmd\":\"spotify_client\",\"client_id\":\"ffffffffffffffffffffffffffffffff\","
          "\"redirect_uri\":\"" REDIRECT "\"}");
@@ -204,7 +207,8 @@ static void test_wrong_state_is_rejected(void)
 {
     linkable();
     send("{\"id\":2,\"cmd\":\"spotify_begin\"}");
-    send("{\"id\":3,\"cmd\":\"spotify_code\",\"code\":\"AQDcode\",\"state\":\"QEFCQ0RFRkdISUpLTE1OTw.192.168.1.99\"}");
+    send("{\"id\":3,\"cmd\":\"spotify_code\",\"code\":\"AQDcode\",\"state\":\"QEFCQ0RFRkdISUpLTE1OTw.192.168."
+         "1.99\"}");
     expect_error("bad_state");
     TEST_ASSERT_EQUAL_UINT32(0, owl_prov_take_actions(&prov));
 }
@@ -220,9 +224,11 @@ static void test_expired_session_rejects_code(void)
 {
     linkable();
     send_at("{\"id\":2,\"cmd\":\"spotify_begin\"}", 0);
-    send_at("{\"id\":3,\"cmd\":\"spotify_code\",\"code\":\"AQDcode\",\"state\":\"" STATE "\"}", OWL_PROV_SESSION_MS);
+    send_at("{\"id\":3,\"cmd\":\"spotify_code\",\"code\":\"AQDcode\",\"state\":\"" STATE "\"}",
+            OWL_PROV_SESSION_MS);
     expect_error("expired");
-    TEST_ASSERT_EQUAL_STRING("no_session", owl_prov_accept_code(&prov, "AQDcode", STATE, OWL_PROV_SESSION_MS + 1));
+    TEST_ASSERT_EQUAL_STRING("no_session",
+                             owl_prov_accept_code(&prov, "AQDcode", STATE, OWL_PROV_SESSION_MS + 1));
 }
 
 static void test_code_with_unsafe_characters_is_rejected(void)
@@ -313,7 +319,8 @@ static void test_settings_from_another_version_fall_back_to_defaults(void)
 static void test_event_lines(void)
 {
     TEST_ASSERT_TRUE(owl_prov_event(out, sizeof out, "spotify", "failed", "error", "invalid_client"));
-    TEST_ASSERT_EQUAL_STRING("@owl {\"event\":\"spotify\",\"state\":\"failed\",\"error\":\"invalid_client\"}\n", out);
+    TEST_ASSERT_EQUAL_STRING(
+        "@owl {\"event\":\"spotify\",\"state\":\"failed\",\"error\":\"invalid_client\"}\n", out);
     TEST_ASSERT_TRUE(owl_prov_event(out, sizeof out, "spotify", "linked", NULL, NULL));
     TEST_ASSERT_EQUAL_STRING("@owl {\"event\":\"spotify\",\"state\":\"linked\"}\n", out);
     TEST_ASSERT_FALSE(owl_prov_event(out, 10, "spotify", "linked", NULL, NULL));

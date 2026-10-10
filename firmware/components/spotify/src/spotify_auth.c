@@ -96,8 +96,8 @@ static bool fits(int n, size_t cap)
     return n > 0 && (size_t)n < cap;
 }
 
-bool spotify_authorize_url(const char *client_id, const char *redirect_uri, const spotify_pkce_t *s, char *out,
-                           size_t cap)
+bool spotify_authorize_url(const char *client_id, const char *redirect_uri, const spotify_pkce_t *s,
+                           char *out, size_t cap)
 {
     char scope[256], redirect[3 * SPOTIFY_REDIRECT_URI_LEN], state[3 * SPOTIFY_STATE_LEN];
     if (!spotify_client_id_valid(client_id) || !spotify_redirect_uri_valid(redirect_uri) ||
@@ -120,7 +120,8 @@ bool spotify_token_body_for_code(const char *client_id, const char *redirect_uri
         !spotify_code_valid(code) || !encode(redirect, sizeof redirect, redirect_uri)) {
         return false;
     }
-    int n = snprintf(out, cap, "grant_type=authorization_code&code=%s&redirect_uri=%s&client_id=%s&code_verifier=%s",
+    int n = snprintf(out, cap,
+                     "grant_type=authorization_code&code=%s&redirect_uri=%s&client_id=%s&code_verifier=%s",
                      code, redirect, client_id, verifier);
     return fits(n, cap);
 }
@@ -136,8 +137,9 @@ bool spotify_token_body_for_refresh(const char *client_id, const char *refresh_t
     return fits(n, cap);
 }
 
-spotify_token_result_t spotify_parse_token_response(int http_status, const char *body, size_t len, int64_t now_ms,
-                                                    spotify_token_t *token, char *error, size_t error_cap)
+spotify_token_result_t spotify_parse_token_response(int http_status, const char *body, size_t len,
+                                                    int64_t now_ms, spotify_token_t *token, char *error,
+                                                    size_t error_cap)
 {
     owl_utf8_copy(error, error_cap, "");
     if (http_status == 429 || http_status >= 500) {
@@ -162,8 +164,8 @@ spotify_token_result_t spotify_parse_token_response(int http_status, const char 
         owl_utf8_copy(error, error_cap, code);
         if (code != NULL && strcmp(code, "invalid_grant") == 0) {
             result = SPOTIFY_TOKEN_LOG_IN_AGAIN;
-        } else if (http_status == 401 ||
-                   (code != NULL && (strcmp(code, "invalid_client") == 0 || strcmp(code, "unauthorized_client") == 0))) {
+        } else if (http_status == 401 || (code != NULL && (strcmp(code, "invalid_client") == 0 ||
+                                                           strcmp(code, "unauthorized_client") == 0))) {
             result = SPOTIFY_TOKEN_BAD_CLIENT;
         }
     }

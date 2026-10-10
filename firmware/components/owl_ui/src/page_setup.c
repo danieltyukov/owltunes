@@ -36,7 +36,8 @@ static void update_qr(owl_setup_ui_t *pg, const char *url)
         return;
     }
     size_t len = strlen(url);
-    pg->qr_ok = len > 0 && len < sizeof pg->qr_text && lv_qrcode_update(pg->qr, url, (uint32_t)len) == LV_RESULT_OK;
+    pg->qr_ok =
+        len > 0 && len < sizeof pg->qr_text && lv_qrcode_update(pg->qr, url, (uint32_t)len) == LV_RESULT_OK;
     snprintf(pg->qr_text, sizeof pg->qr_text, "%s", url);
 }
 

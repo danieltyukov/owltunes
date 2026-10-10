@@ -38,7 +38,8 @@ static void fill_playlist(const cJSON *pl, const char *my_user_id, owl_list_item
         }
         int64_t total = counts ? sj_int(counts, "total", -1) : -1;
         if (total >= 0) {
-            snprintf(it->subtitle, sizeof it->subtitle, "%lld %s", (long long)total, total == 1 ? "song" : "songs");
+            snprintf(it->subtitle, sizeof it->subtitle, "%lld %s", (long long)total,
+                     total == 1 ? "song" : "songs");
         }
     } else {
         const char *owner_name = owner ? sj_str(owner, "display_name") : NULL;
@@ -83,8 +84,9 @@ static const char *array_key(owl_list_kind_t kind)
     }
 }
 
-spotify_parse_result_t spotify_parse_list(owl_list_kind_t kind, const char *json, size_t len, const char *my_user_id,
-                                          const char *source_uri, owl_list_page_t *out)
+spotify_parse_result_t spotify_parse_list(owl_list_kind_t kind, const char *json, size_t len,
+                                          const char *my_user_id, const char *source_uri,
+                                          owl_list_page_t *out)
 {
     const char *key = array_key(kind);
     if (key == NULL || json == NULL) {

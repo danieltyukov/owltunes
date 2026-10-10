@@ -18,6 +18,7 @@ static const char DEMO_PLAYER_JSON[] =
 void demo_state_load(owl_app_t *app, owl_player_t *player, int64_t now_ms)
 {
     owl_app_set_link(app, OWL_LINK_API, false);
-    spotify_parse_result_t r = spotify_parse_player(DEMO_PLAYER_JSON, sizeof DEMO_PLAYER_JSON - 1, now_ms, player);
+    spotify_parse_result_t r =
+        spotify_parse_player(DEMO_PLAYER_JSON, sizeof DEMO_PLAYER_JSON - 1, now_ms, player);
     ESP_LOGI(TAG, "demo player parsed: %s", r == SPOTIFY_PARSE_OK ? "ok" : "failed");
 }

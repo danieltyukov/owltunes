@@ -49,8 +49,8 @@ void owl_np_create(owl_np_page_t *pg, lv_obj_t *parent)
 }
 
 /* What the owl shows when there is no track to display. */
-static owl_mood_t idle_state(const owl_app_t *app, const owl_player_t *p, const char **message, const char **hint,
-                             int32_t *gaze_x)
+static owl_mood_t idle_state(const owl_app_t *app, const owl_player_t *p, const char **message,
+                             const char **hint, int32_t *gaze_x)
 {
     *gaze_x = 0;
     if (app->link == OWL_LINK_NONE) {

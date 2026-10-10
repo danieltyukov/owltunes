@@ -13,8 +13,8 @@ extern "C" {
 #define SPOTIFY_ACCOUNTS_HOST "accounts.spotify.com"
 #define SPOTIFY_AUTHORIZE_URL "https://accounts.spotify.com/authorize"
 #define SPOTIFY_TOKEN_PATH "/api/token"
-#define SPOTIFY_SCOPES                                                                                              \
-    "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read "          \
+#define SPOTIFY_SCOPES                                                                                       \
+    "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read "     \
     "user-library-modify playlist-read-private playlist-read-collaborative user-read-recently-played"
 
 #define SPOTIFY_CLIENT_ID_LEN 33
@@ -43,8 +43,8 @@ typedef struct {
 void spotify_pkce_new(spotify_pkce_t *s, owl_random_fn random, const char *lan_ip);
 bool spotify_state_matches(const spotify_pkce_t *s, const char *state);
 
-bool spotify_authorize_url(const char *client_id, const char *redirect_uri, const spotify_pkce_t *s, char *out,
-                           size_t cap);
+bool spotify_authorize_url(const char *client_id, const char *redirect_uri, const spotify_pkce_t *s,
+                           char *out, size_t cap);
 bool spotify_token_body_for_code(const char *client_id, const char *redirect_uri, const char *code,
                                  const char *verifier, char *out, size_t cap);
 bool spotify_token_body_for_refresh(const char *client_id, const char *refresh_token, char *out, size_t cap);
@@ -66,8 +66,9 @@ typedef enum {
 /* Parse a response from POST /api/token. On success token gets the new access token and expiry;
  * its refresh token is replaced only when the response carries one (Spotify may rotate it). error
  * receives Spotify's error code ("invalid_grant") or "" on success. */
-spotify_token_result_t spotify_parse_token_response(int http_status, const char *body, size_t len, int64_t now_ms,
-                                                    spotify_token_t *token, char *error, size_t error_cap);
+spotify_token_result_t spotify_parse_token_response(int http_status, const char *body, size_t len,
+                                                    int64_t now_ms, spotify_token_t *token, char *error,
+                                                    size_t error_cap);
 
 /* True when there is no access token or it expires within SPOTIFY_REFRESH_MARGIN_MS. */
 bool spotify_token_needs_refresh(const spotify_token_t *t, int64_t now_ms);

@@ -46,5 +46,6 @@ void net_start(net_change_fn on_change)
 
 void net_networks_changed(const owl_settings_t *settings)
 {
-    ESP_LOGI(TAG, "%u Wi-Fi network(s) saved; the QEMU board stays on Ethernet", (unsigned)settings->n_networks);
+    ESP_LOGI(TAG, "%u Wi-Fi network(s) saved; the QEMU board stays on Ethernet",
+             (unsigned)settings->n_networks);
 }

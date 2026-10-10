@@ -85,7 +85,9 @@ int main(int argc, char **argv)
         return sim_run_sdl(argc >= 3 ? argv[2] : "now_playing");
     }
 #endif
-    fprintf(stderr, "usage: owl_sim list | verify-list <a,b,c> | snapshot <scenario> <out.png> |\n"
-                    "               check <scenario> <golden-dir> <out-dir> | update-golden <scenario> <golden-dir>\n");
+    fprintf(
+        stderr,
+        "usage: owl_sim list | verify-list <a,b,c> | snapshot <scenario> <out.png> |\n"
+        "               check <scenario> <golden-dir> <out-dir> | update-golden <scenario> <golden-dir>\n");
     return 2;
 }

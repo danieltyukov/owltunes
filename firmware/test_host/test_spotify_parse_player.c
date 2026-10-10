@@ -82,7 +82,9 @@ static void test_unicode_title_is_truncated_safely(void)
     TEST_ASSERT_TRUE(is_valid_utf8(player.track.title));
     TEST_ASSERT_EQUAL_MEMORY("\xF0\x9F\xA6\x89 ", player.track.title, 5);
     TEST_ASSERT_EQUAL_STRING("Bj\xC3\xB6rk Hoot, Caf\xC3\xA9 Owls", player.track.subtitle);
-    TEST_ASSERT_EQUAL_STRING("Mitternacht \xC3\xBC" "ber dem Wald", player.track.album);
+    TEST_ASSERT_EQUAL_STRING("Mitternacht \xC3\xBC"
+                             "ber dem Wald",
+                             player.track.album);
 }
 
 static void test_bad_json_leaves_player_unchanged(void)
@@ -114,7 +116,8 @@ static void test_like_state_and_context_name_survive_a_poll(void)
 static void test_progress_past_duration_is_clamped(void)
 {
     static const char json[] =
-        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_playing\":true,\"progress_ms\":999999,"
+        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_playing\":true,\"progress_ms\":"
+        "999999,"
         "\"item\":{\"type\":\"track\",\"name\":\"x\",\"uri\":\"spotify:track:abc\",\"duration_ms\":1000}}";
     owl_player_init(&player);
     TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_player(json, sizeof json - 1, NOW, &player));
@@ -138,9 +141,10 @@ static void test_huge_numbers_fall_back_safely(void)
 
 static void test_durations_beyond_32_bits_are_capped(void)
 {
-    static const char json[] =
-        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_playing\":true,\"progress_ms\":5000,"
-        "\"item\":{\"type\":\"track\",\"name\":\"x\",\"uri\":\"spotify:track:abc\",\"duration_ms\":5000000000}}";
+    static const char json[] = "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_"
+                               "playing\":true,\"progress_ms\":5000,"
+                               "\"item\":{\"type\":\"track\",\"name\":\"x\",\"uri\":\"spotify:track:abc\","
+                               "\"duration_ms\":5000000000}}";
     owl_player_init(&player);
     TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_player(json, sizeof json - 1, NOW, &player));
     TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, player.track.duration_ms);
@@ -166,7 +170,8 @@ static void test_like_state_and_context_name_survive_no_device(void)
 static void test_local_file_is_not_a_likeable_track(void)
 {
     static const char json[] =
-        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_playing\":true,\"progress_ms\":0,"
+        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_playing\":true,\"progress_ms\":"
+        "0,"
         "\"item\":{\"type\":\"track\",\"is_local\":true,\"name\":\"Barn Demo\","
         "\"uri\":\"spotify:local:The+Barn+Owls:Demos:Barn+Demo:201\",\"duration_ms\":201000}}";
     owl_player_init(&player);
