@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Check the sourcing fields of every part against hardware/<board>/design.toml.
 
-Each part that is assembled (assembled = true, the default) must carry the fields
-"LCSC Part #" and "MPN" in the schematic, equal to design.toml, and the LCSC number must look
-like C followed by digits. Test points, mounting holes and fiducials set assembled = false.
+Each part that is assembled (assembled = true, the default) must have a non-empty mpn in
+design.toml and carry the non-empty fields "LCSC Part #" and "MPN" in the schematic, equal to
+design.toml, and the LCSC number must look like C followed by digits. Test points, mounting holes and fiducials set assembled = false.
 
 Usage: python3 tools/hw/hw_bom.py owl-mainboard [--sheets power,mcu_usb]
 """
@@ -29,12 +29,14 @@ def check(design: dict, comps: dict[str, dict], sheets: set[str] | None = None) 
         ref = part["ref"]
         if not LCSC_RE.match(part.get("lcsc", "")):
             errors.append(f"{ref}: design.toml lcsc {part.get('lcsc')!r} is not an LCSC number")
+        if not part.get("mpn", "").strip():
+            errors.append(f"{ref}: design.toml has no mpn")
         comp = comps.get(ref)
         if comp is None:
             errors.append(f"{ref}: not in the schematic")
             continue
         for field, key in (("LCSC Part #", "lcsc"), ("MPN", "mpn")):
-            if comp["fields"].get(field, "") != part.get(key, ""):
+            if not comp["fields"].get(field, "").strip() or comp["fields"].get(field, "") != part.get(key, ""):
                 errors.append(f"{ref}: field {field!r} is {comp['fields'].get(field)!r}, design says {part.get(key)!r}")
     return errors
 

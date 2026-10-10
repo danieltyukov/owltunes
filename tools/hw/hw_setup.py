@@ -15,6 +15,7 @@ import tomllib
 
 import pcbnew
 
+import hw_stackup
 from hw_netlist import ROOT
 
 
@@ -31,6 +32,11 @@ def main(argv: list[str]) -> int:
     ds.SetAuxOrigin(origin)
     ds.SetGridOrigin(origin)
     pcbnew.SaveBoard(str(pcb_path), board)
+    errors = hw_stackup.validate(cfg)
+    if errors:
+        print("\n".join(errors))
+        return 1
+    pcb_path.write_text(hw_stackup.apply(pcb_path.read_text(), cfg))
 
     pro_path = folder / f"{board_name}.kicad_pro"
     pro = json.loads(pro_path.read_text())

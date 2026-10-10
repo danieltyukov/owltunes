@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import subprocess
 import sys
 import urllib.request
@@ -42,7 +41,20 @@ def query(lcsc: str) -> dict | None:
 
 def needed(per_board: int, boards: int) -> int:
     """Quantity to order: 10 percent attrition, at least 2 spare."""
-    return max(per_board * boards + 2, math.ceil(per_board * boards * 1.1))
+    return max(per_board * boards + 2, -(-per_board * boards * 11 // 10))
+
+
+def resolve_prices(path: Path | None) -> Path | None:
+    """Return the resolved --prices path, or raise ValueError when it is outside the private folder."""
+    if path is None:
+        return None
+    resolved = path.resolve()
+    root = private_root().resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError:
+        raise ValueError(f"refusing to write prices outside {root}") from None
+    return resolved
 
 
 def main(argv: list[str]) -> int:
@@ -51,32 +63,43 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--boards", type=int, default=5)
     ap.add_argument("--prices", type=Path)
     args = ap.parse_args(argv)
+    try:
+        prices = resolve_prices(args.prices)
+    except ValueError as e:
+        print(e)
+        return 2
     parts = [p for p in load_design(args.board)["part"] if p.get("assembled", True)]
     counts = Counter(p["lcsc"] for p in parts)
     mpn = {p["lcsc"]: p.get("mpn", "") for p in parts}
     low = 0
     rows = []
     for lcsc, n in sorted(counts.items()):
-        c = query(lcsc)
+        try:
+            c = query(lcsc)
+        except (OSError, ValueError) as e:
+            print(f"{lcsc:>10} {mpn[lcsc]:28} QUERY FAILED: {e}")
+            low += 1
+            continue
         need = needed(n, args.boards)
         if c is None:
             print(f"{lcsc:>10} {mpn[lcsc]:28} NOT FOUND")
             low += 1
             continue
-        kind = "Basic" if c["componentLibraryType"] == "base" else "Extended"
-        ok = c["stockCount"] >= need
-        low += 0 if ok else 1
-        print(f"{lcsc:>10} {mpn[lcsc]:28} {kind:8} stock {c['stockCount']:>8} need {need:>5} {'OK' if ok else 'LOW'}")
-        price = (c.get("componentPrices") or [{}])[0].get("productPrice")
-        rows.append([lcsc, mpn[lcsc], kind, c["stockCount"], need, price])
-    if args.prices:
         try:
-            args.prices.resolve().relative_to(private_root().resolve())
-        except ValueError:
-            print(f"refusing to write prices outside {private_root()}")
-            return 2
-        args.prices.parent.mkdir(parents=True, exist_ok=True)
-        with args.prices.open("w", newline="") as f:
+            kind = "Basic" if c["componentLibraryType"] == "base" else "Extended"
+            stock = c["stockCount"]
+        except KeyError as e:
+            print(f"{lcsc:>10} {mpn[lcsc]:28} UNEXPECTED ANSWER: missing {e}")
+            low += 1
+            continue
+        ok = stock >= need
+        low += 0 if ok else 1
+        print(f"{lcsc:>10} {mpn[lcsc]:28} {kind:8} stock {stock:>8} need {need:>5} {'OK' if ok else 'LOW'}")
+        price = (c.get("componentPrices") or [{}])[0].get("productPrice")
+        rows.append([lcsc, mpn[lcsc], kind, stock, need, price])
+    if prices:
+        prices.parent.mkdir(parents=True, exist_ok=True)
+        with prices.open("w", newline="") as f:
             csv.writer(f).writerows([["lcsc", "mpn", "type", "stock", "need", "unit_usd"], *rows])
     print(f"{args.board}: {len(counts)} unique parts, {low} low or missing")
     return 1 if low else 0

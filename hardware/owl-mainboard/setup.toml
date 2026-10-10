@@ -5,6 +5,51 @@ copper_layers = 4
 thickness_mm = 1.0
 origin_mm = [100.0, 100.0]
 
+# JLCPCB 4-layer 1.0 mm FR-4, ENIG. Layer thicknesses follow the JLC04101H-7628 build (35 um outer
+# copper, 7628 prepreg 0.2104 mm, 15.2 um inner copper); the core is 0.4788 mm so the stack adds up
+# to 1.0 mm. Confirm the core against JLCPCB's impedance page (https://jlcpcb.com/impedance) on the
+# order day.
+[stackup]
+finish = "ENIG"
+
+[[stackup.layer]]
+name = "F.Cu"
+type = "copper"
+thickness = 0.035
+
+[[stackup.layer]]
+type = "prepreg"
+thickness = 0.2104
+material = "7628"
+epsilon_r = 4.4
+
+[[stackup.layer]]
+name = "In1.Cu"
+type = "copper"
+thickness = 0.0152
+
+[[stackup.layer]]
+type = "core"
+thickness = 0.4788
+material = "FR4"
+epsilon_r = 4.6
+
+[[stackup.layer]]
+name = "In2.Cu"
+type = "copper"
+thickness = 0.0152
+
+[[stackup.layer]]
+type = "prepreg"
+thickness = 0.2104
+material = "7628"
+epsilon_r = 4.4
+
+[[stackup.layer]]
+name = "B.Cu"
+type = "copper"
+thickness = 0.035
+
 [rules]
 min_clearance = 0.1
 min_track_width = 0.1

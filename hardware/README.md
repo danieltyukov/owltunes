@@ -18,6 +18,12 @@ schematic must match it exactly:
 | `python3 tools/hw/hw_stock.py owl-mainboard --boards 5` | JLCPCB stock (needs network) |
 
 `tools/hw/hw_setup.py <board>` applies `setup.toml` (stackup, origins, JLCPCB rules, net classes).
+The stackup in `setup.toml` is written into each PCB by `hw_setup.py`. Main board: JLCPCB 4-layer
+1.0 mm, modelled on JLC04101H-7628 (35 um outer copper, 7628 prepreg 0.2104 mm, 15.2 um inner
+copper); the core thickness (0.4788 mm) is chosen so the stack adds up to 1.0 mm and is to be
+confirmed against https://jlcpcb.com/impedance on the order day. Perch board: 2-layer 1.6 mm FR-4.
+A test checks that each stack adds up to the board thickness.
+
 `hw_stock.py` writes prices only below the main checkout's `private/` folder.
 
 Coordinates: the display centre is at (100, 100) on the board page, with X right and Y down.

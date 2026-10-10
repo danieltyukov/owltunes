@@ -4,6 +4,26 @@ copper_layers = 2
 thickness_mm = 1.6
 origin_mm = [100.0, 100.0]
 
+# JLCPCB 2-layer 1.6 mm FR-4, ENIG: 35 um copper on a 1.53 mm core.
+[stackup]
+finish = "ENIG"
+
+[[stackup.layer]]
+name = "F.Cu"
+type = "copper"
+thickness = 0.035
+
+[[stackup.layer]]
+type = "core"
+thickness = 1.53
+material = "FR4"
+epsilon_r = 4.5
+
+[[stackup.layer]]
+name = "B.Cu"
+type = "copper"
+thickness = 0.035
+
 [rules]
 min_clearance = 0.15
 min_track_width = 0.15

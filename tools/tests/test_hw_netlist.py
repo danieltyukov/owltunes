@@ -57,6 +57,21 @@ class NetlistCheckTest(unittest.TestCase):
         d["part"].append({"ref": "C9", "sheet": "periph", "symbol": "Device:C", "footprint": "", "value": "1u"})
         self.assertEqual(check(d, self.nets, self.comps, {"power"}), [])
 
+    def test_nc_pin_that_is_connected_is_reported(self):
+        d = design(U1={"pins": {"1": "+3V3"}, "nc": ["2"]})
+        errors = check(d, self.nets, self.comps)
+        self.assertIn("U1.2 must be unconnected but is on 'SIG'", errors)
+
+    def test_part_missing_from_design_is_reported(self):
+        d = design()
+        d["part"] = [p for p in d["part"] if p["ref"] != "R1"]
+        self.assertIn("part R1 is not in design.toml", check(d, self.nets, self.comps))
+
+    def test_symbol_and_value_mismatches_are_reported(self):
+        errors = check(design(R1={"symbol": "Device:C", "value": "4k7"}), self.nets, self.comps)
+        self.assertIn("R1 symbol is 'Device:R', design says 'Device:C'", errors)
+        self.assertIn("R1 value is '10k', design says '4k7'", errors)
+
 
 if __name__ == "__main__":
     unittest.main()

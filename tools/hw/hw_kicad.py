@@ -23,20 +23,45 @@ def boards() -> list[dict]:
     return tomllib.loads((ROOT / "hardware" / "boards.toml").read_text())["board"]
 
 
-def run_erc(schematic: Path, report: Path) -> int:
-    cmd = ["kicad-cli", "sch", "erc", "--format", "json", "--severity-error", "--severity-warning",
-           "-o", str(report), str(schematic)]
-    subprocess.run(cmd, check=True, capture_output=True, text=True)
-    data = json.loads(report.read_text())
-    return sum(len(sheet["violations"]) for sheet in data["sheets"])
+def describe(v: dict, where: str = "") -> str:
+    """One line for a KiCad violation: type, description, severity and the first item's position."""
+    items = v.get("items") or []
+    pos = ""
+    if items and "pos" in items[0]:
+        pos = f" at ({items[0]['pos']['x']}, {items[0]['pos']['y']}) mm"
+    place = f" [{where}]" if where else ""
+    return f"{v.get('severity', '?')} {v.get('type', '?')}: {v.get('description', '')}{pos}{place}"
 
 
-def run_drc(pcb: Path, report: Path) -> tuple[int, int, int]:
-    cmd = ["kicad-cli", "pcb", "drc", "--format", "json", "--schematic-parity", "--refill-zones",
-           "--severity-error", "--severity-warning", "-o", str(report), str(pcb)]
-    subprocess.run(cmd, check=True, capture_output=True, text=True)
-    data = json.loads(report.read_text())
-    return len(data["violations"]), len(data["unconnected_items"]), len(data["schematic_parity"])
+def erc_violations(data: dict) -> list[str]:
+    return [describe(v, sheet.get("path", "/")) for sheet in data["sheets"] for v in sheet["violations"]]
+
+
+def drc_violations(data: dict) -> tuple[list[str], list[str], list[str]]:
+    return (
+        [describe(v) for v in data["violations"]],
+        [describe(v) for v in data["unconnected_items"]],
+        [describe(v) for v in data["schematic_parity"]],
+    )
+
+
+def kicad_cli(cmd: list[str]) -> None:
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        sys.stderr.write(f"kicad-cli failed ({result.returncode}): {' '.join(cmd)}\n{result.stderr}{result.stdout}\n")
+        raise SystemExit(2)
+
+
+def run_erc(schematic: Path, report: Path) -> list[str]:
+    kicad_cli(["kicad-cli", "sch", "erc", "--format", "json", "--severity-error", "--severity-warning",
+               "-o", str(report), str(schematic)])
+    return erc_violations(json.loads(report.read_text()))
+
+
+def run_drc(pcb: Path, report: Path) -> tuple[list[str], list[str], list[str]]:
+    kicad_cli(["kicad-cli", "pcb", "drc", "--format", "json", "--schematic-parity", "--refill-zones",
+               "--severity-error", "--severity-warning", "-o", str(report), str(pcb)])
+    return drc_violations(json.loads(report.read_text()))
 
 
 def main(argv: list[str]) -> int:
@@ -49,12 +74,16 @@ def main(argv: list[str]) -> int:
         out.mkdir(parents=True, exist_ok=True)
         base = ROOT / "hardware" / name / name
         erc = run_erc(base.with_suffix(".kicad_sch"), out / "erc.json")
-        print(f"{name} ERC: {erc} violations")
-        failures += erc
+        print(f"{name} ERC: {len(erc)} violations")
+        for line in erc:
+            print(f"  {line}")
+        failures += len(erc)
         if board.get("drc", False):
             v, u, p = run_drc(base.with_suffix(".kicad_pcb"), out / "drc.json")
-            print(f"{name} DRC: {v} violations, {u} unconnected, {p} parity")
-            failures += v + u + p
+            print(f"{name} DRC: {len(v)} violations, {len(u)} unconnected, {len(p)} parity")
+            for line in (*v, *u, *p):
+                print(f"  {line}")
+            failures += len(v) + len(u) + len(p)
         else:
             print(f"{name} DRC: skipped (drc = false in hardware/boards.toml)")
     return 1 if failures else 0
