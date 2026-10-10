@@ -10,6 +10,13 @@ test prints check; the measured results are recorded in docs/hardware/ring-test.
 here before the main board is ordered. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
 """
 
+# MJF nylon (PA12) minimum wall, from JLC3DP's design guideline (jlc3dp.com/help/article/212): 1.0 mm,
+# and up to 0.2 mm less only on non-critical features. Structural walls (bearing seat and lip, ring
+# bodies, carrier rings and the wall around each magnet pocket, bezel lugs, jig floor and pocket
+# walls, sleeve) use MJF_STRUCT_WALL; cosmetic rims and coupon steps may use MJF_MIN_WALL.
+MJF_MIN_WALL = 0.8
+MJF_STRUCT_WALL = 1.0
+
 # Display: VIEWE ALL-UEOL018WV-RA31-A001A specification V1.0 (2024-09-04), pages 4 and 6.
 GLASS_D = 48.16  # cover glass diameter ("C.G 48.16")
 GLASS_T = 1.10  # cover glass thickness ("C.G 1.1")
@@ -27,14 +34,14 @@ BRG_INNER_RACE_OD = 53.6  # estimate of the inner race shoulder; the bezel lip s
 BRG_OUTER_RACE_ID = 58.4  # estimate of the outer race shoulder; the ring contacts outside it
 
 # Face bezel (stationary): holds the glass and carries the bearing inner race.
-LIP_T = 1.2  # front lips of bezel and ring stand this far in front of the glass
-BEZEL_LIP_ID = 48.50  # front opening: the glass is inserted from the front, so it must pass here
+LIP_T = 1.3  # front lips of bezel and ring stand this far in front of the glass (ring lip is LIP_T - LIP_RELIEF = 1.0 thick)
+BEZEL_LIP_ID = 48.30  # front opening: the glass is inserted from the front, so it must pass here
 BEZEL_LIP_OD = 52.0  # contacts only the inner race front face (inside 53.6)
-GLASS_POCKET_D = 48.50  # glass seat, 0.17 radial clearance; the glass drops in from the front, glue it
+GLASS_POCKET_D = 48.30  # glass seat, 0.07 radial clearance; drops in from the front, glue it; wall to the 49.9 seat is 0.8
 GLASS_POCKET_DEPTH = 1.3  # glass rests on the ledge, 0.2 below the rim plane (glue layer)
 PANEL_POCKET_D = 47.2  # clears the 46.35 panel behind the glass; the ring left over is the glass ledge
 FPC_NOTCH_W = 14.0  # room for the flex fold at the panel's top edge
-FPC_NOTCH_R = 24.15  # notch reaches this radius, leaving a 0.8 wall under the bearing seat
+FPC_NOTCH_R = 23.95  # notch reaches this radius, leaving a 1.0 wall under the bearing seat
 FPC_NOTCH_END_DEPTH = 4.0  # the fold sits next to the panel edge; behind it the flex lies flat
 BRG_SEAT_D = 49.90  # test: 0.10 clearance, bearing glued (coupon picks the final value)
 TUBE_OD = 49.6  # bezel tube behind the seat; the bearing slides over it from the back
@@ -57,7 +64,7 @@ RING_CONTACT_R = 30.0  # the ring touches the outer race only outside this radiu
 LIP_RELIEF = 0.3  # gap between the ring lip and the inner race or shields
 RING_A_BORE_D = 62.10  # test: bearing variant, 0.10 clearance, bearing glued
 RING_B_BORE_D = 62.00  # test: bushing variant, 0.10 radial clearance on the sleeve
-RING_REAR_DEPTH = 9.2  # ring body ends here; leaves a 0.8 floor under the magnet pockets
+RING_REAR_DEPTH = 9.2  # ring body ends here; leaves a 1.0 floor under the magnet pockets
 INDEX_NOTCH_W = 1.0
 INDEX_NOTCH_D = 0.6
 INDEX_NOTCH_L = 2.0
@@ -76,15 +83,15 @@ ORING_GROOVE_DEPTH = 1.15
 MAG_D = 3.0
 MAG_H = 2.0
 MAG_POCKET_D = 3.10  # test: coupon checks 2.95 to 3.25; magnets are glued
-MAG_POCKET_DEPTH = 2.10
+MAG_POCKET_DEPTH = 2.00  # equal to MAG_H: a seated magnet is flush with the carrier's rear face
 R_TRACK = 28.0  # magnet centre radius
 MAGNET_COUNTS = (24, 32)
-CARRIER_ID = 51.2  # 0.8 radial clearance to the bezel tube
+CARRIER_ID = 50.9  # 0.65 radial clearance to the bezel tube; leaves a 1.0 wall inside the magnet pockets
 CARRIER_FIT_CLEARANCE = 0.2  # diametral MJF clearance between the carrier body and the smaller ring bore
 CARRIER_OD = min(RING_A_BORE_D, RING_B_BORE_D) - CARRIER_FIT_CLEARANCE  # fits both rings; glued
-CARRIER_FRONT_DEPTH = 6.3  # 0.3 behind the bearing rear face
-CARRIER_FLANGE_T = 0.8
-CARRIER_FLANGE_R_IN = 30.5
+CARRIER_FRONT_DEPTH = 6.2  # 0.2 behind the bearing rear face; leaves a 1.0 floor in front of the pockets
+CARRIER_FLANGE_T = 1.0
+CARRIER_FLANGE_R_IN = 29.8  # 1.1 overlap with the body, 0.25 clear of the pocket mouths
 POLARITY_BUMP_D = 1.0  # raised bump on the flange behind every other pocket
 POLARITY_BUMP_H = 0.3
 POLARITY_BUMP_R = 31.75
@@ -95,7 +102,7 @@ POLARITY_BUMP_R = 31.75
 SENSOR_ANGLE_DEG = 180.0
 PCB_T = 1.0  # main board thickness (4-layer)
 HALL_ELEMENT_H = 0.70  # Hall element height above its seating plane, TMAG5273 figure 6-2 (estimate)
-HALL_GAP_NOMINAL = 3.1  # test: magnet face to Hall element; 3.1 puts the board front 0.5 mm behind the carrier flange
+HALL_GAP_NOMINAL = 3.0  # test: magnet face to Hall element; the board front then sits 0.3 mm behind the flange
 HALL_GAP_STEPS = (4.5, 3.5, 2.5, 1.5)  # gaps the jig gives with spacers of 0, 1, 2 and 3 mm
 
 

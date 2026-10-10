@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from build123d import Box, Cylinder, Part, Pos, Vector
+from build123d import Box, Cylinder, Edge, Part, Pos, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import owl_params as P  # noqa: E402
@@ -73,8 +73,8 @@ def test_glass_drops_in_from_the_front_and_cannot_fall_out_the_back(parts):
     assert inside(bezel, P.GLASS_D / 2 - 0.1, -P.GLASS_POCKET_DEPTH - 0.1)
     assert not inside(bezel, P.PANEL_POCKET_D / 2 - 0.2, -P.GLASS_POCKET_DEPTH - 0.1)
     # the rim stands in front of the glass and its opening is wider than the glass
-    assert P.BEZEL_LIP_ID >= P.GLASS_D + 0.3
-    assert P.GLASS_POCKET_D >= P.GLASS_D + 0.3
+    assert P.BEZEL_LIP_ID >= P.GLASS_D + 0.1
+    assert P.GLASS_POCKET_D >= P.GLASS_D + 0.1
 
 
 def test_bearing_seat_and_bores(parts):
@@ -145,17 +145,20 @@ def test_sensor_position_is_the_pcb_contract():
     assert y == pytest.approx(0.0, abs=1e-9)
     assert P.pcb_front_depth() == pytest.approx(10.5)
     flange_back = P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T
-    assert P.pcb_front_depth() - flange_back >= 0.5 - 1e-9
-    # the polarity bumps exist on the test carriers only; they still must not touch the board
+    assert flange_back == pytest.approx(10.2)
+    assert P.pcb_front_depth() - flange_back >= 0.3 - 1e-9
+    # the polarity bumps exist on the test carriers only (the product carrier uses bumps=False);
+    # they reach the board but must not pass it
     bump_back = flange_back + P.POLARITY_BUMP_H
-    assert P.pcb_front_depth() - bump_back >= 0.2 - 1e-9
+    assert P.pcb_front_depth() - bump_back >= -1e-9
 
 
 def test_magnet_face_is_where_a_seated_magnet_sits():
     assert P.magnet_face_depth() == pytest.approx(P.RING_REAR_DEPTH - (P.MAG_POCKET_DEPTH - P.MAG_H))
-    assert P.magnet_face_depth() == pytest.approx(9.1)
+    assert P.MAG_POCKET_DEPTH >= P.MAG_H
+    assert P.magnet_face_depth() == pytest.approx(9.2)
     # the Hall element sits HALL_ELEMENT_H behind the board's back face
-    assert P.pcb_front_depth(3.1) + P.PCB_T + P.HALL_ELEMENT_H - P.magnet_face_depth() == pytest.approx(3.1)
+    assert P.pcb_front_depth(3.0) + P.PCB_T + P.HALL_ELEMENT_H - P.magnet_face_depth() == pytest.approx(3.0)
 
 
 def test_carrier_fits_both_rings_with_real_clearance(parts):
@@ -243,18 +246,87 @@ def test_jig_screw_holes_and_nut_pockets(parts):
     assert P.M2_NUT_AF_CLEAR >= 0.2 and P.M2_NUT_DEPTH_CLEAR >= 0.2
 
 
-def test_thin_walls_meet_the_mjf_minimum():
-    min_wall = 0.8
-    # the glass pocket wall is 0.7: the pocket needs 0.17 mm radial room for the glass to drop in
-    assert (P.BRG_SEAT_D - P.GLASS_POCKET_D) / 2 >= 0.7 - 1e-9
-    assert P.BRG_SEAT_D / 2 - P.FPC_NOTCH_R >= min_wall - 1e-9
-    assert P.R_TRACK - P.MAG_POCKET_D / 2 - P.CARRIER_ID / 2 >= min_wall
-    assert P.RING_REAR_DEPTH - P.CARRIER_FRONT_DEPTH - P.MAG_POCKET_DEPTH >= min_wall - 1e-9
-    assert P.LIP_T - P.LIP_RELIEF >= min_wall
-    assert P.CARRIER_OD / 2 - (P.R_TRACK + P.MAG_POCKET_D / 2) >= min_wall
-    for count in P.MAGNET_COUNTS:
-        pitch = 2 * math.pi * P.R_TRACK / count
-        assert pitch - P.MAG_POCKET_D >= min_wall
+PROBE_ANGLES = (0.0, 7.0, 45.0, 90.0, 215.0, 300.0)
+# Per part: (z0, z1) zones that are cosmetic or glass-fit features and are judged against
+# MJF_MIN_WALL, and zones that are skipped (engraved lines and bumps are not walls).
+PART_ZONES = {
+    "face_bezel": {"min": [(-P.GLASS_POCKET_DEPTH, 0.0)], "skip": []},
+    "magnet_carrier_24": {"min": [], "skip": [(-(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T + 0.5), -(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T))]},
+    "magnet_carrier_32": {"min": [], "skip": [(-(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T + 0.5), -(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T))]},
+    "sensor_jig": {"min": [], "skip": [(-P.JIG_FRONT_DEPTH - P.TICK_DEPTH - 0.01, -P.JIG_FRONT_DEPTH + 0.01)]},
+}
+
+
+def chords(part: Part, p0: tuple[float, float, float], p1: tuple[float, float, float]):
+    """Solid chords of the line p0 to p1 through the part: (length, z_low, z_high) each."""
+    hit = part & Edge.make_line(Vector(*p0), Vector(*p1))
+    out = []
+    for edge in hit.edges() if hit else []:
+        box = edge.bounding_box()
+        out.append((edge.length, box.min.Z, box.max.Z))
+    return out
+
+
+def probe_lines(part: Part):
+    box = part.bounding_box()
+    r_max = max(box.max.X, box.max.Y, -box.min.X, -box.min.Y) + 2.0
+    lines = []
+    z = box.min.Z + 0.13
+    while z < box.max.Z:
+        for a in PROBE_ANGLES:
+            lines.append(((*R.polar(0.5, a), z), (*R.polar(r_max, a), z)))
+        z += 0.5
+    r = 12.13
+    while r < r_max - 2.0:
+        for a in PROBE_ANGLES:
+            x, y = R.polar(r, a)
+            lines.append(((x, y, box.min.Z - 1.0), (x, y, box.max.Z + 1.0)))
+        r += 0.5
+    for a in (0.0, 15.0):
+        x, y = R.polar(P.R_TRACK, a)
+        lines.append(((x, y, box.min.Z - 1.0), (x, y, box.max.Z + 1.0)))
+    return lines
+
+
+def thinnest_wall(name: str, part: Part) -> float:
+    """Thinnest chord found over radial and axial probe lines, judged per zone class. Returns the
+    smallest margin-corrected value: chord length for the structural class, and chord length plus
+    the difference between the two classes for the glass-fit zone, so one threshold fits all."""
+    zones = PART_ZONES.get(name, {"min": [], "skip": []})
+    worst = float("inf")
+    for p0, p1 in probe_lines(part):
+        for length, z_low, z_high in chords(part, p0, p1):
+            if any(z_high > lo and z_low < hi for lo, hi in zones["skip"]):
+                continue
+            allowance = 0.0
+            if any(z_low >= lo - 1e-6 and z_high <= hi + 1e-6 for lo, hi in zones["min"]):
+                allowance = P.MJF_STRUCT_WALL - P.MJF_MIN_WALL
+            worst = min(worst, length + allowance)
+    return worst
+
+
+def test_wall_classes_are_ordered():
+    assert P.MJF_MIN_WALL == 0.8
+    assert P.MJF_STRUCT_WALL == 1.0
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "face_bezel",
+        "ring_a_bearing",
+        "ring_b_bushing",
+        "bushing_sleeve",
+        "magnet_carrier_24",
+        "magnet_carrier_32",
+        "sensor_jig",
+        "jig_spacer_1mm",
+        "coupon_shaft",
+        "coupon_bore",
+    ],
+)
+def test_walls_meet_the_jlc3dp_mjf_minimum(parts, name):
+    assert thinnest_wall(name, parts[name]) >= P.MJF_STRUCT_WALL - 1e-6, name
 
 
 def test_export_writes_step_and_stl(tmp_path):

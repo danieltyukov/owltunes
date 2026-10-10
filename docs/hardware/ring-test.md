@@ -32,6 +32,14 @@ hardware detunes the antenna (spec 15). The printed parts come from `enclosure/r
 | SparkFun Linear 3D Hall-Effect Sensor TMAG5273 (Qwiic), SEN-23880, and a Qwiic cable | 1 |
 | Any ESP32-S3 board with a WROOM-1 PCB antenna (for example ESP32-S3-DevKitC-1) | 1 |
 
+## Wall thickness
+
+Walls follow JLC3DP's MJF nylon guideline: 1.0 mm for structural walls, 0.8 mm only for
+non-critical features (the glass pocket wall in the bezel is 0.8 mm). Separately printed fits keep
+the clearances listed in `enclosure/owl_params.py`. The bezel's glass pocket is 48.30 mm for the
+48.16 mm glass (0.07 mm per side): if the glass does not drop in, open the pocket with a scraper
+or fine sandpaper.
+
 ## Assembly
 
 1. Magnets: hold a reference magnet; every pocket with a bump behind it gets a magnet that the
@@ -65,8 +73,9 @@ hardware detunes the antenna (spec 15). The printed parts come from `enclosure/r
 - Magnet count: electrical cycles equal to half the magnet count; prefer the count with the
   smaller cogging and a Z to Y amplitude ratio nearer 1.
 - Gap: the smallest gap whose peak field stays under 120 mT (TMAG5273A2, 133 mT range) and over
-  15 mT. The product needs a gap of at least 3.1 mm (board front 0.5 mm behind the carrier flange, with
-  the magnets resting on their pocket floors).
+  15 mT. The product needs a gap of at least 3.0 mm (board front 0.3 mm behind the 1.0 mm carrier
+  flange, magnets flush with the carrier's rear face). The polarity bumps on the test carriers
+  reach the board plane, so the product magnet carrier is built with `bumps=False`.
 - If no variant passes, the EC11 encoder fallback is used through J202 (spec 7.2) and the
   decision is recorded before the PCB order.
 
