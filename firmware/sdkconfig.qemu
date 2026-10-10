@@ -1,0 +1,4 @@
+# QEMU board: the virtual RGB panel, and Ethernet through the OpenCores MAC that QEMU emulates
+# (-nic user,model=open_eth). Layered over sdkconfig.defaults by firmware/CMakeLists.txt.
+CONFIG_OWL_BOARD_QEMU=y
+CONFIG_ETH_USE_OPENETH=y

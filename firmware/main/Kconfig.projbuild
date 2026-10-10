@@ -11,4 +11,11 @@ menu "OwlTunes"
             bool "QEMU emulator (virtual RGB panel)"
     endchoice
 
+    config OWL_SETUP_URL
+        string "Setup page address"
+        default "https://danieltyukov.github.io/owltunes/setup/"
+        help
+            Shown as a QR code while the owl is being set up. A fork that hosts its own
+            setup page changes it here.
+
 endmenu
