@@ -54,9 +54,6 @@ static void dispatch(owl_input_kind_t kind, int32_t steps)
     if (fixture != NULL) {
         /* Answer the fetch at once from the fixtures, as the network task will on the device. */
         sim_load_list(&s_world, fx.fetch.kind, fixture, fx.fetch.uri[0] ? fx.fetch.uri : NULL);
-        if (fx.fetch.kind == OWL_LIST_PLAYLIST_ITEMS || fx.fetch.kind == OWL_LIST_ALBUM_TRACKS) {
-            snprintf(s_world.list.source_uri, sizeof s_world.list.source_uri, "%s", fx.fetch.uri);
-        }
         printf("fetch %d answered: %u items\n", (int)fx.fetch.kind, (unsigned)s_world.list.count);
         owl_app_set_list(&s_world.app, &s_world.list);
     }

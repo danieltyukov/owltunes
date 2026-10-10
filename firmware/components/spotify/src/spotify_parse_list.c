@@ -38,12 +38,15 @@ static void fill_playlist(const cJSON *pl, const char *my_user_id, owl_list_item
         }
         int64_t total = counts ? sj_int(counts, "total", -1) : -1;
         if (total >= 0) {
-            snprintf(it->subtitle, sizeof it->subtitle, "%lld songs", (long long)total);
+            snprintf(it->subtitle, sizeof it->subtitle, "%lld %s", (long long)total, total == 1 ? "song" : "songs");
         }
     } else {
         const char *owner_name = owner ? sj_str(owner, "display_name") : NULL;
-        owl_utf8_copy(it->subtitle, sizeof it->subtitle, "by ");
-        owl_utf8_append(it->subtitle, sizeof it->subtitle, owner_name ? owner_name : owner_id);
+        const char *by = owner_name != NULL && owner_name[0] != '\0' ? owner_name : owner_id;
+        if (by != NULL && by[0] != '\0') {
+            owl_utf8_copy(it->subtitle, sizeof it->subtitle, "by ");
+            owl_utf8_append(it->subtitle, sizeof it->subtitle, by);
+        }
     }
 }
 

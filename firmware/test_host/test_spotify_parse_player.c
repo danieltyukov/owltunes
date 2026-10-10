@@ -123,6 +123,46 @@ static void test_progress_past_duration_is_clamped(void)
     TEST_ASSERT_EQUAL_STRING("", player.track.art_url);
 }
 
+static void test_huge_numbers_fall_back_safely(void)
+{
+    static const char json[] =
+        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\",\"volume_percent\":1e999},"
+        "\"is_playing\":true,\"progress_ms\":-1e300,"
+        "\"item\":{\"type\":\"track\",\"name\":\"x\",\"uri\":\"spotify:track:abc\",\"duration_ms\":1e300}}";
+    owl_player_init(&player);
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_player(json, sizeof json - 1, NOW, &player));
+    TEST_ASSERT_EQUAL_INT8(-1, player.device.volume_percent);
+    TEST_ASSERT_EQUAL_UINT32(0, player.track.duration_ms);
+    TEST_ASSERT_EQUAL_UINT32(0, player.progress_ms);
+}
+
+static void test_durations_beyond_32_bits_are_capped(void)
+{
+    static const char json[] =
+        "{\"device\":{\"id\":\"d\",\"name\":\"n\",\"type\":\"Computer\"},\"is_playing\":true,\"progress_ms\":5000,"
+        "\"item\":{\"type\":\"track\",\"name\":\"x\",\"uri\":\"spotify:track:abc\",\"duration_ms\":5000000000}}";
+    owl_player_init(&player);
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_player(json, sizeof json - 1, NOW, &player));
+    TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, player.track.duration_ms);
+    TEST_ASSERT_EQUAL_UINT32(5000, player.progress_ms);
+}
+
+static void test_like_state_and_context_name_survive_no_device(void)
+{
+    owl_player_init(&player);
+    parse_fixture("player_track.json");
+    player.liked = true;
+    player.liked_known = true;
+    strcpy(player.context_name, "Night Flight Mix");
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK, spotify_parse_player(NULL, 0, NOW, &player));
+    TEST_ASSERT_EQUAL(OWL_PLAYER_NO_DEVICE, player.status);
+    TEST_ASSERT_FALSE(player.has_track);
+    parse_fixture("player_track.json");
+    TEST_ASSERT_TRUE(player.liked);
+    TEST_ASSERT_TRUE(player.liked_known);
+    TEST_ASSERT_EQUAL_STRING("Night Flight Mix", player.context_name);
+}
+
 static void test_local_file_is_not_a_likeable_track(void)
 {
     static const char json[] =
@@ -194,6 +234,9 @@ int main(void)
     RUN_TEST(test_bad_json_leaves_player_unchanged);
     RUN_TEST(test_like_state_and_context_name_survive_a_poll);
     RUN_TEST(test_progress_past_duration_is_clamped);
+    RUN_TEST(test_huge_numbers_fall_back_safely);
+    RUN_TEST(test_durations_beyond_32_bits_are_capped);
+    RUN_TEST(test_like_state_and_context_name_survive_no_device);
     RUN_TEST(test_local_file_is_not_a_likeable_track);
     RUN_TEST(test_classify_errors);
     return UNITY_END();

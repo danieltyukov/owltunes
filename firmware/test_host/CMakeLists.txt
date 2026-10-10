@@ -4,8 +4,8 @@ project(owltunes_host_tests C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 # Catch memory errors in the parsers and the core logic.
-add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
-add_link_options(-fsanitize=address,undefined)
+add_compile_options(-fsanitize=address,undefined,float-cast-overflow -fno-sanitize-recover=all -fno-omit-frame-pointer)
+add_link_options(-fsanitize=address,undefined,float-cast-overflow)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/owl_deps.cmake)
 owl_fetch_unity()

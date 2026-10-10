@@ -20,7 +20,12 @@ bool sj_bool(const cJSON *obj, const char *key, bool fallback)
 int64_t sj_int(const cJSON *obj, const char *key, int64_t fallback)
 {
     const cJSON *v = cJSON_GetObjectItemCaseSensitive(obj, key);
-    return cJSON_IsNumber(v) ? (int64_t)v->valuedouble : fallback;
+    /* Casting a double outside int64_t's range (or 1e999, which cJSON reads as infinity) is
+     * undefined; JSON integers beyond +-2^53 are not exact anyway. */
+    if (!cJSON_IsNumber(v) || !(v->valuedouble >= -9007199254740992.0 && v->valuedouble <= 9007199254740992.0)) {
+        return fallback;
+    }
+    return (int64_t)v->valuedouble;
 }
 
 const cJSON *sj_obj(const cJSON *obj, const char *key)
@@ -90,7 +95,7 @@ void sj_parse_track(const cJSON *item, owl_track_t *t)
     owl_utf8_copy(t->uri, sizeof t->uri, sj_str(item, "uri"));
     owl_utf8_copy(t->title, sizeof t->title, sj_str(item, "name"));
     int64_t duration = sj_int(item, "duration_ms", 0);
-    t->duration_ms = duration > 0 ? (uint32_t)duration : 0;
+    t->duration_ms = duration <= 0 ? 0 : (duration >= UINT32_MAX ? UINT32_MAX : (uint32_t)duration);
     if (type != NULL && strcmp(type, "episode") == 0) {
         t->kind = OWL_ITEM_EPISODE;
         const cJSON *show = sj_obj(item, "show");

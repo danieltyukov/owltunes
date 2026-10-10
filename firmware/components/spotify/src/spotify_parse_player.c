@@ -19,8 +19,20 @@ static void parse_device(const cJSON *dev, owl_device_t *d)
 spotify_parse_result_t spotify_parse_player(const char *json, size_t len, int64_t now_ms, owl_player_t *out)
 {
     if (json == NULL || len == 0) {
+        /* Nothing is playing (HTTP 204). Remember what was, so the liked state and the context
+         * name are still known when the same track resumes. */
+        char track[OWL_URI_LEN], context[OWL_URI_LEN], context_name[OWL_NAME_LEN];
+        bool liked = out->liked, liked_known = out->liked_known;
+        owl_utf8_copy(track, sizeof track, out->track.uri);
+        owl_utf8_copy(context, sizeof context, out->context_uri);
+        owl_utf8_copy(context_name, sizeof context_name, out->context_name);
         owl_player_init(out);
         out->status = OWL_PLAYER_NO_DEVICE;
+        owl_utf8_copy(out->track.uri, sizeof out->track.uri, track);
+        owl_utf8_copy(out->context_uri, sizeof out->context_uri, context);
+        owl_utf8_copy(out->context_name, sizeof out->context_name, context_name);
+        out->liked = liked;
+        out->liked_known = liked_known;
         return SPOTIFY_PARSE_OK;
     }
     cJSON *root = cJSON_ParseWithLength(json, len);
@@ -34,7 +46,7 @@ spotify_parse_result_t spotify_parse_player(const char *json, size_t len, int64_
 
     /* Keep what the poll does not report, so it survives when nothing changed. */
     char old_track[OWL_URI_LEN], old_context[OWL_URI_LEN], old_context_name[OWL_NAME_LEN];
-    bool old_has_track = out->has_track, old_liked = out->liked, old_liked_known = out->liked_known;
+    bool old_liked = out->liked, old_liked_known = out->liked_known;
     owl_utf8_copy(old_track, sizeof old_track, out->track.uri);
     owl_utf8_copy(old_context, sizeof old_context, out->context_uri);
     owl_utf8_copy(old_context_name, sizeof old_context_name, out->context_name);
@@ -76,7 +88,7 @@ spotify_parse_result_t spotify_parse_player(const char *json, size_t len, int64_
     out->progress_ms = (uint32_t)progress;
     out->progress_at_ms = now_ms;
 
-    if (out->has_track && old_has_track && strcmp(old_track, out->track.uri) == 0) {
+    if (out->has_track && old_track[0] != '\0' && strcmp(old_track, out->track.uri) == 0) {
         out->liked = old_liked;
         out->liked_known = old_liked_known;
     }

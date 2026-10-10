@@ -147,6 +147,18 @@ static void test_oversized_device_list_is_capped(void)
     TEST_ASSERT_EQUAL_STRING("Speaker 49", page.items[49].title);
 }
 
+static void test_song_count_and_owner_wording(void)
+{
+    static const char json[] =
+        "{\"items\":[{\"name\":\"Solo\",\"uri\":\"spotify:playlist:a\",\"owner\":{\"id\":\"owlfan\"},"
+        "\"items\":{\"total\":1}},{\"name\":\"Anon\",\"uri\":\"spotify:playlist:b\",\"owner\":{}}],\"total\":2}";
+    TEST_ASSERT_EQUAL(SPOTIFY_PARSE_OK,
+                      spotify_parse_list(OWL_LIST_PLAYLISTS, json, sizeof json - 1, ME, NULL, &page));
+    TEST_ASSERT_EQUAL_UINT16(2, page.count);
+    TEST_ASSERT_EQUAL_STRING("1 song", page.items[0].subtitle);
+    TEST_ASSERT_EQUAL_STRING("", page.items[1].subtitle);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -161,5 +173,6 @@ int main(void)
     RUN_TEST(test_album_tracks);
     RUN_TEST(test_missing_array_is_bad_shape);
     RUN_TEST(test_oversized_device_list_is_capped);
+    RUN_TEST(test_song_count_and_owner_wording);
     return UNITY_END();
 }
