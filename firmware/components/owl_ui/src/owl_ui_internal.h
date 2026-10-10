@@ -81,3 +81,18 @@ typedef struct {
 
 void owl_presets_ui_create(owl_presets_ui_t *pg, lv_obj_t *parent);
 void owl_presets_ui_render(owl_presets_ui_t *pg, const owl_app_t *app);
+
+typedef struct {
+    lv_obj_t *root;
+    lv_obj_t *title;
+    lv_obj_t *qr;
+    lv_obj_t *eyes;
+    lv_obj_t *name;
+    lv_obj_t *hint;
+    lv_obj_t *error;
+    char qr_text[192]; /* what the QR code encodes now, so it is only rebuilt on change */
+    bool qr_ok;
+} owl_setup_ui_t;
+
+void owl_setup_ui_create(owl_setup_ui_t *pg, lv_obj_t *parent);
+void owl_setup_ui_render(owl_setup_ui_t *pg, const owl_ui_setup_t *setup);

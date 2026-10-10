@@ -6,6 +6,7 @@ set(OWL_UI_SRCS
     src/page_now_playing.c
     src/page_list.c
     src/page_presets.c
+    src/page_setup.c
     fonts/owl_font_14.c
     fonts/owl_font_20.c
     fonts/owl_font_28.c)

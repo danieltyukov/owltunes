@@ -172,6 +172,42 @@ static void presets_screen(sim_world_t *w)
     sim_input(w, OWL_IN_RING, 3); /* an empty slot */
 }
 
+#define SIM_OWL_NAME "OwlTunes-1A2B"
+#define SIM_SETUP_URL "https://danieltyukov.github.io/owltunes/setup/?owl=" SIM_OWL_NAME
+
+static void setup_screen(sim_world_t *w, owl_ui_setup_mode_t mode, const char *error)
+{
+    base(w);
+    w->inputs.ble = false;
+    w->inputs.setup = (owl_ui_setup_t){mode, SIM_SETUP_URL, SIM_OWL_NAME, error};
+}
+
+static void setup_welcome(sim_world_t *w)
+{
+    setup_screen(w, OWL_UI_SETUP_WELCOME, NULL);
+    w->inputs.wifi = false;
+}
+
+static void setup_link(sim_world_t *w)
+{
+    setup_screen(w, OWL_UI_SETUP_LINK, NULL);
+}
+
+static void setup_linking(sim_world_t *w)
+{
+    setup_screen(w, OWL_UI_SETUP_LINKING, NULL);
+}
+
+static void setup_link_failed(sim_world_t *w)
+{
+    setup_screen(w, OWL_UI_SETUP_LINK, "Spotify rejected the client ID");
+}
+
+static void setup_relink(sim_world_t *w)
+{
+    setup_screen(w, OWL_UI_SETUP_RELINK, NULL);
+}
+
 static const sim_scenario_t SCENARIOS[] = {
     {"no_device", no_device},
     {"now_playing", now_playing},
@@ -186,6 +222,11 @@ static const sim_scenario_t SCENARIOS[] = {
     {"presets_wheel", presets_wheel},
     {"presets_screen", presets_screen},
     {"playlist_items", playlist_items},
+    {"setup_welcome", setup_welcome},
+    {"setup_link", setup_link},
+    {"setup_linking", setup_linking},
+    {"setup_link_failed", setup_link_failed},
+    {"setup_relink", setup_relink},
 };
 
 size_t sim_scenario_count(void)

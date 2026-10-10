@@ -14,12 +14,28 @@ extern "C" {
 /* The owl's round panel is 466 x 466 pixels. */
 #define OWL_UI_RES 466
 
+typedef enum {
+    OWL_UI_SETUP_OFF,     /* normal use: the setup page stays hidden */
+    OWL_UI_SETUP_WELCOME, /* first boot, no network yet */
+    OWL_UI_SETUP_LINK,    /* online, waiting for the Spotify login */
+    OWL_UI_SETUP_LINKING, /* exchanging the login code with Spotify */
+    OWL_UI_SETUP_RELINK,  /* Spotify stopped accepting the saved login */
+} owl_ui_setup_mode_t;
+
+typedef struct {
+    owl_ui_setup_mode_t mode;
+    const char *url;   /* QR payload: the setup page address */
+    const char *name;  /* the owl's name, so the person picks the right device */
+    const char *error; /* a short sentence about the last failure, or NULL */
+} owl_ui_setup_t;
+
 typedef struct {
     const lv_image_dsc_t *art; /* decoded art for the current track, NULL until it is loaded */
     uint8_t battery_percent;
     bool charging;
     bool wifi;
     bool ble;
+    owl_ui_setup_t setup; /* mode OWL_UI_SETUP_OFF unless the owl is being set up */
 } owl_ui_inputs_t;
 
 typedef struct owl_ui owl_ui_t;
