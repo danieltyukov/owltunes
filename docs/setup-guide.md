@@ -31,8 +31,14 @@ OwlTunes uses your own Spotify app, so your owl does not depend on anyone else's
    client secret.
 6. Paste the client ID into the setup page and press **Save client ID**.
 
-If Spotify later says the app is not available for your account, open the app's **User
-Management** page and add the email address of your Spotify account.
+A new Spotify app starts in Development Mode: only you and up to 5 other people you add under the
+app's **User Management** page can log in, and each of them needs Spotify Premium. If Spotify says
+the app is not available for your account, add the email address of your Spotify account there.
+
+If Spotify shows **INVALID_CLIENT: Invalid redirect URI** when you log in, the address in the
+app's **Redirect URIs** list does not match the one on the setup page exactly. Fix it there and
+log in again. If you host your own copy of the setup site, set `CONFIG_OWL_SETUP_URL` (menuconfig:
+"Setup page address") in the firmware to your site's address.
 
 ## 4. Log in
 
@@ -45,8 +51,12 @@ If the setup page was closed, the Spotify tab offers two other ways:
 
 - **Send to my owl over Wi-Fi** opens the owl's own address on your network. It works when the
   device you logged in on is on the same Wi-Fi as the owl.
-- **Paste this line into the owl's USB console**, with any serial terminal at 115200 baud (for
-  example `idf.py monitor`).
+- **Paste this line into the owl's USB console**, with any serial terminal at 115200 baud. Close
+  the setup page first, because it holds the port. With `idf.py monitor`, add `--no-reset`: the
+  default restarts the owl and wipes the open login. Press Enter after pasting.
+
+On Linux the browser needs permission to use the serial port: add your user to the `dialout`
+group (or the group that owns `/dev/ttyACM0`) or add a udev rule, then log in again.
 
 Finish the login within 10 minutes of pressing **Log in with Spotify**.
 
@@ -73,7 +83,8 @@ With ESP-IDF v6.1 activated, build the firmware with `tools/firmware.sh build`, 
 QEMU emulator and links it to your account:
 
 - With the default redirect URI, the script prints Spotify's login address. Log in, then paste the
-  address your browser ends up on.
+  line the callback page shows (it starts with `@owl`; the page removes the code from the address
+  bar, so the address itself no longer works). A full callback address is also accepted.
 - If you add `http://127.0.0.1:18080/callback` as a second redirect URI in your Spotify app and
   pass `--redirect-uri http://127.0.0.1:18080/callback`, Spotify sends the code straight to the
   emulated owl.

@@ -135,10 +135,13 @@ class Owl:
     def wait_log(self, text: str, timeout: float = 90) -> str:
         return self._wait(lambda line: line if text in line else None, timeout, repr(text))
 
-    def wait_event(self, event: str, state: str | None = None, timeout: float = 60, since: int = 0) -> dict:
+    def wait_event(self, event: str, state: str | None = None, timeout: float = 60, since: int = 0,
+                   states: tuple[str, ...] | None = None) -> dict:
         def match(line: str):
             msg = self._message(line)
-            if msg and msg.get("event") == event and (state is None or msg.get("state") == state):
+            if msg and msg.get("event") == event and (
+                    (states is not None and msg.get("state") in states) or
+                    (states is None and (state is None or msg.get("state") == state))):
                 return msg
             return None
         return self._wait(match, timeout, f"event {event} {state or ''}".strip(), since)
@@ -278,6 +281,38 @@ def extra_checks(owl: Owl) -> None:
     check(wait_listening(base, False), "the callback server stops when the login ends")
 
 
+def parse_pasted_login(text: str) -> tuple[str, str]:
+    """Read (code, state) from what the person pasted after logging in.
+
+    The callback page removes the code from the address bar, so the normal paste is the
+    `@owl {...}` line it shows. A full callback address is still accepted.
+
+    >>> parse_pasted_login('@owl {"id":1,"cmd":"spotify_code","code":"AQD1","state":"abc.10.0.2.15"}')
+    ('AQD1', 'abc.10.0.2.15')
+    >>> parse_pasted_login('https://x.example/callback/?code=AQD2&state=s2')
+    ('AQD2', 's2')
+    >>> parse_pasted_login('nonsense')  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ...
+    Failure: the pasted text has no login code: paste the line the callback page shows
+    """
+    text = text.strip()
+    code = state = None
+    if text.startswith(PREFIX):
+        try:
+            msg = json.loads(text[len(PREFIX):])
+        except json.JSONDecodeError:
+            msg = None
+        if isinstance(msg, dict):
+            code, state = msg.get("code"), msg.get("state")
+    else:
+        params = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(text).query))
+        code, state = params.get("code"), params.get("state")
+    if not isinstance(code, str) or not code or not isinstance(state, str):
+        raise Failure("the pasted text has no login code: paste the line the callback page shows")
+    return code, state
+
+
 def run_link(flash: pathlib.Path, client_id: str, redirect_uri: str, http_port: int) -> None:
     owl = Owl(flash, http_port, WORK / "link.log")
     try:
@@ -286,17 +321,18 @@ def run_link(flash: pathlib.Path, client_id: str, redirect_uri: str, http_port: 
         check(owl.send("spotify_client", client_id=client_id, redirect_uri=redirect_uri).get("ok") is True,
               "your client ID is saved")
         reply = owl.send("spotify_begin")
-        if redirect_uri.startswith(f"http://127.0.0.1:{http_port}/"):
+        if redirect_uri == f"http://127.0.0.1:{http_port}/callback":
             print("\nOpen this address and log in. Spotify sends the code straight to the owl:\n")
             print(reply["authorize_url"] + "\n", flush=True)
-            owl.wait_event("spotify", "linked", timeout=600)
+            since = owl.mark()
+            outcome = owl.wait_event("spotify", timeout=600, since=since, states=("linked", "failed"))
+            check(outcome.get("state") == "linked", f"the login succeeded (owl said {outcome.get('error', 'failed')})")
         else:
-            print("\nOpen this address, log in, and paste the address Spotify sends you back to:\n")
+            print("\nOpen this address and log in. The callback page then shows a line that starts with @owl;")
+            print("copy it (the Copy button) and paste it here:\n")
             print(reply["authorize_url"] + "\n", flush=True)
-            back = urllib.parse.urlsplit(input("Address after login: ").strip())
-            params = dict(urllib.parse.parse_qsl(back.query))
-            check("code" in params, "the address carries a login code")
-            check(owl.send("spotify_code", code=params["code"], state=params.get("state", "")).get("accepted") is True,
+            code, state = parse_pasted_login(input("Pasted line: "))
+            check(owl.send("spotify_code", code=code, state=state).get("accepted") is True,
                   "the owl accepts the code")
             owl.wait_event("spotify", "linked", timeout=90)
         hello = owl.send("hello")

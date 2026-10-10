@@ -11,6 +11,8 @@ on its perch and it becomes a desk display that charges while it shows what is p
 **Status:** early development. The design is complete and the firmware, simulator, PCB and
 enclosure are being built in the open. Read the
 [system design](docs/design/2026-10-04-owltunes-system-design.md) for the full picture.
+A physical owl cannot be set up yet: only the QEMU build exists until the dev-kit board support
+lands. The setup site and its protocol are ready.
 
 ## How it works
 
