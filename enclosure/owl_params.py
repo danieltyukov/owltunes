@@ -28,11 +28,11 @@ BRG_OUTER_RACE_ID = 58.4  # estimate of the outer race shoulder; the ring contac
 
 # Face bezel (stationary): holds the glass and carries the bearing inner race.
 LIP_T = 1.2  # front lips of bezel and ring stand this far in front of the glass
-BEZEL_LIP_ID = 45.2  # clears the 44.16 viewing area by 0.52 per side
+BEZEL_LIP_ID = 48.50  # front opening: the glass is inserted from the front, so it must pass here
 BEZEL_LIP_OD = 52.0  # contacts only the inner race front face (inside 53.6)
-GLASS_POCKET_D = 48.30  # glass seat, 0.07 radial clearance; glue the glass in
-GLASS_POCKET_DEPTH = 1.3
-PANEL_POCKET_D = 47.2  # clears the 46.35 panel behind the glass
+GLASS_POCKET_D = 48.50  # glass seat, 0.17 radial clearance; the glass drops in from the front, glue it
+GLASS_POCKET_DEPTH = 1.3  # glass rests on the ledge, 0.2 below the rim plane (glue layer)
+PANEL_POCKET_D = 47.2  # clears the 46.35 panel behind the glass; the ring left over is the glass ledge
 FPC_NOTCH_W = 14.0  # room for the flex fold at the panel's top edge
 FPC_NOTCH_R = 24.15  # notch reaches this radius, leaving a 0.8 wall under the bearing seat
 FPC_NOTCH_END_DEPTH = 4.0  # the fold sits next to the panel edge; behind it the flex lies flat
@@ -47,6 +47,8 @@ LUG_HOLE_R = 20.0
 M2_CLEAR_D = 2.4
 M2_NUT_AF = 4.0  # across flats of an M2 hex nut
 M2_NUT_T = 1.6
+M2_NUT_AF_CLEAR = 0.25  # extra across-flats width of the printed nut pocket
+M2_NUT_DEPTH_CLEAR = 0.2  # extra depth of the printed nut pocket
 
 # Ring (rotating). The outer diameter is the owl's width.
 RING_OD = 66.0
@@ -63,10 +65,12 @@ INDEX_NOTCH_L = 2.0
 # Bushing sleeve (variant B): replaces the bearing in the same 50 x 62 x 6 envelope.
 SLEEVE_ID = 50.10
 SLEEVE_OD = 61.80
-ORING_CS = 1.5  # O-ring 58 x 1.5 mm NBR 70
-ORING_ID = 58.0
+ORING_CS = 1.5  # O-ring 59 x 1.5 mm NBR 70 (the one bought: ID 59, cross-section 1.5, OD 62)
+ORING_ID = 59.0
 ORING_GROOVE_W = 2.0
-ORING_GROOVE_DEPTH = 1.25  # about 17 percent squeeze against the 62.00 bore
+# Groove bottom diameter = SLEEVE_OD - 2 * depth = 59.5: the ring stretches 0.8 percent and is squeezed
+# 1.5 mm to 1.25 mm (16.7 percent) between the groove bottom and the 62.00 bore.
+ORING_GROOVE_DEPTH = 1.15
 
 # Magnets: D3 x 2 mm N52 discs, axially magnetised, alternating polarity.
 MAG_D = 3.0
@@ -75,7 +79,9 @@ MAG_POCKET_D = 3.10  # test: coupon checks 2.95 to 3.25; magnets are glued
 MAG_POCKET_DEPTH = 2.10
 R_TRACK = 28.0  # magnet centre radius
 MAGNET_COUNTS = (24, 32)
-CARRIER_ID = 51.2  # 0.6 radial clearance to the bezel tube
+CARRIER_ID = 51.2  # 0.8 radial clearance to the bezel tube
+CARRIER_FIT_CLEARANCE = 0.2  # diametral MJF clearance between the carrier body and the smaller ring bore
+CARRIER_OD = min(RING_A_BORE_D, RING_B_BORE_D) - CARRIER_FIT_CLEARANCE  # fits both rings; glued
 CARRIER_FRONT_DEPTH = 6.3  # 0.3 behind the bearing rear face
 CARRIER_FLANGE_T = 0.8
 CARRIER_FLANGE_R_IN = 30.5
@@ -89,13 +95,14 @@ POLARITY_BUMP_R = 31.75
 SENSOR_ANGLE_DEG = 180.0
 PCB_T = 1.0  # main board thickness (4-layer)
 HALL_ELEMENT_H = 0.70  # Hall element height above its seating plane, TMAG5273 figure 6-2 (estimate)
-HALL_GAP_NOMINAL = 3.0  # test: magnet face to Hall element
+HALL_GAP_NOMINAL = 3.1  # test: magnet face to Hall element; 3.1 puts the board front 0.5 mm behind the carrier flange
 HALL_GAP_STEPS = (4.5, 3.5, 2.5, 1.5)  # gaps the jig gives with spacers of 0, 1, 2 and 3 mm
 
 
 def magnet_face_depth() -> float:
-    """Depth of the magnets' rear faces (flush with the carrier's rear face)."""
-    return RING_REAR_DEPTH
+    """Depth of the magnets' rear faces. A magnet rests on the pocket floor, so its rear face sits
+    MAG_POCKET_DEPTH - MAG_H (0.1) in front of the carrier's rear face."""
+    return RING_REAR_DEPTH - (MAG_POCKET_DEPTH - MAG_H)
 
 
 def pcb_front_depth(hall_gap: float = HALL_GAP_NOMINAL) -> float:
@@ -105,12 +112,20 @@ def pcb_front_depth(hall_gap: float = HALL_GAP_NOMINAL) -> float:
 
 
 # SparkFun Linear 3D Hall-Effect Sensor TMAG5273 (Qwiic), SEN-23880, 1 x 1 inch board.
-# Board file Qwiic_Hall_Effect_Sensor_TMAG5273.brd: U1 at (12.878, 13.030) on the top side,
-# horizontal Qwiic connectors J1 at x 5.08 and J2 at x 20.32, holes 3.3 at 2.54 from each corner.
-SF_BOARD = 25.4
-SF_BOARD_T = 1.6
-SF_U1 = (12.878, 13.030)
-SF_CONN_H = 3.0  # right-angle JST SH height above the board (estimate)
+# Source: github.com/sparkfun/SparkFun_Qwiic_Hall_Effect_Sensor_TMAG5273, Hardware/1x1/
+# Qwiic_Hall_Effect_Sensor_TMAG5273.brd (Eagle) and Production/ordering_instructions.txt.
+# Board frame: u to the right, v up, origin at the lower left corner, top side (parts) up.
+SF_BOARD = 25.4  # outline 0 to 25.4 in both axes
+SF_BOARD_T = 1.6  # "PCB thickness, 1.6mm" in ordering_instructions.txt
+SF_U1 = (12.8778, 13.0302)  # TMAG5273 (SOT23-6) centre
+SF_HOLE_D = 3.302  # four stand-off holes
+SF_HOLE_INSET = 2.54  # hole centres 2.54 from each edge
+SF_J1 = (5.08, 12.7)  # Qwiic connector, opening faces -u (board edge), rotated R270
+SF_J2 = (20.32, 12.7)  # Qwiic connector, opening faces +u (board edge), rotated R90
+SF_CONN_W = 6.0  # connector body width along the edge (footprint silkscreen +-3.0)
+SF_CONN_L = 4.6  # body length from the pad row towards the board edge (footprint silkscreen)
+SF_CONN_H = 4.25  # height above the board: JST SH side entry, not in the board files (estimate, generous)
+SF_CABLE_SLOT_W = 8.0  # cable slot width through the jig, centred on the connector row
 
 # Sensor jig (test fixture).
 JIG_D = 92.0

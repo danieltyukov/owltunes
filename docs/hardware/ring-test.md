@@ -8,11 +8,11 @@ hardware detunes the antenna (spec 15). The printed parts come from `enclosure/r
 
 | File | Purpose |
 |---|---|
-| face_bezel | Holds the glass (or a dummy disc) and carries the bearing inner race |
+| face_bezel | Holds the glass (or a dummy disc, dropped in from the front and glued) and carries the bearing inner race |
 | ring_a_bearing | Ring for the 6710ZZ bearing (bore 62.10, bearing glued) |
 | ring_b_bushing | Ring for the printed bushing (bore 62.00) |
-| bushing_sleeve | Replaces the bearing for variant B; O-ring groove for drag |
-| magnet_carrier_24, magnet_carrier_32 | 24 or 32 pockets for D3 x 2 mm magnets on a 56 mm circle |
+| bushing_sleeve | Replaces the bearing for variant B; O-ring groove for drag (59 x 1.5 O-ring: 0.8 percent stretch, 17 percent squeeze) |
+| magnet_carrier_24, magnet_carrier_32 | 24 or 32 pockets for D3 x 2 mm magnets on a 56 mm circle; body 61.8 mm, fits both rings |
 | sensor_jig | Base plate: holds the bezel and the SparkFun board where the PCB sensor will be; angle ticks every 10 degrees; antenna marker |
 | jig_spacer_1mm, _2mm, _3mm | Under the SparkFun board: gap 4.5, 3.5, 2.5, 1.5 mm with 0, 1, 2, 3 mm |
 | coupon_shaft | Stepped shaft 49.80 / 49.90 / 50.00 / 50.10 for the bearing bore |
@@ -25,7 +25,7 @@ hardware detunes the antenna (spec 15). The printed parts come from `enclosure/r
 | 6710ZZ bearing, 50 x 62 x 6, steel | 2 |
 | 6710 plastic bearing (POM races, glass balls), 50 x 62 x 6 | 1 |
 | N52 disc magnets D3 x 2 mm, axially magnetised | 80 |
-| O-ring 58 x 1.5 mm NBR 70 | 4 |
+| O-ring 59 x 1.5 mm NBR 70 (ID 59, cross-section 1.5, OD 62) | 4 |
 | Damping grease (heavy, for camera focus rings) | 1 small tube |
 | M2 x 10 screws and M2 hex nuts | 3 each |
 | Cyanoacrylate glue | 1 |
@@ -43,8 +43,9 @@ hardware detunes the antenna (spec 15). The printed parts come from `enclosure/r
    sleeve and push ring B on from the front.
 3. Push a magnet carrier into the ring from the back until its flange touches the ring.
 4. Screw the bezel lugs to the jig with M2 x 10 screws, nuts in the hex pockets underneath.
-5. SparkFun board into the jig pocket, sensor side up, connector J1 towards the centre, the
-   chosen spacer under it.
+5. SparkFun board into the jig pocket, parts side up, the chosen spacer under it. The board is
+   turned so the TMAG5273 chip (not the board centre) sits at the sensor position: connector J1
+   faces the centre and J2 faces outwards, where the cable slot is.
 
 ## Measurements
 
@@ -64,7 +65,8 @@ hardware detunes the antenna (spec 15). The printed parts come from `enclosure/r
 - Magnet count: electrical cycles equal to half the magnet count; prefer the count with the
   smaller cogging and a Z to Y amplitude ratio nearer 1.
 - Gap: the smallest gap whose peak field stays under 120 mT (TMAG5273A2, 133 mT range) and over
-  15 mT. The product needs a gap of at least 2.8 mm (board front 0.3 mm behind the carrier).
+  15 mT. The product needs a gap of at least 3.1 mm (board front 0.5 mm behind the carrier flange, with
+  the magnets resting on their pocket floors).
 - If no variant passes, the EC11 encoder fallback is used through J202 (spec 7.2) and the
   decision is recorded before the PCB order.
 

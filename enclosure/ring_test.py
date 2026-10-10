@@ -117,7 +117,7 @@ def bushing_sleeve() -> Part:
 def magnet_carrier(count: int, bumps: bool = True) -> Part:
     front = -P.CARRIER_FRONT_DEPTH
     back = -P.RING_REAR_DEPTH
-    body = annulus(P.CARRIER_ID / 2, P.RING_A_BORE_D / 2 - 0.05, back, front)
+    body = annulus(P.CARRIER_ID / 2, P.CARRIER_OD / 2, back, front)
     flange = annulus(P.CARRIER_FLANGE_R_IN, P.RING_OD / 2, back - P.CARRIER_FLANGE_T, back)
     carrier = body + flange
     for i in range(count):
@@ -141,7 +141,20 @@ def jig_pocket_floor_depth() -> float:
 
 
 def sensor_xy() -> tuple[float, float]:
+    """Position of the TMAG5273 chip, which is also where the main PCB's sensor goes."""
     return polar(P.R_TRACK, P.SENSOR_ANGLE_DEG)
+
+
+def sf_to_owl(u: float, v: float) -> tuple[float, float]:
+    """Map a point of the SparkFun board (board frame, mm) to the owl XY plane. The board lies
+    rotated by 180 degrees with the TMAG5273 chip on the sensor position: connector J1 (u 5.08)
+    faces the centre and connector J2 (u 20.32) faces outwards, where the cable slot is."""
+    sx, sy = sensor_xy()
+    return sx - (u - P.SF_U1[0]), sy - (v - P.SF_U1[1])
+
+
+def sf_board_centre() -> tuple[float, float]:
+    return sf_to_owl(P.SF_BOARD / 2, P.SF_BOARD / 2)
 
 
 def sensor_jig() -> Part:
@@ -152,20 +165,24 @@ def sensor_jig() -> Part:
         P.ANT_TAB_W, P.ANT_TAB_TOP - 30.0, P.JIG_T
     )
     jig -= disc(P.JIG_CENTRE_HOLE_D / 2, back - EPS, front + EPS)
-    nut_d = P.M2_NUT_AF / math.cos(math.radians(30))
+    nut_af = P.M2_NUT_AF + P.M2_NUT_AF_CLEAR
+    nut_d = nut_af / math.cos(math.radians(30))
+    nut_depth = P.M2_NUT_T + P.M2_NUT_DEPTH_CLEAR
     for angle in P.LUG_ANGLES_DEG:
         x, y = polar(P.LUG_HOLE_R, angle)
         jig -= Pos(x, y, back - EPS) * Cylinder(P.M2_CLEAR_D / 2, P.JIG_T + 2 * EPS, align=BOTTOM)
-        nut = extrude(RegularPolygon(nut_d / 2, 6), P.M2_NUT_T + EPS)
+        nut = extrude(RegularPolygon(nut_d / 2, 6), nut_depth + EPS)
         jig -= Pos(x, y, back - EPS) * nut
-    sx, sy = sensor_xy()
+    cx, cy = sf_board_centre()
     pocket_w = P.SF_BOARD + P.JIG_POCKET_CLEAR
     floor = -jig_pocket_floor_depth()
-    jig -= Pos(sx, sy, (floor + front) / 2 + EPS) * Box(pocket_w, pocket_w, front - floor + 2 * EPS)
-    slot_len = P.JIG_D / 2 - (abs(sx) + pocket_w / 2) + 1.0
-    jig -= Pos(sx - pocket_w / 2 - slot_len / 2 + 0.5, sy, (floor + front) / 2 + EPS) * Box(
-        slot_len + 1.0, 8.0, front - floor + 2 * EPS
-    )
+    z_mid = (floor + front) / 2 + EPS
+    height = front - floor + 2 * EPS
+    jig -= Pos(cx, cy, z_mid) * Box(pocket_w, pocket_w, height)
+    _, j2y = sf_to_owl(*P.SF_J2)
+    slot_x0 = cx - pocket_w / 2 + 0.5
+    slot_len = slot_x0 - (-P.JIG_D / 2) + 1.0
+    jig -= Pos(slot_x0 - slot_len / 2, j2y, z_mid) * Box(slot_len, P.SF_CABLE_SLOT_W, height)
     for k in range(36):
         angle = 10.0 * k
         if abs(angle - P.SENSOR_ANGLE_DEG) < P.TICK_SKIP_DEG or abs(angle - 90.0) < P.TICK_SKIP_TOP_DEG:

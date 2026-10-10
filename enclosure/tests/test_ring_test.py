@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from build123d import Box, Part, Pos, Vector
+from build123d import Box, Cylinder, Part, Pos, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import owl_params as P  # noqa: E402
@@ -25,13 +25,23 @@ def inside(part: Part, r: float, z: float, angle_deg: float = 45.0) -> bool:
     return part.is_inside(Vector(x, y, z))
 
 
+def sf_box(u0: float, u1: float, v0: float, v1: float, z0: float, z1: float) -> Part:
+    """Box given in the SparkFun board frame, placed through the jig mapping."""
+    xa, ya = R.sf_to_owl(u0, v0)
+    xb, yb = R.sf_to_owl(u1, v1)
+    return Pos((xa + xb) / 2, (ya + yb) / 2, (z0 + z1) / 2) * Box(abs(xb - xa), abs(yb - ya), z1 - z0)
+
+
 def sparkfun_dummy(spacer: float) -> Part:
     """Board plus its two right-angle Qwiic connectors, sensor side facing the ring."""
     top = -(R.jig_pocket_floor_depth() - spacer - P.SF_BOARD_T)
-    sx, sy = R.sensor_xy()
-    board = Pos(sx, sy, top - P.SF_BOARD_T / 2) * Box(P.SF_BOARD, P.SF_BOARD, P.SF_BOARD_T)
-    for dx in (5.08 - 12.7, 20.32 - 12.7):
-        board += Pos(sx + dx, sy, top + P.SF_CONN_H / 2) * Box(4.3, 6.0, P.SF_CONN_H)
+    board = sf_box(0, P.SF_BOARD, 0, P.SF_BOARD, top - P.SF_BOARD_T, top)
+    for (u, v), sign in ((P.SF_J1, -1), (P.SF_J2, 1)):
+        u_edge = u + sign * P.SF_CONN_L
+        board += sf_box(
+            min(u, u_edge) - 0.7, max(u, u_edge) + 0.7, v - P.SF_CONN_W / 2, v + P.SF_CONN_W / 2,
+            top, top + P.SF_CONN_H,
+        )
     return board
 
 
@@ -48,6 +58,23 @@ def test_ring_outer_diameter_is_the_owl_width(parts):
         size = parts[name].bounding_box().size
         assert size.X == pytest.approx(P.RING_OD, abs=0.01)
         assert size.Y == pytest.approx(P.RING_OD, abs=0.01)
+
+
+def test_glass_drops_in_from_the_front_and_cannot_fall_out_the_back(parts):
+    bezel = parts["face_bezel"]
+    seated_front = -(P.GLASS_POCKET_DEPTH - P.GLASS_T)
+    for dz in (6.0, 3.0, 1.5, 0.5, 0.0):
+        glass = Pos(0, 0, seated_front + dz - P.GLASS_T) * Cylinder(
+            P.GLASS_D / 2, P.GLASS_T, align=R.BOTTOM
+        )
+        overlap = glass & bezel
+        assert (overlap.volume if overlap is not None else 0.0) < 1e-3, dz
+    # the glass rests on a ledge behind the pocket, and the panel opening below it stays clear
+    assert inside(bezel, P.GLASS_D / 2 - 0.1, -P.GLASS_POCKET_DEPTH - 0.1)
+    assert not inside(bezel, P.PANEL_POCKET_D / 2 - 0.2, -P.GLASS_POCKET_DEPTH - 0.1)
+    # the rim stands in front of the glass and its opening is wider than the glass
+    assert P.BEZEL_LIP_ID >= P.GLASS_D + 0.3
+    assert P.GLASS_POCKET_D >= P.GLASS_D + 0.3
 
 
 def test_bearing_seat_and_bores(parts):
@@ -79,13 +106,14 @@ def test_bezel_lip_stays_inside_the_inner_race_and_ring_lip_clears_it(parts):
     assert inside(ring, P.RING_CONTACT_R + 0.3, P.LIP_T / 2)
 
 
+@pytest.mark.parametrize("count", P.MAGNET_COUNTS)
 @pytest.mark.parametrize("variant", ["a", "b"])
-def test_assembly_has_no_interference(parts, variant):
+def test_assembly_has_no_interference(parts, variant, count):
     if variant == "a":
         stack = [parts["face_bezel"], R.bearing_dummy(), parts["ring_a_bearing"]]
     else:
         stack = [parts["face_bezel"], parts["bushing_sleeve"], parts["ring_b_bushing"]]
-    stack += [parts["magnet_carrier_24"], parts["sensor_jig"], sparkfun_dummy(spacer=3.0)]
+    stack += [parts[f"magnet_carrier_{count}"], parts["sensor_jig"], sparkfun_dummy(spacer=3.0)]
     for a, b in itertools.combinations(stack, 2):
         overlap = a & b
         volume = overlap.volume if overlap is not None else 0.0
@@ -116,18 +144,114 @@ def test_sensor_position_is_the_pcb_contract():
     assert x == pytest.approx(-P.R_TRACK)
     assert y == pytest.approx(0.0, abs=1e-9)
     assert P.pcb_front_depth() == pytest.approx(10.5)
-    carrier_back = P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T
-    assert P.pcb_front_depth() - carrier_back >= 0.5 - 1e-9
+    flange_back = P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T
+    assert P.pcb_front_depth() - flange_back >= 0.5 - 1e-9
+    # the polarity bumps exist on the test carriers only; they still must not touch the board
+    bump_back = flange_back + P.POLARITY_BUMP_H
+    assert P.pcb_front_depth() - bump_back >= 0.2 - 1e-9
+
+
+def test_magnet_face_is_where_a_seated_magnet_sits():
+    assert P.magnet_face_depth() == pytest.approx(P.RING_REAR_DEPTH - (P.MAG_POCKET_DEPTH - P.MAG_H))
+    assert P.magnet_face_depth() == pytest.approx(9.1)
+    # the Hall element sits HALL_ELEMENT_H behind the board's back face
+    assert P.pcb_front_depth(3.1) + P.PCB_T + P.HALL_ELEMENT_H - P.magnet_face_depth() == pytest.approx(3.1)
+
+
+def test_carrier_fits_both_rings_with_real_clearance(parts):
+    for bore in (P.RING_A_BORE_D, P.RING_B_BORE_D):
+        assert (bore - P.CARRIER_OD) / 2 >= P.CARRIER_FIT_CLEARANCE / 2 - 1e-9
+    carrier = parts["magnet_carrier_24"]
+    assert carrier.bounding_box().size.X == pytest.approx(P.RING_OD, abs=0.01)
+    body_z = -(P.CARRIER_FRONT_DEPTH + P.RING_REAR_DEPTH) / 2
+    assert inside(carrier, P.CARRIER_OD / 2 - 0.05, body_z, 7.0)
+    assert not inside(carrier, P.CARRIER_OD / 2 + 0.05, body_z, 7.0)
+    for name in ("ring_a_bearing", "ring_b_bushing"):
+        ring = parts[name]
+        assert inside(ring, P.CARRIER_OD / 2 + 0.05, body_z, 7.0) is False
+        overlap = ring & carrier
+        assert (overlap.volume if overlap is not None else 0.0) < 1e-3
+        # a 0.1 mm radial gap exists between the carrier body and the ring bore
+        assert not inside(ring, P.CARRIER_OD / 2 + 0.05, body_z, 7.0)
+        assert not inside(carrier, ring_bore_radius(name) - 0.05, body_z, 7.0)
+
+
+def ring_bore_radius(name: str) -> float:
+    return (P.RING_A_BORE_D if name == "ring_a_bearing" else P.RING_B_BORE_D) / 2
+
+
+def test_oring_squeeze_and_stretch():
+    groove_d = P.SLEEVE_OD - 2 * P.ORING_GROOVE_DEPTH
+    stretch = (groove_d - P.ORING_ID) / P.ORING_ID
+    gap = (P.RING_B_BORE_D - groove_d) / 2
+    squeeze = 1 - gap / P.ORING_CS
+    assert 0 <= stretch <= 0.03
+    assert 0.15 <= squeeze <= 0.20
+    assert P.ORING_ID + 2 * P.ORING_CS == pytest.approx(P.RING_B_BORE_D)
+    assert P.ORING_GROOVE_W > P.ORING_CS
+
+
+def test_jig_pocket_floor_corners_and_board_probes(parts):
+    jig = parts["sensor_jig"]
+    floor = -R.jig_pocket_floor_depth()
+    sx, sy = R.sensor_xy()
+    # the chip position is where the PCB sensor goes, and the pocket floor lies right under it
+    assert (sx, sy) == (pytest.approx(-28.0), pytest.approx(0.0, abs=1e-9))
+    assert jig.is_inside(Vector(sx, sy, floor - 0.1))
+    assert not jig.is_inside(Vector(sx, sy, floor + 0.1))
+    # the board outline sits inside the pocket: just inside each corner is empty, just outside solid
+    for u, v in ((0, 0), (P.SF_BOARD, 0), (0, P.SF_BOARD), (P.SF_BOARD, P.SF_BOARD)):
+        cx, cy = R.sf_board_centre()
+        x, y = R.sf_to_owl(u, v)
+        ix = x + math.copysign(0.1, cx - x)
+        iy = y + math.copysign(0.1, cy - y)
+        assert not jig.is_inside(Vector(ix, iy, floor + 0.5)), (u, v)
+        ox = x + math.copysign(P.JIG_POCKET_CLEAR / 2 + 0.3, x - cx)
+        oy = y + math.copysign(P.JIG_POCKET_CLEAR / 2 + 0.3, y - cy)
+        assert jig.is_inside(Vector(ox, oy, floor + 0.5)), (u, v)
+    # the cable slot lines up with connector J2 and runs out to the plate rim
+    j2x, j2y = R.sf_to_owl(*P.SF_J2)
+    for x in (-42.0, -44.0, -45.0):
+        assert not jig.is_inside(Vector(x, j2y, floor + 0.5)), x
+        assert not jig.is_inside(Vector(x, j2y + P.SF_CABLE_SLOT_W / 2 - 0.2, floor + 0.5)), x
+        assert jig.is_inside(Vector(x, j2y + P.SF_CABLE_SLOT_W / 2 + 0.3, floor + 0.5)), x
+    # the J1 side faces the centre and stays inside the pocket, which is closed towards the centre
+    j1x, j1y = R.sf_to_owl(*P.SF_J1)
+    assert not jig.is_inside(Vector(j1x + 2.0, j1y, floor + 0.5))
+    assert jig.is_inside(Vector(R.sf_board_centre()[0] + P.SF_BOARD / 2 + 1.0, j1y, floor + 0.5))
+
+
+def test_jig_screw_holes_and_nut_pockets(parts):
+    jig = parts["sensor_jig"]
+    back = -(P.JIG_FRONT_DEPTH + P.JIG_T)
+    circum = (P.M2_NUT_AF + P.M2_NUT_AF_CLEAR) / math.cos(math.radians(30)) / 2
+    for angle in P.LUG_ANGLES_DEG:
+        x, y = R.polar(P.LUG_HOLE_R, angle)
+        # through hole
+        assert not jig.is_inside(Vector(x, y, back + P.JIG_T / 2))
+        assert jig.is_inside(Vector(x + P.M2_CLEAR_D / 2 + 0.3, y, back + P.JIG_T / 2))
+        # hex pocket on the back: open at the corner of the hex, flat-to-flat wider than the nut
+        assert not jig.is_inside(Vector(x + circum - 0.1, y, back + 0.5))
+        assert jig.is_inside(Vector(x + circum + 0.2, y, back + 0.5))
+        flat = (P.M2_NUT_AF + P.M2_NUT_AF_CLEAR) / 2
+        assert not jig.is_inside(Vector(x, y + flat - 0.05, back + 0.5))
+        assert jig.is_inside(Vector(x, y + flat + 0.2, back + 0.5))
+        # pocket depth: nut thickness plus clearance, with solid above it
+        depth = P.M2_NUT_T + P.M2_NUT_DEPTH_CLEAR
+        assert not jig.is_inside(Vector(x + circum - 0.3, y, back + depth - 0.05))
+        assert jig.is_inside(Vector(x + circum - 0.3, y, back + depth + 0.2))
+    assert P.M2_NUT_AF_CLEAR >= 0.2 and P.M2_NUT_DEPTH_CLEAR >= 0.2
 
 
 def test_thin_walls_meet_the_mjf_minimum():
     min_wall = 0.8
-    assert (P.BRG_SEAT_D - P.GLASS_POCKET_D) / 2 >= min_wall - 1e-9
+    # the glass pocket wall is 0.7: the pocket needs 0.17 mm radial room for the glass to drop in
+    assert (P.BRG_SEAT_D - P.GLASS_POCKET_D) / 2 >= 0.7 - 1e-9
     assert P.BRG_SEAT_D / 2 - P.FPC_NOTCH_R >= min_wall - 1e-9
     assert P.R_TRACK - P.MAG_POCKET_D / 2 - P.CARRIER_ID / 2 >= min_wall
     assert P.RING_REAR_DEPTH - P.CARRIER_FRONT_DEPTH - P.MAG_POCKET_DEPTH >= min_wall - 1e-9
     assert P.LIP_T - P.LIP_RELIEF >= min_wall
-    assert P.RING_A_BORE_D / 2 - 0.05 - (P.R_TRACK + P.MAG_POCKET_D / 2) >= min_wall
+    assert P.CARRIER_OD / 2 - (P.R_TRACK + P.MAG_POCKET_D / 2) >= min_wall
     for count in P.MAGNET_COUNTS:
         pitch = 2 * math.pi * P.R_TRACK / count
         assert pitch - P.MAG_POCKET_D >= min_wall
