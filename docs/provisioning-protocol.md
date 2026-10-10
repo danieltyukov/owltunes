@@ -75,7 +75,8 @@ The `error` of a `spotify` event:
 
 | Code | Event | Meaning |
 |---|---|---|
-| Spotify's own code (`invalid_client`, `invalid_grant`, ...) | `failed`, `logged_out` | What the token endpoint answered. It can be empty when Spotify answered with a server error or asked the owl to slow down. |
+| Spotify's own code (`invalid_client`, `invalid_grant`, ...) | `failed`, `logged_out` | What the token endpoint answered. |
+| `http_<status>` (for example `http_503`) | `failed`, `logged_out` | Spotify answered with that HTTP status and no error code of its own, such as a server error or a request to slow down. |
 | `network` | `failed` | The owl could not reach Spotify. |
 | `no_memory` | `failed` | The owl had no memory for the request. |
 | `too_long` | `failed` | Spotify's answer was larger than the owl can read. |

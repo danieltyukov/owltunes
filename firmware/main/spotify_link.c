@@ -1,5 +1,6 @@
 #include "spotify_link.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -69,6 +70,14 @@ static spotify_token_result_t post_token(const char *body, int64_t now_ms, spoti
     } else {
         result = spotify_parse_token_response(status, response.data, response.len, now_ms, token, error,
                                               error_cap);
+        if (result != SPOTIFY_TOKEN_OK && error[0] == '\0') {
+            /* No error code from Spotify (429, 5xx, unreadable answer): say what the status was. */
+            if (status > 0) {
+                snprintf(error, error_cap, "http_%d", status);
+            } else {
+                owl_utf8_copy(error, error_cap, "network");
+            }
+        }
         ESP_LOGI(TAG, "token endpoint answered %d %s", status, error[0] != '\0' ? error : "ok");
     }
     memset(response.data, 0, RESPONSE_MAX); /* it held tokens */
