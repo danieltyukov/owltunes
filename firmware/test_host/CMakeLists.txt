@@ -16,6 +16,8 @@ add_subdirectory(${OWL_COMPONENTS}/owl_core ${CMAKE_BINARY_DIR}/owl_core)
 owl_strict_warnings(owl_core)
 add_subdirectory(${OWL_COMPONENTS}/spotify ${CMAKE_BINARY_DIR}/spotify)
 owl_strict_warnings(spotify)
+add_subdirectory(${OWL_COMPONENTS}/provisioning ${CMAKE_BINARY_DIR}/provisioning)
+owl_strict_warnings(provisioning)
 
 enable_testing()
 
@@ -38,3 +40,4 @@ owl_add_test(test_spotify_parse_player spotify owl_core)
 owl_add_test(test_spotify_parse_list spotify owl_core)
 owl_add_test(test_owl_crypto owl_core)
 owl_add_test(test_spotify_auth spotify owl_core)
+owl_add_test(test_owl_prov provisioning spotify owl_core cjson)
