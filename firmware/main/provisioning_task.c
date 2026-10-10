@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "callback_server.h"
 #include "console.h"
 #include "esp_log.h"
 #include "esp_random.h"
@@ -23,17 +24,19 @@
 
 static const char *TAG = "provisioning";
 
-typedef enum { MSG_LINE, MSG_NETWORK } msg_kind_t;
+typedef enum { MSG_LINE, MSG_CODE, MSG_NETWORK } msg_kind_t;
 
 typedef struct {
     msg_kind_t kind;
     bool up;
     char ip[16];
-    char *text; /* MSG_LINE: the line, on the heap; the protocol task frees it */
+    char *text;  /* MSG_LINE: the line; MSG_CODE: the code. On the heap; the protocol task frees both */
+    char *state; /* MSG_CODE: the state */
 } msg_t;
 
 static owl_prov_t s_prov;
 static QueueHandle_t s_queue;
+static QueueHandle_t s_code_reply; /* one slot: the verdict on the code the HTTP server waits for */
 static SemaphoreHandle_t s_view_lock;
 static provisioning_view_t s_view;
 static bool s_linking;
@@ -210,12 +213,49 @@ static void handle(msg_t *msg)
         }
         break;
     }
+    case MSG_CODE: {
+        const char *error = owl_prov_accept_code(&s_prov, msg->text, msg->state, now_ms());
+        xQueueOverwrite(s_code_reply, &error);
+        break;
+    }
     case MSG_NETWORK:
         owl_prov_set_network(&s_prov, msg->up, msg->ip);
         emit("network", msg->up ? "up" : "down", "ip", msg->up ? msg->ip : NULL);
         break;
     }
     free(msg->text);
+    free(msg->state);
+}
+
+/* Runs on the HTTP server task: hand the code to the protocol task and wait for its verdict. */
+static const char *on_code(const char *code, const char *state)
+{
+    msg_t msg = {.kind = MSG_CODE, .text = strdup(code), .state = strdup(state)};
+    const char *error = "busy";
+    xQueueReset(s_code_reply);
+    if (msg.text != NULL && msg.state != NULL && xQueueSend(s_queue, &msg, pdMS_TO_TICKS(1000)) == pdTRUE) {
+        if (xQueueReceive(s_code_reply, &error, pdMS_TO_TICKS(5000)) != pdTRUE) {
+            error = "busy";
+        }
+    } else {
+        free(msg.text);
+        free(msg.state);
+    }
+    return error;
+}
+
+/* The LAN callback listens only while a login is open (spec 9.7: the authorisation window). */
+static void update_callback_server(void)
+{
+    bool want = s_prov.network_up && s_prov.session_expires_ms != 0 && now_ms() < s_prov.session_expires_ms;
+    if (want && !callback_server_running()) {
+        esp_err_t err = callback_server_start(on_code);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "callback server failed to start: %s", esp_err_to_name(err));
+        }
+    } else if (!want && callback_server_running()) {
+        callback_server_stop();
+    }
 }
 
 static void protocol_task(void *arg)
@@ -227,6 +267,7 @@ static void protocol_task(void *arg)
             handle(&msg);
         }
         do_work();
+        update_callback_server();
         publish_view();
     }
 }
@@ -266,6 +307,7 @@ void provisioning_start(const char *name, const char *fw)
         s_verify_at_ms = 0; /* check the saved login once the network is up */
     }
     s_queue = xQueueCreate(8, sizeof(msg_t));
+    s_code_reply = xQueueCreate(1, sizeof(const char *));
     s_view_lock = xSemaphoreCreateMutex();
     publish_view();
     xTaskCreate(protocol_task, "provisioning", 10240, NULL, 4, NULL);

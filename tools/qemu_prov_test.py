@@ -10,6 +10,7 @@ ESP-IDF Python by itself):
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import pathlib
@@ -22,7 +23,9 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUILD = ROOT / "build" / "firmware"
@@ -230,8 +233,49 @@ def run_checks(flash: pathlib.Path) -> None:
         owl.stop()
 
 
+def http_get(url: str) -> tuple[int, str]:
+    try:
+        with urllib.request.urlopen(url, timeout=15) as response:
+            return response.status, response.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as err:
+        return err.code, err.read().decode("utf-8", "replace")
+
+
+def listening(url: str) -> bool:
+    try:
+        http_get(url)
+        return True
+    except (urllib.error.URLError, ConnectionError, http.client.HTTPException, TimeoutError):
+        return False
+
+
+def wait_listening(url: str, expected: bool, timeout: float = 15) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if listening(url) == expected:
+            return True
+        time.sleep(0.5)
+    return False
+
+
 def extra_checks(owl: Owl) -> None:
-    """Checks added by later tasks."""
+    """The LAN fallback: http://<owl>/callback while a login is open (QEMU forwards the port)."""
+    base = f"http://127.0.0.1:{owl.http_port}/callback"
+    check(wait_listening(base, False), "the callback server is off outside a login")
+    state = authorize_params(owl)["state"]
+    check(wait_listening(base, True), "the callback server listens during a login")
+    status, body = http_get(f"{base}?code=AQDprobe&state=not-the-state")
+    check(status == 400 and "could not use this login" in body, "the callback refuses a wrong state")
+    check("AQDprobe" not in body and "not-the-state" not in body, "the callback page echoes nothing from the request")
+    status, body = http_get(f"{base}?error=access_denied&state={state}")
+    check(status == 400 and "cancelled" in body, "the callback reports a cancelled login")
+    since = owl.mark()
+    status, body = http_get(f"{base}?code=AQDlan&state={state}")
+    check(status == 200 and "linking to Spotify" in body, "the callback accepts the code")
+    owl.wait_event("spotify", "linking", since=since)
+    failed = owl.wait_event("spotify", "failed", timeout=90, since=since)
+    check(failed.get("error") in ("invalid_client", "invalid_grant"), "a code from the LAN reaches Spotify too")
+    check(wait_listening(base, False), "the callback server stops when the login ends")
 
 
 def run_link(flash: pathlib.Path, client_id: str, redirect_uri: str, http_port: int) -> None:
@@ -242,14 +286,19 @@ def run_link(flash: pathlib.Path, client_id: str, redirect_uri: str, http_port: 
         check(owl.send("spotify_client", client_id=client_id, redirect_uri=redirect_uri).get("ok") is True,
               "your client ID is saved")
         reply = owl.send("spotify_begin")
-        print("\nOpen this address, log in, and paste the address Spotify sends you back to:\n")
-        print(reply["authorize_url"] + "\n", flush=True)
-        back = urllib.parse.urlsplit(input("Address after login: ").strip())
-        params = dict(urllib.parse.parse_qsl(back.query))
-        check("code" in params, "the address carries a login code")
-        check(owl.send("spotify_code", code=params["code"], state=params.get("state", "")).get("accepted") is True,
-              "the owl accepts the code")
-        owl.wait_event("spotify", "linked", timeout=90)
+        if redirect_uri.startswith(f"http://127.0.0.1:{http_port}/"):
+            print("\nOpen this address and log in. Spotify sends the code straight to the owl:\n")
+            print(reply["authorize_url"] + "\n", flush=True)
+            owl.wait_event("spotify", "linked", timeout=600)
+        else:
+            print("\nOpen this address, log in, and paste the address Spotify sends you back to:\n")
+            print(reply["authorize_url"] + "\n", flush=True)
+            back = urllib.parse.urlsplit(input("Address after login: ").strip())
+            params = dict(urllib.parse.parse_qsl(back.query))
+            check("code" in params, "the address carries a login code")
+            check(owl.send("spotify_code", code=params["code"], state=params.get("state", "")).get("accepted") is True,
+                  "the owl accepts the code")
+            owl.wait_event("spotify", "linked", timeout=90)
         hello = owl.send("hello")
         check(hello.get("linked") is True and hello.get("setup") == "ready",
               "the owl is linked to your Spotify account")
