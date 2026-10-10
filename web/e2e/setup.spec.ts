@@ -120,3 +120,21 @@ test("callback page reports a cancelled login", async ({ page }) => {
   );
   await expect(page.locator("#fallback")).toBeHidden();
 });
+
+test("a connect that times out can be retried on the same port", async ({ page }) => {
+  test.setTimeout(60_000);
+  const owl: FakeOwlOptions = { exchange: "linked", ip: "192.168.1.23", silent: true };
+  await page.addInitScript(installFakeOwl, owl);
+  await page.goto("setup/");
+  await page.getByRole("button", { name: "Connect over USB" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "The owl did not answer. Check the cable and connect again.",
+    { timeout: 25_000 },
+  );
+  await page.evaluate(() => {
+    (window as unknown as { __owl: FakeOwlState }).__owl.silent = false;
+  });
+  await page.getByRole("button", { name: "Connect over USB" }).click();
+  await expect(page.getByText("OwlTunes-1A2B")).toBeVisible();
+  expect((await owlState(page)).opens).toBe(2);
+});

@@ -5,6 +5,8 @@
 export interface FakeOwlOptions {
   exchange: "linked" | "failed";
   ip: string;
+  /** Start with the owl ignoring every request, like firmware that does not know the protocol. */
+  silent?: boolean;
 }
 
 export interface FakeOwlState {
@@ -14,10 +16,12 @@ export interface FakeOwlState {
   linked: boolean;
   state: string | null;
   codes: string[];
+  silent: boolean;
+  opens: number;
 }
 
 export function installFakeOwl(options: FakeOwlOptions): void {
-  const owl: FakeOwlState = { networks: [], clientId: "", redirectUri: "", linked: false, state: null, codes: [] };
+  const owl: FakeOwlState = { networks: [], clientId: "", redirectUri: "", linked: false, state: null, codes: [], silent: options.silent === true, opens: 0 };
   (window as unknown as { __owl: FakeOwlState }).__owl = owl;
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -30,6 +34,9 @@ export function installFakeOwl(options: FakeOwlOptions): void {
   const later = (fn: () => void, ms = 30): void => void setTimeout(fn, ms);
 
   const handle = (req: Record<string, unknown>): void => {
+    if (owl.silent) {
+      return;
+    }
     const id = req.id;
     const str = (key: string): string => (typeof req[key] === "string" ? (req[key] as string) : "");
     switch (req.cmd) {
@@ -117,28 +124,40 @@ export function installFakeOwl(options: FakeOwlOptions): void {
     }
   };
 
-  const port = {
-    readable: new ReadableStream<Uint8Array>({
-      start(controller) {
-        output = controller;
-      },
-    }),
-    writable: new WritableStream<Uint8Array>({
-      write(chunk) {
-        input += decoder.decode(chunk, { stream: true });
-        for (let end = input.indexOf("\n"); end >= 0; end = input.indexOf("\n")) {
-          const line = input.slice(0, end);
-          input = input.slice(end + 1);
-          if (line.startsWith("@owl ")) {
-            handle(JSON.parse(line.slice(5)) as Record<string, unknown>);
-          }
-        }
-      },
-    }),
+  // Like a real port: open() fails while it is already open, and every open gets fresh streams.
+  let isOpen = false;
+  const port: Record<string, unknown> = {
+    readable: null,
+    writable: null,
     open: async (): Promise<void> => {
+      if (isOpen) {
+        throw new DOMException("The port is already open.", "InvalidStateError");
+      }
+      isOpen = true;
+      owl.opens++;
+      input = "";
+      port.readable = new ReadableStream<Uint8Array>({
+        start(controller) {
+          output = controller;
+        },
+      });
+      port.writable = new WritableStream<Uint8Array>({
+        write(chunk) {
+          input += decoder.decode(chunk, { stream: true });
+          for (let end = input.indexOf("\n"); end >= 0; end = input.indexOf("\n")) {
+            const line = input.slice(0, end);
+            input = input.slice(end + 1);
+            if (line.startsWith("@owl ")) {
+              handle(JSON.parse(line.slice(5)) as Record<string, unknown>);
+            }
+          }
+        },
+      });
       later(() => send("I (412) owltunes: OWL_BOOT_OK track=\"demo\" name=OwlTunes-1A2B"), 0);
     },
-    close: async (): Promise<void> => undefined,
+    close: async (): Promise<void> => {
+      isOpen = false;
+    },
     setSignals: async (): Promise<void> => undefined,
   };
   Object.defineProperty(navigator, "serial", {

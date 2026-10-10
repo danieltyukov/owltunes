@@ -3,7 +3,7 @@
 import { $ } from "./dom";
 import { CHANNEL, type Handoff } from "./callback";
 import { describeError } from "./messages";
-import { OwlClient, OwlError, type OwlEvent, type OwlReply } from "./protocol";
+import { OwlClient, OwlError, type OwlEvent, type OwlReply, type Transport } from "./protocol";
 import { openSerial, serialSupported } from "./serial";
 import { clientIdValid, defaultRedirectUri, normalizeClientId, ssidValid, wifiPasswordValid } from "./validate";
 
@@ -96,8 +96,13 @@ function onEvent(event: OwlEvent): void {
 }
 
 async function connect(): Promise<void> {
+  // One owner per port: let go of an earlier connection before opening another.
+  const previous = client;
+  client = null;
+  previous?.close();
+  let next: OwlClient | null = null;
+  let opened: Transport | null = null;
   try {
-    let next: OwlClient | null = null;
     const transport = await openSerial(
       (chunk) => next?.receive(chunk),
       () => {
@@ -109,12 +114,19 @@ async function connect(): Promise<void> {
       },
     );
     next = new OwlClient(transport);
+    opened = transport;
     next.onEvent(onEvent);
     client = next;
     status("Connected.");
     const hello = await firstHello();
     status(hello.linked === true ? "This owl is already linked to Spotify. Log in again to switch accounts." : "");
   } catch (err) {
+    // A failed connect must not leave the port open, or choosing it again would be refused.
+    next?.close();
+    if (client === next) {
+      client = null;
+    }
+    await opened?.close().catch(() => undefined);
     if (err instanceof DOMException && err.name === "NotFoundError") {
       status("No port chosen. Press Connect over USB and pick the owl.");
     } else {

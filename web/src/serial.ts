@@ -30,36 +30,41 @@ export async function openSerial(onData: (chunk: Uint8Array) => void, onClose: (
   }
   const port = await api.requestPort();
   await port.open({ baudRate: 115200 });
-  // Keep DTR and RTS low: on boards with an auto-reset circuit, moving them resets the ESP32.
-  await port.setSignals?.({ dataTerminalReady: false, requestToSend: false });
-  if (port.readable === null || port.writable === null) {
-    throw new Error("the port opened without streams");
-  }
-  const reader = port.readable.getReader();
-  const writer = port.writable.getWriter();
-  const encoder = new TextEncoder();
-  void (async () => {
-    try {
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) {
-          break;
-        }
-        onData(value);
-      }
-    } catch {
-      // The cable came out or the port was closed; onClose reports it.
-    } finally {
-      reader.releaseLock();
-      onClose();
+  try {
+    // Keep DTR and RTS low: on boards with an auto-reset circuit, moving them resets the ESP32.
+    await port.setSignals?.({ dataTerminalReady: false, requestToSend: false });
+    if (port.readable === null || port.writable === null) {
+      throw new Error("the port opened without streams");
     }
-  })();
-  return {
-    write: (text) => writer.write(encoder.encode(text)),
-    close: async () => {
-      await reader.cancel().catch(() => undefined);
-      writer.releaseLock();
-      await port.close().catch(() => undefined);
-    },
-  };
+    const reader = port.readable.getReader();
+    const writer = port.writable.getWriter();
+    const encoder = new TextEncoder();
+    void (async () => {
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) {
+            break;
+          }
+          onData(value);
+        }
+      } catch {
+        // The cable came out or the port was closed; onClose reports it.
+      } finally {
+        reader.releaseLock();
+        onClose();
+      }
+    })();
+    return {
+      write: (text) => writer.write(encoder.encode(text)),
+      close: async () => {
+        await reader.cancel().catch(() => undefined);
+        writer.releaseLock();
+        await port.close().catch(() => undefined);
+      },
+    };
+  } catch (err) {
+    await port.close().catch(() => undefined);
+    throw err;
+  }
 }
