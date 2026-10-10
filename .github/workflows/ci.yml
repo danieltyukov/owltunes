@@ -39,6 +39,25 @@ jobs:
           name: simulator-screens
           path: build/sim/out
 
+  web:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+
   firmware:
     runs-on: ubuntu-24.04
     container: espressif/idf:v6.1

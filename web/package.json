@@ -1,0 +1,25 @@
+{
+  "name": "owltunes-setup",
+  "version": "0.2.0",
+  "private": true,
+  "description": "OwlTunes setup site: Wi-Fi, your Spotify app and the Spotify login, from the browser",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --strictPort --port 4173"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "jsdom": "30.1.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.2",
+    "vitest": "5.0.3"
+  }
+}
