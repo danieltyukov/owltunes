@@ -22,6 +22,7 @@ function contentSecurityPolicy(): Plugin {
 // A relative base keeps every link working wherever the site is served, so a fork needs no change.
 export default defineConfig({
   base: "./",
+  server: { host: "127.0.0.1" },
   plugins: [contentSecurityPolicy()],
   build: {
     rollupOptions: {

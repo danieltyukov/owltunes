@@ -7,6 +7,11 @@ export interface FakeOwlOptions {
   ip: string;
   /** Start with the owl ignoring every request, like firmware that does not know the protocol. */
   silent?: boolean;
+  /** The error a failed exchange reports; an empty string sends the event without one. */
+  failError?: string;
+  /** A client ID and redirect URI the owl already holds, as if saved from another copy of the site. */
+  savedClientId?: string;
+  savedRedirectUri?: string;
 }
 
 export interface FakeOwlState {
@@ -21,7 +26,7 @@ export interface FakeOwlState {
 }
 
 export function installFakeOwl(options: FakeOwlOptions): void {
-  const owl: FakeOwlState = { networks: [], clientId: "", redirectUri: "", linked: false, state: null, codes: [], silent: options.silent === true, opens: 0 };
+  const owl: FakeOwlState = { networks: [], clientId: options.savedClientId ?? "", redirectUri: options.savedRedirectUri ?? "", linked: false, state: null, codes: [], silent: options.silent === true, opens: 0 };
   (window as unknown as { __owl: FakeOwlState }).__owl = owl;
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -30,6 +35,7 @@ export function installFakeOwl(options: FakeOwlOptions): void {
   const send = (text: string): void => output?.enqueue(encoder.encode(`${text}\n`));
   const reply = (id: unknown, fields: Record<string, unknown>): void => send(`@owl ${JSON.stringify({ id, ...fields })}`);
   const event = (fields: Record<string, unknown>): void => send(`@owl ${JSON.stringify(fields)}`);
+  (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit = event;
   const online = (): boolean => owl.networks.length > 0;
   const later = (fn: () => void, ms = 30): void => void setTimeout(fn, ms);
 
@@ -114,7 +120,11 @@ export function installFakeOwl(options: FakeOwlOptions): void {
             event(
               owl.linked
                 ? { event: "spotify", state: "linked" }
-                : { event: "spotify", state: "failed", error: "invalid_client" },
+                : {
+                    event: "spotify",
+                    state: "failed",
+                    ...(options.failError === "" ? {} : { error: options.failError ?? "invalid_client" }),
+                  },
             );
           }, 120);
         }

@@ -2,14 +2,20 @@
 
 import { $ } from "./dom";
 import { CHANNEL, type Handoff } from "./callback";
-import { describeError } from "./messages";
+import { describeError, describeEvent } from "./messages";
 import { OwlClient, OwlError, type OwlEvent, type OwlReply, type Transport } from "./protocol";
 import { openSerial, serialSupported } from "./serial";
-import { clientIdValid, defaultRedirectUri, normalizeClientId, ssidValid, wifiPasswordValid } from "./validate";
+import { clientIdValid, defaultRedirectUri, normalizeClientId, redirectUriValid, ssidValid, wifiPasswordValid } from "./validate";
 
 const redirectUri = defaultRedirectUri(location.href);
 let client: OwlClient | null = null;
 let pendingState: string | null = null; /* the state of the login this page started */
+let codeSent = false; /* the code of that login has gone to the owl */
+
+const REDIRECT_INVALID_HINT =
+  "The owl cannot use this page's address as a redirect URI. Open the page at http://127.0.0.1 instead of localhost, or from the https site.";
+const REDIRECT_MISMATCH_HINT =
+  "The owl's client ID was saved with a different setup page. Press Save client ID on this page so the login returns here.";
 
 function status(text: string): void {
   $("status").textContent = text;
@@ -45,6 +51,18 @@ function renderNetworks(ssids: string[]): void {
   );
 }
 
+/** Why Log in must stay off even though the owl holds a client ID, or null when it can go ahead. */
+function loginBlocker(hello: OwlReply): string | null {
+  if (!redirectUriValid(redirectUri)) {
+    return REDIRECT_INVALID_HINT;
+  }
+  const clientId = typeof hello.client_id === "string" ? hello.client_id : "";
+  if (clientId !== "" && hello.redirect_uri !== redirectUri) {
+    return REDIRECT_MISMATCH_HINT;
+  }
+  return null;
+}
+
 function showOwl(hello: OwlReply): void {
   $("owl-name").textContent = String(hello.name ?? "");
   $("owl-fw").textContent = String(hello.fw ?? "");
@@ -54,7 +72,7 @@ function showOwl(hello: OwlReply): void {
   if (clientId !== "") {
     $<HTMLInputElement>("client-id").value = clientId;
   }
-  $<HTMLButtonElement>("login-button").disabled = clientId === "";
+  $<HTMLButtonElement>("login-button").disabled = clientId === "" || loginBlocker(hello) !== null;
   for (const id of ["owl", "wifi", "spotify-app", "login"]) {
     $(id).hidden = false;
   }
@@ -86,11 +104,15 @@ function onEvent(event: OwlEvent): void {
     if (event.state === "linking") {
       status("Your owl is linking to Spotify...");
     } else if (event.state === "linked") {
-      pendingState = null;
+      if (codeSent) {
+        pendingState = null;
+        codeSent = false;
+      }
       status("Linked. Your owl is ready: start Spotify on your phone or computer and press play.");
     } else if (event.state === "failed" || event.state === "logged_out") {
       pendingState = null;
-      status(describeError(String(event.error ?? "unknown")));
+      codeSent = false;
+      status(describeEvent(event.state, typeof event.error === "string" ? event.error : undefined));
     }
   }
 }
@@ -119,7 +141,10 @@ async function connect(): Promise<void> {
     client = next;
     status("Connected.");
     const hello = await firstHello();
-    status(hello.linked === true ? "This owl is already linked to Spotify. Log in again to switch accounts." : "");
+    status(
+      loginBlocker(hello) ??
+        (hello.linked === true ? "This owl is already linked to Spotify. Log in again to switch accounts." : ""),
+    );
   } catch (err) {
     // A failed connect must not leave the port open, or choosing it again would be refused.
     next?.close();
@@ -193,6 +218,7 @@ async function logIn(): Promise<void> {
       throw new OwlError("bad_authorize_url", "spotify_begin");
     }
     pendingState = url.searchParams.get("state");
+    codeSent = false;
     if (tab === null) {
       status("Your browser blocked the Spotify tab. Allow pop-ups for this page and press Log in again.");
       return;
@@ -213,6 +239,7 @@ async function onHandoff(message: Handoff, channel: BroadcastChannel): Promise<v
   }
   try {
     await client.request("spotify_code", { code: message.code, state: message.state });
+    codeSent = true;
     channel.postMessage({ type: "ack", state: message.state, ok: true } satisfies Handoff);
     status("Spotify login received. Your owl is linking...");
   } catch (err) {
@@ -224,6 +251,9 @@ async function onHandoff(message: Handoff, channel: BroadcastChannel): Promise<v
 
 function start(): void {
   $("redirect-uri").textContent = redirectUri;
+  if (!redirectUriValid(redirectUri)) {
+    status(REDIRECT_INVALID_HINT);
+  }
   $("copy-redirect").addEventListener("click", () => void navigator.clipboard.writeText(redirectUri));
   if (!serialSupported()) {
     $<HTMLButtonElement>("connect-button").disabled = true;

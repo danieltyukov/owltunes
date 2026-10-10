@@ -68,6 +68,64 @@ test("setup explains a client ID that Spotify rejects", async ({ page }) => {
   );
 });
 
+test("setup explains a failure the owl reports without a message", async ({ page }) => {
+  await openSetup(page, { exchange: "failed", failError: "" });
+  await prepareLogin(page);
+  await Promise.all([
+    page.context().waitForEvent("page"),
+    page.getByRole("button", { name: "Log in with Spotify" }).click(),
+  ]);
+  await expect(page.getByRole("status")).toHaveText(
+    "Spotify did not give a reason. Wait a moment and log in again.",
+  );
+});
+
+test("setup explains a login that could not be saved", async ({ page }) => {
+  await openSetup(page, { exchange: "failed", failError: "storage" });
+  await prepareLogin(page);
+  await Promise.all([
+    page.context().waitForEvent("page"),
+    page.getByRole("button", { name: "Log in with Spotify" }).click(),
+  ]);
+  await expect(page.getByRole("status")).toHaveText(
+    "The owl could not save the login to its memory. Try again, and update the firmware if it keeps happening.",
+  );
+});
+
+test("setup keeps Log in off when the owl holds another site's redirect address", async ({ page }) => {
+  await openSetup(page, { savedClientId: CLIENT_ID, savedRedirectUri: "https://example.github.io/owltunes/callback/" });
+  await expect(page.getByRole("status")).toContainText("saved with a different setup page");
+  await expect(page.getByRole("button", { name: "Log in with Spotify" })).toBeDisabled();
+  await page.getByRole("button", { name: "Save client ID" }).click();
+  await expect(page.getByRole("status")).toHaveText("Client ID saved. Now log in.");
+  await expect(page.getByRole("button", { name: "Log in with Spotify" })).toBeEnabled();
+});
+
+test("a stray linked event does not cancel a login in progress", async ({ page }) => {
+  await openSetup(page);
+  await prepareLogin(page);
+  let release: () => void = () => undefined;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  // Hold Spotify's answer back (this route wins over the one openSetup added).
+  await page.context().route("https://accounts.spotify.com/authorize**", async (route) => {
+    await held;
+    const url = new URL(route.request().url());
+    const back = new URL(url.searchParams.get("redirect_uri") ?? "");
+    back.search = new URLSearchParams({ code: "AQDtest-code", state: url.searchParams.get("state") ?? "" }).toString();
+    await route.fulfill({ status: 302, headers: { location: back.href } });
+  });
+  const [spotifyTab] = await Promise.all([
+    page.context().waitForEvent("page"),
+    page.getByRole("button", { name: "Log in with Spotify" }).click(),
+  ]);
+  await page.evaluate(() => (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit({ event: "spotify", state: "linked" }));
+  release();
+  await expect(spotifyTab.getByRole("status")).toHaveText(
+    "Sent to your owl. You can close this tab and watch the owl's screen.",
+  );
+  expect((await owlState(page)).codes).toEqual(["AQDtest-code"]);
+});
+
 test("setup checks input before the owl sees it", async ({ page }) => {
   await openSetup(page);
   await page.getByLabel("Network name").fill("Home");

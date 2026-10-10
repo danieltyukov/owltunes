@@ -1,6 +1,7 @@
 // What the owl's error codes mean for the person at the keyboard.
 
-const MESSAGES: Record<string, string> = {
+/** Errors in the reply to a request. */
+const MESSAGES = new Map<string, string>(Object.entries({
   bad_request: "The owl did not understand the page. Reload this page and connect again.",
   unknown_cmd: "The owl's firmware is older than this page. Update the firmware, then try again.",
   too_long: "That value is too long for the owl.",
@@ -21,8 +22,40 @@ const MESSAGES: Record<string, string> = {
   invalid_client: "Spotify rejected the client ID. Check it on your Spotify app's page and save it again.",
   invalid_grant: "Spotify refused the login. Check the redirect URI on your Spotify app's page, then log in again.",
   network: "The owl could not reach Spotify. Check its Wi-Fi, then log in again.",
-};
+}));
+
+/** Errors in a spotify event, which concern the login itself rather than the last request. */
+const EVENT_MESSAGES = new Map<string, string>(Object.entries({
+  invalid_client: MESSAGES.get("invalid_client") ?? "",
+  invalid_grant: "Spotify refused the login. Check the redirect URI on your Spotify app's page, then log in again.",
+  unauthorized_client: "Spotify does not allow this app to log in. Check the app on your Spotify developer dashboard.",
+  network: MESSAGES.get("network") ?? "",
+  no_memory: "The owl ran out of memory. Restart the owl and log in again.",
+  too_long: "Spotify's answer was larger than the owl can read. Try again.",
+  bad_request: "The owl could not build the login request. Check the client ID and redirect URI, then try again.",
+  no_refresh_token: "Spotify did not give the owl a lasting login. Log in again.",
+  storage: "The owl could not save the login to its memory. Try again, and update the firmware if it keeps happening.",
+}));
 
 export function describeError(code: string): string {
-  return MESSAGES[code] ?? `Something went wrong (${code}).`;
+  return MESSAGES.get(code) ?? `Something went wrong (${code}).`;
+}
+
+/** The sentence for a failed or logged_out spotify event; `error` may be missing or empty. */
+export function describeEvent(state: string, error: string | undefined): string {
+  if (state === "logged_out") {
+    return "Your Spotify login expired or was revoked. Log in again.";
+  }
+  const known = error === undefined ? undefined : EVENT_MESSAGES.get(error);
+  if (known !== undefined) {
+    return known;
+  }
+  const status = /^http_(\d{3})$/.exec(error ?? "");
+  if (status !== null) {
+    return `Spotify answered with an error (${status[1]}). Wait a moment and log in again.`;
+  }
+  if (error === undefined || error === "") {
+    return "Spotify did not give a reason. Wait a moment and log in again.";
+  }
+  return `Something went wrong (${error}).`;
 }
