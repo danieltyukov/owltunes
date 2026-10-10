@@ -249,16 +249,20 @@ def run_link(flash: pathlib.Path, client_id: str, redirect_uri: str, http_port: 
         check("code" in params, "the address carries a login code")
         check(owl.send("spotify_code", code=params["code"], state=params.get("state", "")).get("accepted") is True,
               "the owl accepts the code")
-        linked = owl.wait_event("spotify", "linked", timeout=90)
-        check(linked.get("state") == "linked", "the owl is linked to your Spotify account")
+        owl.wait_event("spotify", "linked", timeout=90)
+        hello = owl.send("hello")
+        check(hello.get("linked") is True and hello.get("setup") == "ready",
+              "the owl is linked to your Spotify account")
     finally:
         owl.stop()
     owl = Owl(flash, http_port, WORK / "link2.log")
     try:
         owl.wait_log("OWL_BOOT_OK")
-        linked = owl.wait_event("spotify", "linked", timeout=120)
-        check(linked.get("state") == "linked", "after a reboot the saved login still works (refresh token accepted)")
-        check(owl.send("hello").get("setup") == "ready", "the owl is set up after the refresh")
+        owl.wait_event("spotify", "linked", timeout=120)
+        hello = owl.send("hello")
+        owl.mark()
+        check(not any('"logged_out"' in line for line in owl.lines) and hello.get("setup") == "ready",
+              "after a reboot the saved login still works (refresh token accepted)")
     finally:
         owl.stop()
 

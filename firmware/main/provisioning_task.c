@@ -39,6 +39,7 @@ static provisioning_view_t s_view;
 static bool s_linking;
 static bool s_relink;
 static char s_error[64];
+static bool s_save_pending; /* a save failed and must be retried */
 static int64_t s_verify_at_ms = -1; /* when to check the saved login with Spotify; -1: not due */
 static char s_out[OWL_PROV_LINE_MAX + 64];
 
@@ -96,6 +97,30 @@ static void publish_view(void)
     xSemaphoreGive(s_view_lock);
 }
 
+/* Write the settings to flash. A failure keeps the save pending, so the next pass retries it. */
+static bool persist(void)
+{
+    esp_err_t err = settings_store_save(&s_prov.settings);
+    s_save_pending = err != ESP_OK;
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "saving settings failed: %s", esp_err_to_name(err));
+    }
+    return err == ESP_OK;
+}
+
+/* A new or rotated token must be on flash before the owl reports it linked or uses it. */
+static bool persist_login(void)
+{
+    uint32_t actions = owl_prov_take_actions(&s_prov);
+    if ((actions & OWL_PROV_DO_SAVE) != 0 || s_save_pending) {
+        if (!persist()) {
+            emit("spotify", "failed", "error", "storage");
+            return false;
+        }
+    }
+    return true;
+}
+
 static void exchange_code(void)
 {
     static spotify_token_t token;
@@ -117,7 +142,9 @@ static void exchange_code(void)
     s_linking = false;
     if (ok) {
         s_relink = false;
-        emit("spotify", "linked", NULL, NULL);
+        if (persist_login()) {
+            emit("spotify", "linked", NULL, NULL);
+        }
     } else {
         owl_utf8_copy(s_error, sizeof s_error, sentence_for(result));
         emit("spotify", "failed", "error", error);
@@ -135,7 +162,9 @@ static void verify_saved_login(void)
     memset(&token, 0, sizeof token);
     if (result == SPOTIFY_TOKEN_OK) {
         s_verify_at_ms = -1;
-        emit("spotify", "linked", NULL, NULL);
+        if (persist_login()) {
+            emit("spotify", "linked", NULL, NULL);
+        }
     } else if (dropped) {
         s_verify_at_ms = -1;
         s_relink = result == SPOTIFY_TOKEN_LOG_IN_AGAIN;
@@ -163,11 +192,8 @@ static void do_work(void)
         verify_saved_login();
         actions |= owl_prov_take_actions(&s_prov);
     }
-    if (actions & OWL_PROV_DO_SAVE) {
-        esp_err_t err = settings_store_save(&s_prov.settings);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "saving settings failed: %s", esp_err_to_name(err));
-        }
+    if ((actions & OWL_PROV_DO_SAVE) != 0 || s_save_pending) {
+        persist();
     }
 }
 
