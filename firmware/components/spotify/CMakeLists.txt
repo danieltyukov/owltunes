@@ -4,6 +4,7 @@ set(SPOTIFY_SRCS
     src/spotify_json.c
     src/spotify_parse_player.c
     src/spotify_parse_list.c
+    src/spotify_auth.c
 )
 
 if(ESP_PLATFORM)

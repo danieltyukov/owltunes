@@ -37,7 +37,7 @@ size_t owl_utf8_append(char *dst, size_t cap, const char *src)
     return len + owl_utf8_copy(dst + len, cap - len, src);
 }
 
-static bool is_unreserved(unsigned char c)
+bool owl_url_unreserved(unsigned char c)
 {
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '.' ||
            c == '_' || c == '~';
@@ -51,7 +51,7 @@ size_t owl_url_encode(char *dst, size_t cap, const char *src)
     }
     size_t o = 0;
     for (const unsigned char *p = (const unsigned char *)(src ? src : ""); *p; p++) {
-        size_t need = is_unreserved(*p) ? 1 : 3;
+        size_t need = owl_url_unreserved(*p) ? 1 : 3;
         if (o + need >= cap) {
             dst[0] = '\0';
             return OWL_TEXT_OVERFLOW;

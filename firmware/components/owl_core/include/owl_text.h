@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -20,6 +21,9 @@ size_t owl_utf8_append(char *dst, size_t cap, const char *src);
 /* Percent-encode src for a URL query value. Unreserved characters (A-Z a-z 0-9 - . _ ~) are kept.
  * Returns the encoded length, or OWL_TEXT_OVERFLOW with dst set to "" when it does not fit. */
 size_t owl_url_encode(char *dst, size_t cap, const char *src);
+
+/* RFC 3986 unreserved characters: A-Z a-z 0-9 - . _ ~ */
+bool owl_url_unreserved(unsigned char c);
 
 #ifdef __cplusplus
 }
