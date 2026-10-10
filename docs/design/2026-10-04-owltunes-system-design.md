@@ -321,18 +321,27 @@ with the 4 px corner radius Spotify specifies for small screens. The last 32 ima
 2. **First boot.** The owl shows "Hoot! Set me up" with a QR code for the setup page and starts
    BLE provisioning.
 3. **Setup page** (static, hosted on GitHub Pages, works in Chrome on Android and desktop):
-   connects over Web Bluetooth, takes one or more Wi-Fi networks (home and phone hotspot) and the
-   user's Spotify client ID. It walks the user through creating the Spotify app with the redirect
-   URI `https://danieltyukov.github.io/owltunes/callback/`.
-4. **Spotify login.** The owl generates the PKCE verifier and a `state` value and hands the
-   authorize URL to the page. Spotify redirects to the GitHub Pages callback, which returns the
-   one-time code to the owl:
-   - primary: over Web Bluetooth (the user taps "Send to OwlTunes"),
-   - fallback: a full-page navigation to `http://<owl-ip>/callback` on the local network,
-   - last resort: pasting the code into the USB console.
-   The owl exchanges the code for tokens itself.
+   connects to the owl over Web Bluetooth, the transport the design targets and which arrives
+   with the dev-kit hardware (P3). Until then the page also connects over USB (Web Serial) in
+   Chrome or Edge on a computer, which is the route available now. It takes one or more Wi-Fi
+   networks (home and phone hotspot) and the user's Spotify client ID. It walks the user through
+   creating the Spotify app with the redirect URI `https://danieltyukov.github.io/owltunes/callback/`
+   and sends the owl that redirect URI with the client ID, so a fork's own site works unchanged.
+   Page and owl speak the line protocol in `docs/provisioning-protocol.md`.
+4. **Spotify login.** The owl generates the PKCE verifier and a `state` value (a random nonce
+   followed by the owl's LAN address) and hands the authorize URL to the page, which opens it in
+   a new tab. Spotify redirects that tab to the GitHub Pages callback, which returns the one-time
+   code to the owl:
+   - primary: the callback tab passes the code to the setup tab (BroadcastChannel), which sends
+     it over its open Bluetooth or USB link and reports the owl's answer back,
+   - fallback: when no setup tab answers within 2 seconds, a button for a full-page navigation
+     to `http://<owl-ip>/callback` on the local network (offered only for private addresses),
+   - last resort: a ready-made line to paste into the USB console.
+   The owl exchanges the code for tokens itself, and checks the saved login with one token
+   refresh at every start.
 5. **Bluetooth media keys.** The owl asks to pair as a media remote with the phone.
-6. **Re-authorisation** every 6 months repeats step 4 from a QR code on the owl.
+6. **Re-authorisation.** When Spotify refuses the saved login (after 6 months, or when the user
+   revokes it), the owl shows "Log in again" with the QR code and step 4 repeats.
 
 ## 11. User experience
 

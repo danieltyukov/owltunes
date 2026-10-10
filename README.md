@@ -37,6 +37,7 @@ The album art is a generated placeholder; the device shows the real cover.
 | `docs/` | Design documents and guides |
 | `firmware/` | ESP-IDF firmware; `firmware/components/` holds the shared C code |
 | `sim/` | Desktop simulator and golden screenshots |
+| `web/` | The setup site (TypeScript and Vite), published on GitHub Pages |
 | `tools/` | Build, test, style and font scripts |
 
 ## Building
@@ -50,16 +51,27 @@ Linux with CMake 3.22+, Ninja and a C compiler.
 | Interactive simulator (needs `libsdl2-dev`) | `cmake -S sim -B build/sim-sdl -G Ninja -DOWL_SIM_SDL=ON && cmake --build build/sim-sdl && build/sim-sdl/owl_sim sdl` |
 | Firmware (ESP-IDF v6.1 activated) | `tools/firmware.sh build` |
 | Firmware in the QEMU emulator | `tools/qemu_smoke.sh` |
+| Setup protocol in QEMU, including a real HTTPS call to Spotify | `tools/qemu_prov_test.py` |
+| Setup site: unit and browser tests (Node.js 22) | `cd web && npm ci && npm test && npm run e2e` |
+| Setup site: local development server | `cd web && npm run dev` |
 | Regenerate the UI fonts (needs Node.js) | `tools/gen_fonts.sh` |
 
 The UI font is [Inter](https://rsms.me/inter/) (SIL Open Font License, see
 `firmware/components/owl_ui/fonts/LICENSE-Inter.txt`).
 
-## Using it with Spotify
+## Setting it up
 
 OwlTunes needs Spotify Premium and your own free Spotify developer app (client ID). It uses the
 Authorization Code flow with PKCE, so no client secret is ever stored on the device or in this
 repository.
+
+Open the [setup page](https://danieltyukov.github.io/owltunes/setup/) in Chrome or Edge, connect
+the owl over USB, add your Wi-Fi networks and your client ID, and log in with Spotify. The
+[setup guide](docs/setup-guide.md) walks through every step, including creating the Spotify app,
+and the [protocol notes](docs/provisioning-protocol.md) describe what the page and the owl say to
+each other.
+
+<img src="docs/img/setup.png" alt="The owl's setup screen with a QR code for the setup page" width="240">
 
 ## Licences
 
