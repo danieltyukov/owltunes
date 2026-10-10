@@ -40,6 +40,9 @@ The album art is a generated placeholder; the device shows the real cover.
 | `firmware/` | ESP-IDF firmware; `firmware/components/` holds the shared C code |
 | `sim/` | Desktop simulator and golden screenshots |
 | `web/` | The setup site (TypeScript and Vite), published on GitHub Pages |
+| `enclosure/` | build123d sources for the owl, the ring and the perch |
+| `hardware/` | KiCad 10 projects for the owl main board and the perch board |
+| `docs/hardware/` | Hardware notes, ring test, bring-up and ordering |
 | `tools/` | Build, test, style and font scripts |
 
 ## Building

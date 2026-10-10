@@ -1,0 +1,141 @@
+"""Shared OwlTunes mechanical parameters, in millimetres.
+
+Coordinates: the origin is the centre of the display's active area on the front surface of the
+cover glass. X points to the owl's right as seen from the front, Y points up and Z points out of
+the face towards the viewer, so a part that sits behind the glass has a negative Z. "Depth" in the
+names below is a positive distance behind the glass front (z = -depth).
+
+Every value that comes from a datasheet names its source. Values marked "test" are what the ring
+test prints check; the measured results are recorded in docs/hardware/ring-test.md and copied
+here before the main board is ordered. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
+"""
+
+# Display: VIEWE ALL-UEOL018WV-RA31-A001A specification V1.0 (2024-09-04), pages 4 and 6.
+GLASS_D = 48.16  # cover glass diameter ("C.G 48.16")
+GLASS_T = 1.10  # cover glass thickness ("C.G 1.1")
+DISPLAY_STACK_T = 2.07  # glass, OCA, panel and foam ("Total 2.07")
+VIEW_D = 44.16  # viewing area ("V.A 44.16")
+PANEL_W = 45.93  # panel outline width
+PANEL_H = 46.35  # panel outline height including the flex bonding ledge
+FLEX_PARTS_H = 1.2  # component area on the folded main flex ("H=1.2mm")
+
+# Bearing 6710ZZ: 50 x 62 x 6 thin-section deep-groove ball bearing.
+BRG_ID = 50.0
+BRG_OD = 62.0
+BRG_W = 6.0
+BRG_INNER_RACE_OD = 53.6  # estimate of the inner race shoulder; the bezel lip stays inside it
+BRG_OUTER_RACE_ID = 58.4  # estimate of the outer race shoulder; the ring contacts outside it
+
+# Face bezel (stationary): holds the glass and carries the bearing inner race.
+LIP_T = 1.2  # front lips of bezel and ring stand this far in front of the glass
+BEZEL_LIP_ID = 45.2  # clears the 44.16 viewing area by 0.52 per side
+BEZEL_LIP_OD = 52.0  # contacts only the inner race front face (inside 53.6)
+GLASS_POCKET_D = 48.30  # glass seat, 0.07 radial clearance; glue the glass in
+GLASS_POCKET_DEPTH = 1.3
+PANEL_POCKET_D = 47.2  # clears the 46.35 panel behind the glass
+FPC_NOTCH_W = 14.0  # room for the flex fold at the panel's top edge
+FPC_NOTCH_R = 24.15  # notch reaches this radius, leaving a 0.8 wall under the bearing seat
+FPC_NOTCH_END_DEPTH = 4.0  # the fold sits next to the panel edge; behind it the flex lies flat
+BRG_SEAT_D = 49.90  # test: 0.10 clearance, bearing glued (coupon picks the final value)
+TUBE_OD = 49.6  # bezel tube behind the seat; the bearing slides over it from the back
+TUBE_END_DEPTH = 9.6
+LUG_T = 2.0
+LUG_R_IN = 15.0
+LUG_W = 8.0
+LUG_ANGLES_DEG = (0.0, 120.0, 270.0)  # keeps the top free for the flex and 9 o clock free for the sensor
+LUG_HOLE_R = 20.0
+M2_CLEAR_D = 2.4
+M2_NUT_AF = 4.0  # across flats of an M2 hex nut
+M2_NUT_T = 1.6
+
+# Ring (rotating). The outer diameter is the owl's width.
+RING_OD = 66.0
+RING_LIP_ID = 52.8  # 0.4 radial gap to the bezel lip
+RING_CONTACT_R = 30.0  # the ring touches the outer race only outside this radius
+LIP_RELIEF = 0.3  # gap between the ring lip and the inner race or shields
+RING_A_BORE_D = 62.10  # test: bearing variant, 0.10 clearance, bearing glued
+RING_B_BORE_D = 62.00  # test: bushing variant, 0.10 radial clearance on the sleeve
+RING_REAR_DEPTH = 9.2  # ring body ends here; leaves a 0.8 floor under the magnet pockets
+INDEX_NOTCH_W = 1.0
+INDEX_NOTCH_D = 0.6
+INDEX_NOTCH_L = 2.0
+
+# Bushing sleeve (variant B): replaces the bearing in the same 50 x 62 x 6 envelope.
+SLEEVE_ID = 50.10
+SLEEVE_OD = 61.80
+ORING_CS = 1.5  # O-ring 58 x 1.5 mm NBR 70
+ORING_ID = 58.0
+ORING_GROOVE_W = 2.0
+ORING_GROOVE_DEPTH = 1.25  # about 17 percent squeeze against the 62.00 bore
+
+# Magnets: D3 x 2 mm N52 discs, axially magnetised, alternating polarity.
+MAG_D = 3.0
+MAG_H = 2.0
+MAG_POCKET_D = 3.10  # test: coupon checks 2.95 to 3.25; magnets are glued
+MAG_POCKET_DEPTH = 2.10
+R_TRACK = 28.0  # magnet centre radius
+MAGNET_COUNTS = (24, 32)
+CARRIER_ID = 51.2  # 0.6 radial clearance to the bezel tube
+CARRIER_FRONT_DEPTH = 6.3  # 0.3 behind the bearing rear face
+CARRIER_FLANGE_T = 0.8
+CARRIER_FLANGE_R_IN = 30.5
+POLARITY_BUMP_D = 1.0  # raised bump on the flange behind every other pocket
+POLARITY_BUMP_H = 0.3
+POLARITY_BUMP_R = 31.75
+
+# Ring sensor (TMAG5273) position on the main PCB: under the magnet track at 9 o'clock, mounted
+# on the PCB's back side so the board's flat front can sit just behind the magnet carrier. The
+# field passes through the 1.0 mm FR4 unchanged.
+SENSOR_ANGLE_DEG = 180.0
+PCB_T = 1.0  # main board thickness (4-layer)
+HALL_ELEMENT_H = 0.70  # Hall element height above its seating plane, TMAG5273 figure 6-2 (estimate)
+HALL_GAP_NOMINAL = 3.0  # test: magnet face to Hall element
+HALL_GAP_STEPS = (4.5, 3.5, 2.5, 1.5)  # gaps the jig gives with spacers of 0, 1, 2 and 3 mm
+
+
+def magnet_face_depth() -> float:
+    """Depth of the magnets' rear faces (flush with the carrier's rear face)."""
+    return RING_REAR_DEPTH
+
+
+def pcb_front_depth(hall_gap: float = HALL_GAP_NOMINAL) -> float:
+    """Depth of the main PCB's front surface for a given magnet-to-Hall-element gap, with the
+    TMAG5273 on the back side (the element sits HALL_ELEMENT_H behind the back surface)."""
+    return magnet_face_depth() + hall_gap - HALL_ELEMENT_H - PCB_T
+
+
+# SparkFun Linear 3D Hall-Effect Sensor TMAG5273 (Qwiic), SEN-23880, 1 x 1 inch board.
+# Board file Qwiic_Hall_Effect_Sensor_TMAG5273.brd: U1 at (12.878, 13.030) on the top side,
+# horizontal Qwiic connectors J1 at x 5.08 and J2 at x 20.32, holes 3.3 at 2.54 from each corner.
+SF_BOARD = 25.4
+SF_BOARD_T = 1.6
+SF_U1 = (12.878, 13.030)
+SF_CONN_H = 3.0  # right-angle JST SH height above the board (estimate)
+
+# Sensor jig (test fixture).
+JIG_D = 92.0
+JIG_FRONT_DEPTH = TUBE_END_DEPTH + LUG_T  # 11.6
+JIG_T = 6.2
+JIG_POCKET_CLEAR = 0.4
+JIG_CENTRE_HOLE_D = 28.0
+SPACER_T = (1.0, 2.0, 3.0)
+TICK_R_IN = 36.0
+TICK_R_OUT = 39.0
+TICK_R_OUT_LONG = 40.5
+TICK_W = 0.6
+TICK_DEPTH = 0.4
+TICK_SKIP_DEG = 32.0  # no ticks within this angle of the sensor pocket and cable slot
+TICK_SKIP_TOP_DEG = 12.0  # no ticks across the antenna marker at 90 degrees
+
+# Module antenna region used for the RSSI check. ESP32-S3-WROOM-1 is 18 x 25.5 mm; its PCB
+# antenna is the top 6.5 mm. The module top edge sits 0.3 mm inside the 1.6 mm head top wall.
+OWL_TOP_Y = 45.0
+OWL_BOTTOM_Y = -39.0
+MODULE_W = 18.0
+MODULE_L = 25.5
+ANTENNA_L = 6.5
+ANT_Y_TOP = OWL_TOP_Y - 1.9  # 43.1
+ANT_Y_BOTTOM = ANT_Y_TOP - ANTENNA_L  # 36.6
+ANT_TAB_W = 32.0
+ANT_TAB_TOP = 50.0
+MODULE_SIDE = "back"  # the WROOM-1 sits on the PCB back side; its antenna overhangs the top edge

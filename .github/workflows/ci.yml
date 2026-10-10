@@ -103,3 +103,12 @@ jobs:
           path: |
             build/qemu-smoke.log
             build/qemu-prov
+
+  enclosure:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        run: pipx install uv==0.11.32
+      - name: Enclosure tests
+        run: uv run --project enclosure --locked python -m pytest enclosure -q
