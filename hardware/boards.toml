@@ -1,0 +1,13 @@
+# Boards the hardware checks run on. Flags switch on as the work progresses:
+# netlist after the schematic matches design.toml, contract after placement, drc after routing.
+[[board]]
+name = "owl-mainboard"
+netlist = false
+contract = false
+drc = false
+
+[[board]]
+name = "perch-dock"
+netlist = false
+contract = false
+drc = false

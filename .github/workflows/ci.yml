@@ -112,3 +112,13 @@ jobs:
         run: pipx install uv==0.11.32
       - name: Enclosure tests
         run: uv run --project enclosure --locked python -m pytest enclosure -q
+
+  hardware:
+    runs-on: ubuntu-24.04
+    container:
+      image: kicad/kicad:10.0.6
+      options: --user root
+    steps:
+      - uses: actions/checkout@v7
+      - name: Hardware checks (ERC, DRC, connectivity, sourcing, contract, pin map)
+        run: tools/hw/check_all.sh

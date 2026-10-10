@@ -1,0 +1,19 @@
+(version 1)
+(rule "JLC 4-layer minimum track"
+	(constraint track_width (min 0.09mm)))
+(rule "JLC 4-layer minimum clearance"
+	(constraint clearance (min 0.09mm)))
+(rule "JLC via drill without extra fee"
+	(condition "A.Type == 'Via'")
+	(constraint hole_size (min 0.3mm)))
+(rule "JLC via annular ring"
+	(condition "A.Type == 'Via'")
+	(constraint annular_width (min 0.1mm)))
+(rule "JLC copper to edge"
+	(constraint edge_clearance (min 0.3mm)))
+(rule "JLC silkscreen text"
+	(layer "F.Silkscreen")
+	(constraint text_height (min 0.8mm)))
+(rule "JLC silkscreen text back"
+	(layer "B.Silkscreen")
+	(constraint text_height (min 0.8mm)))

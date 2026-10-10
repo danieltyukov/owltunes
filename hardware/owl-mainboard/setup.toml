@@ -1,0 +1,45 @@
+# Stackup, origins, JLCPCB minimum rules and net classes for the owl main board.
+# Applied by tools/hw/hw_setup.py. JLCPCB 4-layer capability: 0.09 mm track and gap; vias with a
+# 0.3 mm drill and 0.5 mm pad carry no extra fee.
+copper_layers = 4
+thickness_mm = 1.0
+origin_mm = [100.0, 100.0]
+
+[rules]
+min_clearance = 0.1
+min_track_width = 0.1
+min_via_diameter = 0.5
+min_through_hole_diameter = 0.3
+min_via_annular_width = 0.1
+min_copper_edge_clearance = 0.3
+min_hole_clearance = 0.25
+min_hole_to_hole = 0.25
+min_text_height = 0.8
+min_text_thickness = 0.15
+
+[netclass.Default]
+track_width = 0.15
+clearance = 0.15
+via_diameter = 0.5
+via_drill = 0.3
+
+[netclass.Power]
+track_width = 0.5
+clearance = 0.2
+via_diameter = 0.6
+via_drill = 0.3
+nets = ["GND", "+3V3", "DISP_3V3", "VSYS", "VBAT", "VIN_CHG", "VBUS_USB", "VBUS_DOCK", "TPS_L1", "TPS_L2"]
+
+[netclass.Fine]
+track_width = 0.1
+clearance = 0.1
+via_diameter = 0.5
+via_drill = 0.3
+nets = ["LCD_*", "TP_*"]
+
+[netclass.USB]
+track_width = 0.2
+clearance = 0.15
+via_diameter = 0.5
+via_drill = 0.3
+nets = ["USB_DP", "USB_DM", "USB_DP_CONN", "USB_DM_CONN"]

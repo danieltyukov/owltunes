@@ -1,0 +1,52 @@
+(kicad_sch (version 20260101) (generator "eeschema") (generator_version "10.0")
+
+  (uuid 948e8676-f056-4436-994a-11bca7b1eb74)
+
+  (paper "A4")
+	(title_block
+		(title "OwlTunes perch board")
+		(date "2026-10-11")
+		(rev "A")
+		(company "OwlTunes")
+		(comment 1 "CERN-OHL-P-2.0")
+	)
+
+  (lib_symbols
+  )
+
+  (sheet (at 30.0 40.0) (size 60.0 30.0) (fields_autoplaced yes)
+    (stroke (width 0.0006) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "6a3141fb-b0c5-4b80-95ea-be34186c275e")
+    (property "Sheetname" "perch" (at 32.54 38.73 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "perch.kicad_sch" (at 32.54 71.27 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "perch-dock"
+        (path "/948e8676-f056-4436-994a-11bca7b1eb74" (page "2"))
+      )
+    )
+  )
+  (sheet (at 100.0 40.0) (size 60.0 30.0) (fields_autoplaced yes)
+    (stroke (width 0.0006) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "89980b2c-1085-4c2e-bf1f-9666c904eaba")
+    (property "Sheetname" "owl_pads" (at 102.54 38.73 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "owl_pads.kicad_sch" (at 102.54 71.27 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "perch-dock"
+        (path "/948e8676-f056-4436-994a-11bca7b1eb74" (page "3"))
+      )
+    )
+  )
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)

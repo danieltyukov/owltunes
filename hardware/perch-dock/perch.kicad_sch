@@ -1,0 +1,20 @@
+(kicad_sch
+	(version 20260101)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid 15a5f54c-ffb7-4c5d-b261-62f319b6ca20)
+	(paper "A4")
+	(title_block
+		(title "OwlTunes perch board: perch")
+		(date "2026-10-11")
+		(rev "A")
+		(company "OwlTunes")
+		(comment 1 "CERN-OHL-P-2.0")
+	)
+	(lib_symbols)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)
