@@ -70,6 +70,8 @@ __pycache__/
 # Web setup page
 node_modules/
 dist/
+web/test-results/
+web/playwright-report/
 .vite/
 coverage/
 .env

@@ -111,6 +111,7 @@ interface Pending {
 /** Matches replies to requests by id and hands events to listeners. Feed it with receive(). */
 export class OwlClient {
   private nextId = 1;
+  private closed = false;
   private readonly pending = new Map<number, Pending>();
   private readonly listeners = new Set<(event: OwlEvent) => void>();
   private readonly splitter = new LineSplitter((line) => this.onLine(line));
@@ -126,6 +127,9 @@ export class OwlClient {
 
   /** Send a command; resolves with the reply, rejects with OwlError when ok is false or on timeout. */
   request(cmd: string, params: Params = {}): Promise<OwlReply> {
+    if (this.closed) {
+      return Promise.reject(new OwlError("disconnected", cmd));
+    }
     const id = this.nextId++;
     let line: string;
     try {
@@ -152,8 +156,15 @@ export class OwlClient {
     return () => this.listeners.delete(listener);
   }
 
-  /** Fail every request still waiting, for example when the port closes. */
+  /**
+   * The one owner of the connection: fail every request still waiting, refuse new ones and close the
+   * transport. Safe to call more than once.
+   */
   close(code = "disconnected"): void {
+    if (!this.closed) {
+      this.closed = true;
+      this.transport.close().catch(() => undefined);
+    }
     for (const [id, p] of this.pending) {
       clearTimeout(p.timer);
       p.reject(new OwlError(code, p.cmd));

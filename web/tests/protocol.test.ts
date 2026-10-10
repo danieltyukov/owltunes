@@ -5,11 +5,13 @@ const bytes = (s: string): Uint8Array => new TextEncoder().encode(s);
 
 class FakeTransport implements Transport {
   written: string[] = [];
+  closes = 0;
   write(text: string): Promise<void> {
     this.written.push(text);
     return Promise.resolve();
   }
   close(): Promise<void> {
+    this.closes++;
     return Promise.resolve();
   }
 }
@@ -116,5 +118,15 @@ describe("OwlClient", () => {
     const reply = client.request("hello");
     client.close();
     await expect(reply).rejects.toMatchObject({ code: "disconnected" });
+  });
+
+  test("close closes the transport once and refuses new requests", async () => {
+    const transport = new FakeTransport();
+    const client = new OwlClient(transport);
+    client.close();
+    client.close();
+    expect(transport.closes).toBe(1);
+    await expect(client.request("hello")).rejects.toMatchObject({ code: "disconnected" });
+    expect(transport.written).toEqual([]);
   });
 });

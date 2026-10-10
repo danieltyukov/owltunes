@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>OwlTunes Setup</title>
+    <link rel="stylesheet" href="../src/style.css" />
+    <script type="module" src="../src/setup.ts"></script>
+  </head>
+  <body>
+    <main>
+      <h1>Set up your owl</h1>
+      <section id="connect">
+        <p>Plug the owl into this computer with a USB cable, then connect to it.</p>
+        <button id="connect-button" type="button">Connect over USB</button>
+        <p id="connect-help" class="note" hidden>
+          This browser cannot talk to USB devices. Open this page in Chrome or Edge on a computer.
+        </p>
+      </section>
+
+      <section id="owl" hidden>
+        <p>Connected to <strong id="owl-name"></strong> (firmware <span id="owl-fw"></span>). <span id="owl-network"></span></p>
+      </section>
+
+      <section id="wifi" hidden>
+        <h2>1. Wi-Fi</h2>
+        <p>Add your home network and, for use on the go, your phone's hotspot. The owl keeps up to four.</p>
+        <ul id="wifi-list"></ul>
+        <form id="wifi-form">
+          <label>Network name <input id="wifi-ssid" autocomplete="off" required /></label>
+          <label>Password <input id="wifi-password" type="password" autocomplete="off" /></label>
+          <button type="submit">Save network</button>
+        </form>
+      </section>
+
+      <section id="spotify-app" hidden>
+        <h2>2. Your Spotify app</h2>
+        <ol>
+          <li>
+            Open the <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">Spotify developer dashboard</a>
+            and create an app. Any name works.
+          </li>
+          <li>Add this redirect URI: <code id="redirect-uri"></code> <button id="copy-redirect" type="button">Copy</button></li>
+          <li>Tick "Web API", save, then copy the app's client ID into the box below.</li>
+        </ol>
+        <form id="client-form">
+          <label>Client ID <input id="client-id" autocomplete="off" spellcheck="false" required /></label>
+          <button type="submit">Save client ID</button>
+        </form>
+      </section>
+
+      <section id="login" hidden>
+        <h2>3. Log in</h2>
+        <p>Spotify opens in a new tab. After you agree, this page hands the login to your owl.</p>
+        <button id="login-button" type="button">Log in with Spotify</button>
+      </section>
+
+      <p id="status" role="status" aria-live="polite"></p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>OwlTunes Login</title>
+    <link rel="stylesheet" href="../src/style.css" />
+    <script type="module" src="../src/callback-page.ts"></script>
+  </head>
+  <body>
+    <main>
+      <h1>OwlTunes</h1>
+      <p id="message" role="status" aria-live="polite">Handing the login to your owl...</p>
+      <section id="fallback" hidden>
+        <p id="lan" hidden>
+          <a id="lan-link" class="button" href="#">Send to my owl over Wi-Fi</a><br />
+          <span class="note">Works when this device is on the same network as the owl.</span>
+        </p>
+        <p>Or paste this line into the owl's USB console:</p>
+        <textarea id="console-line" readonly rows="4"></textarea>
+        <button id="copy-line" type="button">Copy</button>
+      </section>
+    </main>
+  </body>
+</html>

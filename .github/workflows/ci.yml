@@ -57,6 +57,18 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm test
+      - name: Build
+        run: npm run build
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end tests against a simulated owl
+        run: npm run e2e
+      - name: Upload the Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: web/playwright-report
 
   firmware:
     runs-on: ubuntu-24.04
