@@ -24,6 +24,7 @@ typedef enum {
     OWL_STATUS_NO_DEVICE,    /* no active Spotify device */
     OWL_STATUS_PAUSED,
     OWL_STATUS_PLAYING,
+    OWL_STATUS_COUNT, /* not a status: the number of statuses */
 } owl_status_t;
 
 typedef struct {
@@ -40,7 +41,7 @@ typedef struct {
 owl_status_t owl_status_of(const owl_status_inputs_t *in);
 
 /* "needs_wifi", "joining", "needs_login", "linking", "log_in_again", "starting", "quota",
- * "rate_limited", "no_device", "paused" or "playing". */
+ * "rate_limited", "no_device", "paused" or "playing"; "unknown" for a value outside the enum. */
 const char *owl_status_name(owl_status_t s);
 
 typedef struct {

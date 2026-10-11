@@ -104,10 +104,17 @@ static void test_waiting_for_the_network_blinks_quickly(void)
 
 static void test_every_status_has_a_name(void)
 {
-    for (int s = OWL_STATUS_NEEDS_WIFI; s <= OWL_STATUS_PLAYING; s++) {
+    for (int s = OWL_STATUS_NEEDS_WIFI; s < OWL_STATUS_COUNT; s++) {
         TEST_ASSERT_TRUE(owl_status_name((owl_status_t)s)[0] != '\0');
     }
     TEST_ASSERT_EQUAL_STRING("rate_limited", owl_status_name(OWL_STATUS_RATE_LIMITED));
+}
+
+static void test_an_out_of_range_status_is_unknown(void)
+{
+    TEST_ASSERT_EQUAL_STRING("unknown", owl_status_name(OWL_STATUS_COUNT));
+    TEST_ASSERT_EQUAL_STRING("unknown", owl_status_name((owl_status_t)-1));
+    TEST_ASSERT_EQUAL_STRING("unknown", owl_status_name((owl_status_t)99));
 }
 
 int main(void)
@@ -123,5 +130,6 @@ int main(void)
     RUN_TEST(test_waiting_for_the_person_blinks_slowly);
     RUN_TEST(test_waiting_for_the_network_blinks_quickly);
     RUN_TEST(test_every_status_has_a_name);
+    RUN_TEST(test_an_out_of_range_status_is_unknown);
     return UNITY_END();
 }

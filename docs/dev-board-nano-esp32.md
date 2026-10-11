@@ -56,7 +56,8 @@ port as busy, close the monitor (or any other program holding it) and connect ag
 The RGB LED shows the one thing the owl most needs you to know. The console's `info` command will
 report the same status by name once the developer console arrives (a later task). The Wi-Fi, login and
 playback statuses appear as those features arrive: until then only `needs_wifi`, `joining`,
-`needs_login`, `linking` and `log_in_again` can show.
+`needs_login`, `linking`, `log_in_again` and `starting` can show (`starting` is what a linked,
+online owl shows until playback support arrives).
 
 | LED | Status | Meaning |
 |---|---|---|

@@ -10,12 +10,20 @@
 #include "driver/ledc.h"
 #include "esp_err.h"
 #include "esp_heap_caps.h"
+#include "esp_system.h"
 #include "owl_ui.h"
 
 #define LINES 40
 
 /* The RGB LED is common anode: a channel lights while its pin is low (the green LED lights while
- * GPIO0 is held low to enter download mode). Pins from Arduino's Nano ESP32 pinout. */
+ * GPIO0 is held low to enter download mode). Pins from Arduino's Nano ESP32 pinout.
+ *
+ * All three are strapping pins: GPIO0 (boot mode, the B1 jumper), GPIO45 (VDD_SPI voltage) and
+ * GPIO46 (ROM log and boot mode). The chip samples straps only at power-on and after a hardware
+ * reset, and it releases every IO driver on any chip reset before sampling, so a driven LED cannot
+ * change what the next boot reads. A software restart does not sample straps again. Even so, the
+ * shutdown handler below turns the LED off before esp_restart, so the pins are at their inactive
+ * (high) level when the chip resets. */
 static const gpio_num_t LED_PINS[3] = {GPIO_NUM_46, GPIO_NUM_0, GPIO_NUM_45}; /* red, green, blue */
 
 static void discard(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
@@ -61,13 +69,26 @@ static void led_init(void)
     }
 }
 
+static bool s_ready;
+
+static void led_off(void)
+{
+    if (!s_ready) {
+        return;
+    }
+    for (int i = 0; i < 3; i++) {
+        ledc_set_duty(LEDC_LOW_SPEED_MODE, (ledc_channel_t)i, 0);
+        ledc_update_duty(LEDC_LOW_SPEED_MODE, (ledc_channel_t)i);
+    }
+}
+
 void bsp_status_led(uint8_t r, uint8_t g, uint8_t b)
 {
-    static bool ready;
     static int last[3] = {-1, -1, -1};
-    if (!ready) {
+    if (!s_ready) {
         led_init();
-        ready = true;
+        s_ready = true;
+        ESP_ERROR_CHECK(esp_register_shutdown_handler(led_off));
     }
     const uint8_t want[3] = {r, g, b};
     for (int i = 0; i < 3; i++) {

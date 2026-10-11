@@ -71,7 +71,7 @@ void app_main(void)
             (owl_ui_setup_t){view.mode, setup_url, name, view.error[0] != '\0' ? view.error : NULL};
         int64_t now = esp_timer_get_time() / 1000;
         owl_ui_render(ui, &app, &player, &inputs, now);
-        owl_rgb_t led = owl_status_led(status_now(), now);
+        owl_rgb_t led = owl_status_led(status_now(&view), now);
         bsp_status_led(led.r, led.g, led.b);
         uint32_t wait = lv_timer_handler();
         if (!announced) {

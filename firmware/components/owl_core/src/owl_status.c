@@ -58,8 +58,10 @@ const char *owl_status_name(owl_status_t s)
         return "paused";
     case OWL_STATUS_PLAYING:
         return "playing";
+    case OWL_STATUS_COUNT:
+        break;
     }
-    return "starting";
+    return "unknown";
 }
 
 typedef enum { SOLID, SLOW, FAST } pattern_t;
@@ -116,6 +118,9 @@ owl_rgb_t owl_status_led(owl_status_t s, int64_t now_ms)
         break;
     case OWL_STATUS_PLAYING:
         colour = GREEN;
+        break;
+    case OWL_STATUS_COUNT:
+        colour = (owl_rgb_t){0, 0, 0};
         break;
     }
     if (pattern != SOLID) {
