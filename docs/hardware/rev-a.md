@@ -132,6 +132,9 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 - IMU_INT1: set the LIS2DW12 interrupt push-pull and active low (H_LACTIVE = 1) before ext1 is
   armed, and again after any LIS2DW12 reset (it comes out of reset driving INT1 low).
 - HALL_INT: use the TMAG5273 latched interrupt mode; the pulse mode is only 10 us wide.
+- ext1 ANY_LOW wakes at once if a masked pin is already low, so arm only the pins that read high:
+  on external power drop CHG_PGOOD and DOCK_DET, and clear a latched HALL_INT by addressing the
+  TMAG5273 first.
 - DRV2605L: EN is tied high, so idle it with the STANDBY bit and never let its VDD drop while the
   I2C bus is up.
 - Sensor bus: 4.7k pull-ups. Measure the rise time at 400 kHz at bring-up; if it is too slow, run

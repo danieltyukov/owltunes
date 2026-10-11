@@ -69,6 +69,9 @@
 #define OWL_PIN_U0TXD 43 /* pad TP204; the 499 ohm series resistor is inside the module */
 #define OWL_PIN_U0RXD 44 /* pad TP205 */
 
+/* ext1 ANY_LOW wakes at once if a masked pin is already low, so arm only the pins that read high:
+ * on external power drop CHG_PGOOD and DOCK_DET, and clear a latched HALL_INT by addressing the
+ * TMAG5273 first. */
 #define OWL_WAKE_PINS_MASK                                                                                   \
     ((1ULL << OWL_PIN_DOCK_DET) | (1ULL << OWL_PIN_BTN_EAR_L) | (1ULL << OWL_PIN_BTN_EAR_R) |                \
      (1ULL << OWL_PIN_BTN_BEAK) | (1ULL << OWL_PIN_HALL_INT) | (1ULL << OWL_PIN_IMU_INT1) |                  \
