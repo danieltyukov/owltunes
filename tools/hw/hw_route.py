@@ -7,7 +7,7 @@ neck down to 0.25 or 0.3 mm only where a track leaves a 0.5 mm pitch pin. Runnin
 first removes the tracks it drew before, so a group can be re-routed after a placement change.
 GND vias, pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
 
-Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb ...]
+Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb crystal dock]
 Needs KiCad's pcbnew Python module.
 """
 
@@ -77,6 +77,19 @@ GROUPS = {
                               (11.45, 14.85), (11.45, 16.79)]),
         ("USB_DP", 0.2, [(8.75, 19.1), (9.7, 19.1), (10.35, 18.45), (10.35, 17.81)]),
         ("USB_DM", 0.2, [(8.75, 20.37), (10.9, 20.37), (11.45, 19.82), (11.45, 17.81)]),
+    ],
+    # 32.768 kHz crystal: pins 8 and 9 straight to Y201, load caps on its far side, nothing else
+    # between the crystal and the module (pins 7 and 10 must escape elsewhere).
+    "crystal": [
+        ("XTAL32_P", 0.15, [(8.75, 26.72), (9.9, 26.72), (10.5, 27.35), (12.0, 27.35), (13.92, 27.35)]),
+        ("XTAL32_N", 0.15, [(8.75, 25.45), (9.9, 25.45), (10.5, 24.85), (12.0, 24.85), (13.92, 24.85)]),
+    ],
+    # Dock: VBUS_DOCK from J303 pin 2 through the D301 TVS up the right side, clear of the H4 boss
+    # ring and U301, to the D102 anode at 0.5 mm; DOCK_PAD from J303 pin 3 through D302 to R307.
+    "dock": [
+        ("VBUS_DOCK", 0.5, [(14.5, -30.0), (14.5, -28.0), (16.4, -26.4), (16.4, -24.5), (19.6, -21.3),
+                            (19.6, -13.0), (23.5, -10.0), (26.9, -10.0), (26.9, -7.9)]),
+        ("DOCK_PAD", 0.25, [(13.5, -30.0), (13.5, -28.2), (11.3, -27.0), (11.3, -26.6), (11.49, -24.8)]),
     ],
 }
 
