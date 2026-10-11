@@ -109,6 +109,32 @@ LANDS = {
 }
 POGO_DRILL = 0.8
 
+
+def fh26w_stencil(n: int = 31) -> list:
+    """Hirose EDC3-323714-05 p. 1, recommended stencil pattern (t = 0.1): openings 0.23 wide on 0.6
+    pitch in each row; even row 0.55 long and odd row 0.65 long, both flush with the pads' outer ends
+    (2.4 between the openings, 3.6 overall); tab openings 0.3 x 0.7 on the tab's outer side, their
+    outer edge 0.9 from the outer odd contact's centre and their lower edge 0.2 up from the odd
+    row's outer edge."""
+    odd_y = (0.65 / 2 + 2.15 + 0.8 / 2) / 2
+    odd_end, even_end = odd_y + 0.8 / 2, -odd_y - 0.65 / 2
+    out = [((k - (n + 1) / 2) * 0.3, odd_end - 0.65 / 2 if k % 2 else even_end + 0.55 / 2, 0.23, 0.65 if k % 2 else 0.55)
+           for k in range(1, n + 1)]
+    tab_x = (n - 1) / 2 * 0.3 + 0.9 - 0.3 / 2
+    tab_y = odd_end - 0.2 - 0.7 / 2
+    return out + [(-tab_x, tab_y, 0.3, 0.7), (tab_x, tab_y, 0.3, 0.7)]
+
+
+# Stencil openings that differ from the pad: TPS63802 SLVSEU9D p. 37, pad 8 printed at 83 % (two
+# 0.55 x 0.25 openings, here one 1.1 x 0.25); OPT3001 SBOS681C p. 43, thermal pad 0.62 x 1.25 (here
+# turned); Maxim gives no stencil, the exposed pad prints 0.05 mm in from its edge. Other pads print
+# in full, except J301 (Hirose's own stencil) and the pogo pin (a ring that keeps paste off the hole).
+STENCIL = {
+    "TI_DLA_VSON-10_2x3mm_P0.5mm": {"8": (1.1, 0.25)},
+    "Maxim_TDFN-8-1EP_2x2mm_P0.5mm": {"9": (1.28, 0.70)},
+    "TI_DNP_USON-6-1EP_2x2mm_P0.65mm": {"7": (1.25, 0.62)},
+}
+
 # Stock KiCad footprints the boards use, against the manufacturers' land patterns: EVQP7A
 # (Panasonic EVQP7 catalogue p. 2: 5.0 and 2.2 across, 2.5 and 0.4 down); TS-1088 (XUNPU drawing
 # for C720477: 5.50 and 3.40 across, 2.00 tall); LGA-12 (LIS2DW12 DS11811 rev 9 p. 56 terminals
@@ -155,18 +181,45 @@ def pads(text: str) -> list[dict]:
     return out
 
 
-def paste_apertures(text: str) -> dict[str, tuple[float, float]]:
-    """Stencil opening of every pad with a local paste margin: size + 2 (margin + ratio * size)."""
-    out = {}
-    for m in re.finditer(r'\(pad "([^"]*)" \w+ \w+\s*\(at [-\d. ]+\)\s*\(size ([\d.]+) ([\d.]+)\)'
-                         r'((?:(?!\(pad ).)*)', text, re.S):
-        num, w, h, rest = m.group(1), float(m.group(2)), float(m.group(3)), m.group(4)
-        margin = re.search(r"\(solder_paste_margin ([-\d.]+)\)", rest)
-        ratio = re.search(r"\(solder_paste_margin_ratio ([-\d.]+)\)", rest)
-        if margin or ratio:
-            mg = float(margin.group(1)) if margin else 0.0
-            r = float(ratio.group(1)) if ratio else 0.0
-            out[num] = (w + 2 * (mg + r * w), h + 2 * (mg + r * h))
+def pad_blocks(text: str) -> list[str]:
+    """The text of every pad, one top-level item of the footprint each."""
+    starts = [m.start() for m in re.finditer(r"\n\t\(", text)] + [len(text)]
+    return [text[a:b] for a, b in zip(starts, starts[1:]) if text.startswith("\n\t(pad ", a)]
+
+
+def paste_openings(text: str) -> list[tuple[float, float, float, float]]:
+    """(x, y, w, h) of every stencil opening made by a plain pad: its size grown by 2 (margin + ratio
+    * size) per axis, as KiCad plots it. Custom (ring) openings are in paste_rings."""
+    out = []
+    for block in pad_blocks(text):
+        layers = re.search(r"\(layers ([^)]*)\)", block).group(1)
+        if "F.Paste" not in layers or " custom" in block.split("\n", 2)[1]:
+            continue
+        x, y, *rot = map(float, re.search(r"\(at ([-\d. ]+)\)", block).group(1).split())
+        w, h = map(float, re.search(r"\(size ([\d.]+) ([\d.]+)\)", block).groups())
+        if rot and round(rot[0]) % 180 == 90:
+            w, h = h, w
+        margin = re.search(r"\(solder_paste_margin ([-\d.]+)\)", block)
+        ratio = re.search(r"\(solder_paste_margin_ratio ([-\d.]+)\)", block)
+        mg = float(margin.group(1)) if margin else 0.0
+        r = float(ratio.group(1)) if ratio else 0.0
+        out.append((x, y, w + 2 * (mg + r * w), h + 2 * (mg + r * h)))
+    return out
+
+
+def paste_rings(text: str) -> list[tuple[float, float, float, float]]:
+    """(x, y, inner radius, outer radius) of every custom paste pad drawn as an unfilled circle."""
+    out = []
+    for block in pad_blocks(text):
+        if "F.Paste" not in block or " custom" not in block.split("\n", 2)[1]:
+            continue
+        px, py = map(float, re.search(r"\(at ([-\d.]+) ([-\d.]+)", block).groups())
+        for c in re.findall(r"\(gr_circle(.*?)\(fill no\)", block, re.S):
+            cx, cy = map(float, re.search(r"\(center ([-\d.]+) ([-\d.]+)\)", c).groups())
+            ex, ey = map(float, re.search(r"\(end ([-\d.]+) ([-\d.]+)\)", c).groups())
+            width = float(re.search(r"\(width ([\d.]+)\)", c).group(1))
+            r = ((ex - cx) ** 2 + (ey - cy) ** 2) ** 0.5
+            out.append((px + cx, py + cy, r - width / 2, r + width / 2))
     return out
 
 
@@ -190,7 +243,8 @@ def courtyard(text: str) -> tuple[float, float, float, float]:
 
 
 def land_matches(test: unittest.TestCase, name: str, have: list[dict], want: list, tol: float = 0.005) -> None:
-    """Every expected pad is in the file once, within tol mm; nothing else is."""
+    """Every expected copper pad is in the file once, within tol mm; nothing else is."""
+    have = [p for p in have if "Cu" in p["layers"]]  # paste-only openings are not pads
     got = sorted((p["number"], round(p["x"], 3), round(p["y"], 3), round(p["w"], 3), round(p["h"], 3))
                  for p in have)
     exp = sorted((n, round(x, 3), round(y, 3), round(w, 3), round(h, 3)) for n, x, y, w, h in want)
@@ -211,7 +265,7 @@ class LibraryTest(unittest.TestCase):
     def test_footprints_have_the_right_pads_courtyard_and_model(self):
         for name, pads_ in PADS.items():
             text = (LIB / "owltunes.pretty" / f"{name}.kicad_mod").read_text()
-            self.assertEqual(set(re.findall(r'\(pad "([^"]*)"', text)), pads_, name)
+            self.assertEqual({p["number"] for p in pads(text) if "Cu" in p["layers"]}, pads_, name)
             self.assertIn("F.CrtYd", text, name)
             model = re.search(r'\(model "\$\{KIPRJMOD\}/\.\./lib/3dmodels/([^"]+)"', text)
             self.assertIsNotNone(model, name)
@@ -283,22 +337,50 @@ class LibraryTest(unittest.TestCase):
         self.assertAlmostEqual(holes[0]["drill"], POGO_DRILL, delta=0.001)
         self.assertGreaterEqual(holes[0]["w"] - holes[0]["drill"], 0.3 - 1e-6)  # 0.15 mm annular ring
 
-    def test_paste_apertures_follow_the_stencil_examples(self):
-        # TPS63802 SLVSEU9D p. 37: pad 8 printed at 83 % (two 0.55 x 0.25 openings, here one 1.1 x 0.25);
-        # OPT3001 SBOS681C p. 43: thermal pad opening 0.62 x 1.25 (here turned, 1.25 x 0.62); Maxim gives
-        # no stencil, the exposed pad prints 0.05 mm in from its edge. Every other pad prints in full.
-        want = {
-            "TI_DLA_VSON-10_2x3mm_P0.5mm": {"8": (1.1, 0.25)},
-            "Maxim_TDFN-8-1EP_2x2mm_P0.5mm": {"9": (1.28, 0.70)},
-            "TI_DNP_USON-6-1EP_2x2mm_P0.65mm": {"7": (1.25, 0.62)},
-        }
-        for name in PADS:
-            have = paste_apertures((LIB / "owltunes.pretty" / f"{name}.kicad_mod").read_text())
-            exp = want.get(name, {})
-            self.assertEqual(sorted(have), sorted(exp), name)
-            for n, (w, h) in exp.items():
-                self.assertAlmostEqual(have[n][0], w, delta=0.002, msg=f"{name} pad {n}")
-                self.assertAlmostEqual(have[n][1], h, delta=0.002, msg=f"{name} pad {n}")
+    def test_paste_openings_follow_the_datasheet_stencils(self):
+        for name, land in LANDS.items():
+            if name == "PogoPin_Xinyangze_YZ71215080P-02":
+                continue
+            if name.startswith("Hirose_FH26W"):
+                want = fh26w_stencil()
+            else:
+                over = STENCIL.get(name, {})
+                want = [(x, y, *over.get(n, (w, h))) for n, x, y, w, h in land]
+            have = paste_openings((LIB / "owltunes.pretty" / f"{name}.kicad_mod").read_text())
+            self.assertEqual(len(have), len(want), name)
+            for g, e in zip(sorted(have), sorted(want)):
+                for a, b in zip(g, e):
+                    self.assertAlmostEqual(a, b, delta=0.002, msg=f"{name}: opening {g} != {e}")
+
+    def test_fh26w_stencil_measures_right(self):
+        """Hirose's printed stencil dimensions, measured between the openings in the file."""
+        have = paste_openings((LIB / "owltunes.pretty" /
+                               "Hirose_FH26W-31S-0.3SHW_1x31-1MP_P0.30mm_Horizontal.kicad_mod").read_text())
+        contacts = sorted((o for o in have if abs(o[2] - 0.23) < 0.002), key=lambda o: o[0])
+        tabs = sorted((o for o in have if abs(o[2] - 0.3) < 0.002), key=lambda o: o[0])
+        self.assertEqual((len(contacts), len(tabs)), (31, 2))
+        odd, even = contacts[0::2], contacts[1::2]
+        self.assertAlmostEqual(min(o[1] - o[3] / 2 for o in odd) - max(o[1] + o[3] / 2 for o in even), 2.4,
+                               delta=0.001)  # 2.4 +- 0.02
+        self.assertAlmostEqual(max(o[1] + o[3] / 2 for o in odd) - min(o[1] - o[3] / 2 for o in even), 3.6,
+                               delta=0.001)  # (3.6)
+        self.assertAlmostEqual(odd[1][0] - odd[0][0], 0.6, delta=0.001)  # 0.6
+        self.assertAlmostEqual(tabs[1][0] + tabs[1][2] / 2 - odd[-1][0], 0.9, delta=0.001)  # 0.9 +- 0.02
+        self.assertAlmostEqual((odd[-1][1] + odd[-1][3] / 2) - (tabs[1][1] + tabs[1][3] / 2), 0.2,
+                               delta=0.001)  # 0.2 +- 0.02
+        self.assertAlmostEqual(tabs[1][3], 0.7, delta=0.001)  # 0.7 +- 0.02
+
+    def test_pogo_pin_paste_stays_off_the_hole(self):
+        text = (LIB / "owltunes.pretty" / "PogoPin_Xinyangze_YZ71215080P-02.kicad_mod").read_text()
+        self.assertEqual(paste_openings(text), [])  # neither the pad nor anything else prints over the hole
+        rings = paste_rings(text)
+        self.assertEqual(len(rings), 1)
+        x, y, r_in, r_out = rings[0]
+        self.assertAlmostEqual(x, 0.0, delta=0.001)
+        self.assertAlmostEqual(y, 0.0, delta=0.001)
+        self.assertGreaterEqual(r_in, POGO_DRILL / 2 + 0.15 - 1e-6)  # 0.15 mm of bare copper round the hole
+        self.assertLessEqual(r_out, 2.2 / 2 + 1e-6)  # within the pad
+        self.assertGreaterEqual(r_out, 2.2 / 2 - 0.05)  # out to the flange's fillet
 
     def test_inductor_keeps_tracks_and_vias_from_under_the_coil(self):
         # Murata DFE201612E reference specification p. 7: no through holes or copper under the coil
@@ -319,8 +401,9 @@ class LibraryTest(unittest.TestCase):
         # Edits made by hand in the footprint editor would be lost on the next build; they belong in
         # the tables of tools/hw/hw_lib_build.py.
         with tempfile.TemporaryDirectory() as tmp:
-            subprocess.run([sys.executable, str(ROOT / "tools" / "hw" / "hw_lib_build.py"), "--offline", "--lib", tmp,
-                            "--stock", str(STOCK)], check=True, capture_output=True)
+            run = subprocess.run([sys.executable, str(ROOT / "tools" / "hw" / "hw_lib_build.py"), "--offline",
+                                  "--lib", tmp, "--stock", str(STOCK)], capture_output=True, text=True)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             built = pathlib.Path(tmp)
             self.assertEqual((built / "owltunes.kicad_sym").read_text(), (LIB / "owltunes.kicad_sym").read_text())
             for path in sorted((built / "owltunes.pretty").glob("*.kicad_mod")):

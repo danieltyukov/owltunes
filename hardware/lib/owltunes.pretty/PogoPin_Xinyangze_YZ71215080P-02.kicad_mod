@@ -3,7 +3,7 @@
 	(generator "pcbnew")
 	(generator_version "10.0")
 	(layer "F.Cu")
-	(descr "Xinyangze YZ71215080P-02 pogo pin, 2.0 mm flange, 0.6 mm locating post, 7.0 mm free height above the board (drawing YZ71215080P-02, p. 3); 2.2 mm pad and a plated 0.8 mm hole for the post (https://datasheet.lcsc.com/datasheet/pdf/a95fd643b0f3d095f6de25ea57e8af6c.pdf?productCode=C5157364)")
+	(descr "Xinyangze YZ71215080P-02 pogo pin, 2.0 mm flange, 0.6 mm locating post, 7.0 mm free height above the board (drawing YZ71215080P-02, p. 3); 2.2 mm pad, a plated 0.8 mm hole for the post and a ring of paste clear of the hole (https://datasheet.lcsc.com/datasheet/pdf/a95fd643b0f3d095f6de25ea57e8af6c.pdf?productCode=C5157364)")
 	(tags "pogo pin spring contact C5157364")
 	(property "Reference" "REF**"
 		(at 0 -2.05 0)
@@ -38,7 +38,7 @@
 			)
 		)
 	)
-	(property "Description" "Xinyangze YZ71215080P-02 pogo pin, 2.0 mm flange, 0.6 mm locating post, 7.0 mm free height above the board (drawing YZ71215080P-02, p. 3); 2.2 mm pad and a plated 0.8 mm hole for the post"
+	(property "Description" "Xinyangze YZ71215080P-02 pogo pin, 2.0 mm flange, 0.6 mm locating post, 7.0 mm free height above the board (drawing YZ71215080P-02, p. 3); 2.2 mm pad, a plated 0.8 mm hole for the post and a ring of paste clear of the hole"
 		(at 0 0 0)
 		(layer "F.Fab")
 		(hide yes)
@@ -84,6 +84,24 @@
 			)
 		)
 	)
+	(pad "" smd custom
+		(at 0.825 0)
+		(size 0.2 0.2)
+		(layers "F.Paste")
+		(options
+			(clearance outline)
+			(anchor circle)
+		)
+		(primitives
+			(gr_circle
+				(center -0.825 0)
+				(end 0 0)
+				(width 0.55)
+				(fill no)
+			)
+		)
+		(uuid "a99b22b8-d482-5ae1-88cc-edcd05b193f5")
+	)
 	(pad "1" thru_hole circle
 		(at 0 0)
 		(size 1.1 1.1)
@@ -95,7 +113,7 @@
 	(pad "1" smd circle
 		(at 0 0)
 		(size 2.2 2.2)
-		(layers "F.Cu" "F.Mask" "F.Paste")
+		(layers "F.Cu" "F.Mask")
 		(uuid "78f6eab9-9f91-53a2-b179-1a957108a97a")
 	)
 	(embedded_fonts no)

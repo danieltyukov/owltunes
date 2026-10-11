@@ -49,9 +49,14 @@ checks wherever KiCad is installed):
 
 ## How the footprints are drawn
 
-- Every pad is the manufacturer's recommended land; where the datasheet gives a stencil, the paste
-  opening follows it (TPS63802 pad 8, OPT3001 thermal pad). Maxim gives no stencil for the TDFN;
-  its exposed pad prints 0.05 mm in from the edge (81 %).
+- Every pad is the manufacturer's recommended land. Where the datasheet gives a stencil, the paste
+  openings follow it: TPS63802 pad 8 (p. 37), OPT3001 thermal pad (p. 43), and every FH26W
+  contact and tab (drawing p. 1, recommended stencil pattern: openings 0.23 wide, 0.55 long on
+  the even row and 0.65 long on the odd row, flush with the pads' outer ends, 2.4 between them;
+  tab openings 0.3 x 0.7 on the tab's outer side). KiCad's paste margins shrink a pad evenly, so
+  the FH26W contacts carry no paste of their own and the openings are separate paste-only pads
+  (unnumbered, as in KiCad's ESP32 module footprint). Maxim gives no stencil for the TDFN; its
+  exposed pad prints 0.05 mm in from the edge (81 %). Other pads print in full.
 - Each footprint keeps the orientation of the part's EasyEDA footprint, which is JLC's zero
   rotation, so the placement file needs no rotation offset for these parts (confirm in JLC's
   placement preview when ordering). TPS63802: pin 1 top left, pins 1 to 5 down the left side.
@@ -65,7 +70,12 @@ checks wherever KiCad is installed):
   Waveshare board (not stocked by JLC) was not available to compare directly.
 - Pogo pin: no land pattern is published. The 2.2 mm pad is the 2.0 mm flange plus 0.1 mm; the
   0.60 +-0.03 mm locating post goes into a plated 0.8 mm hole (at least 0.72 mm with JLCPCB's
-  -0.08 mm plated-hole tolerance). The pin stands 7.0 mm above the board free and 6.0 mm working.
+  -0.08 mm plated-hole tolerance). The paste is a ring from 0.55 mm (0.15 mm clear of the hole)
+  to the pad edge, so none of it runs into the hole. The pin stands 7.0 mm above the board free
+  and 6.0 mm working. The footprint type is SMD although it has a plated hole, because JLC places
+  the part as SMD (LCSC lists it as SMD): it stays in a placement file exported with KiCad's
+  SMD-only option, and the Fabrication Toolkit lists it either way. KiCad's footprint_type_mismatch
+  check is set to ignore in both projects, so DRC does not judge this choice.
 - Murata DFE201612E: a rule area on the part's copper side keeps tracks, vias and copper pour out
   of the gap between the electrodes (p. 7: the core's insulation resistance is low).
 - Courtyards are the pads, the body and the silkscreen plus 0.25 mm. Silkscreen lines are 0.15 mm

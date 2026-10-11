@@ -121,6 +121,12 @@ class Pad:
     drill: float = 0.0
     paste: tuple[float, float] | None = None  # stencil aperture (w, h) when the datasheet reduces it
     exposed: bool = False  # exposed pad: heat sink property, solid zone connection
+    layers: tuple[str, ...] = ("F.Cu", "F.Mask", "F.Paste")  # smd pads; ("F.Paste",) is a stencil opening
+    ring: tuple[float, float] | None = None  # custom paste pad: ring (radius, width) round the origin
+
+    @property
+    def copper(self) -> bool:
+        return self.kind == "thru_hole" or "F.Cu" in self.layers
 
 
 @dataclass(frozen=True)
@@ -188,11 +194,24 @@ def fh26w(n: int = 31) -> tuple[Pad, ...]:
     the outer odd contacts, 0.2 in from the odd row's outer edge. 31 contacts: C = 9.0, B = 8.4
     (p. 4). Origin midway between the row centres; contact 1 at the left of the FPC side."""
     odd_y = (0.65 / 2 + 2.15 + 0.8 / 2) / 2  # row centres 2.875 apart
-    pads = [Pad(str(k), round((k - (n + 1) / 2) * 0.3, 6), odd_y if k % 2 else -odd_y, 0.3, 0.8 if k % 2 else 0.65)
-            for k in range(1, n + 1)]
+    cu = ("F.Cu", "F.Mask")  # the stencil openings below are separate pads
+    pads = [Pad(str(k), round((k - (n + 1) / 2) * 0.3, 6), odd_y if k % 2 else -odd_y, 0.3, 0.8 if k % 2 else 0.65,
+                layers=cu) for k in range(1, n + 1)]
     tab_x = round((n - 1) / 2 * 0.3 + 0.5 + 0.4 / 2, 6)
     tab_y = round(odd_y + 0.8 / 2 - 0.2 - 0.95 / 2, 6)
-    pads += [Pad("MP", -tab_x, tab_y, 0.4, 0.95), Pad("MP", tab_x, tab_y, 0.4, 0.95)]
+    pads += [Pad("MP", -tab_x, tab_y, 0.4, 0.95, layers=cu), Pad("MP", tab_x, tab_y, 0.4, 0.95, layers=cu)]
+    # Recommended stencil pattern (t = 0.1), same page: openings 0.23 wide, even row 0.55 and odd row
+    # 0.65 long, flush with the pads' outer ends (2.4 apart, 3.6 overall); tab openings 0.3 x 0.7 on
+    # the tab's outer side, outer edge 0.9 from the outer odd contact, lower edge 0.2 up from the odd
+    # row's end. KiCad's paste margins shrink a pad evenly, so these are paste-only pads.
+    odd_end, even_end = odd_y + 0.8 / 2, -odd_y - 0.65 / 2
+    paste = ("F.Paste",)
+    pads += [Pad("", round((k - (n + 1) / 2) * 0.3, 6),
+                 round(odd_end - 0.65 / 2, 6) if k % 2 else round(even_end + 0.55 / 2, 6),
+                 0.23, 0.65 if k % 2 else 0.55, layers=paste) for k in range(1, n + 1)]
+    open_x = round((n - 1) / 2 * 0.3 + 0.9 - 0.3 / 2, 6)
+    open_y = round(odd_end - 0.2 - 0.7 / 2, 6)
+    pads += [Pad("", -open_x, open_y, 0.3, 0.7, layers=paste), Pad("", open_x, open_y, 0.3, 0.7, layers=paste)]
     return tuple(pads)
 
 
@@ -230,11 +249,15 @@ FOOTPRINTS = {
     "PogoPin_Xinyangze_YZ71215080P-02": Footprint(
         "C5157364", "SMD_BD2.0-D0.6",
         "Xinyangze YZ71215080P-02 pogo pin, 2.0 mm flange, 0.6 mm locating post, 7.0 mm free height above the "
-        "board (drawing YZ71215080P-02, p. 3); 2.2 mm pad and a plated 0.8 mm hole for the post "
+        "board (drawing YZ71215080P-02, p. 3); 2.2 mm pad, a plated 0.8 mm hole for the post and a ring of "
+        "paste clear of the hole "
         "(https://datasheet.lcsc.com/datasheet/pdf/a95fd643b0f3d095f6de25ea57e8af6c.pdf?productCode=C5157364)",
         "pogo pin spring contact", (-1.0, -1.0, 1.0, 1.0),
-        (Pad("1", 0.0, 0.0, 2.2, 2.2, shape="circle"),
-         Pad("1", 0.0, 0.0, 1.1, 1.1, shape="circle", kind="thru_hole", drill=0.8)),
+        (Pad("1", 0.0, 0.0, 2.2, 2.2, shape="circle", layers=("F.Cu", "F.Mask")),
+         Pad("1", 0.0, 0.0, 1.1, 1.1, shape="circle", kind="thru_hole", drill=0.8),
+         # Paste as a ring from 0.55 mm (0.15 mm clear of the hole) to the pad edge, so none of it
+         # runs into the hole. A custom pad anchored on the ring; the anchor lies inside it.
+         Pad("", 0.825, 0.0, 0.2, 0.2, shape="custom", layers=("F.Paste",), ring=(0.825, 0.55))),
         round_body=True, pin1=False, model_offset=(0.0, 0.0, -1.4)),  # the model's post is 1.4 long
     "L_Murata_DFE201612E": Footprint(
         "C668312", "IND-SMD_L2.0-W1.6-1",
@@ -452,7 +475,8 @@ def footprint(name: str, fp: Footprint) -> str:
                       ["layer", q(layer)], ["uuid", q(next(ids))]])
 
     bx0, by0, bx1, by1 = fp.body
-    keep = [pad_bbox(p, SILK_PAD_GAP + SILK_W / 2) for p in fp.pads]
+    copper = [p for p in fp.pads if p.copper]
+    keep = [pad_bbox(p, SILK_PAD_GAP + SILK_W / 2) for p in copper]
 
     # Fab: package outline with a chamfered pin 1 corner (round bodies get a circle).
     if fp.round_body:
@@ -507,7 +531,7 @@ def footprint(name: str, fp: Footprint) -> str:
         silk_items.append((dot[0] - r - SILK_W / 2, dot[1] - r - SILK_W / 2, dot[0] + r + SILK_W / 2, dot[1] + r + SILK_W / 2))
 
     # Courtyard: pads and body plus 0.25 mm, and the silkscreen.
-    crt = round_out(union([*(pad_bbox(p, CRTYD_GAP) for p in fp.pads), (bx0 - CRTYD_GAP, by0 - CRTYD_GAP,
+    crt = round_out(union([*(pad_bbox(p, CRTYD_GAP) for p in copper), (bx0 - CRTYD_GAP, by0 - CRTYD_GAP,
                                                                          bx1 + CRTYD_GAP, by1 + CRTYD_GAP),
                            *silk_items]))
     if fp.round_body:
@@ -540,8 +564,7 @@ def footprint(name: str, fp: Footprint) -> str:
                  ["uuid", q(next(ids))], font(fab_size, round(fab_size * 0.15, 3))])
 
     for p in fp.pads:
-        layers = (["layers", q("*.Cu"), q("*.Mask")] if p.kind == "thru_hole"
-                  else ["layers", q("F.Cu"), q("F.Mask"), q("F.Paste")])
+        layers = ["layers", q("*.Cu"), q("*.Mask")] if p.kind == "thru_hole" else ["layers", *map(q, p.layers)]
         node = ["pad", q(p.number), p.kind, p.shape, ["at", num(p.x), num(p.y)], ["size", num(p.w), num(p.h)]]
         if p.kind == "thru_hole":
             node.append(["drill", num(p.drill)])
@@ -559,6 +582,11 @@ def footprint(name: str, fp: Footprint) -> str:
                 node.append(["solder_paste_margin_ratio", num(ratio)])
         if p.exposed:
             node.append(["zone_connect", "2"])
+        if p.ring:
+            radius, width = p.ring
+            node.append(["options", ["clearance", "outline"], ["anchor", "circle"]])
+            node.append(["primitives", ["gr_circle", xy("center", -p.x, -p.y), xy("end", -p.x + radius, -p.y),
+                                        ["width", num(width)], ["fill", "no"]]])
         node.append(["uuid", q(next(ids))])
         head.append(node)
 
@@ -634,7 +662,7 @@ def compare_with_easyeda(src: Path) -> None:
             print(f"  {name}: no EasyEDA footprint {fp.easyeda}")
             continue
         theirs = read_pads(path.read_text())
-        mine = [(p.number, p.x, p.y, p.w, p.h) for p in fp.pads]
+        mine = [(p.number, p.x, p.y, p.w, p.h) for p in fp.pads if p.copper]
         if fp.easyeda.startswith("CONN-SMD_FH26W"):
             theirs = [(("MP" if n.startswith("G") else n), *rest) for n, *rest in theirs]
         if sorted(t[0] for t in theirs) != sorted(m[0] for m in mine):
@@ -653,7 +681,10 @@ def compare_with_easyeda(src: Path) -> None:
 
 
 def kicad_cli(*args: str) -> None:
-    subprocess.run(["kicad-cli", *args], check=True, capture_output=True, text=True)
+    run = subprocess.run(["kicad-cli", *args], capture_output=True, text=True)
+    if run.returncode:
+        sys.stderr.write(run.stdout + run.stderr)
+        raise SystemExit(f"kicad-cli {' '.join(args)} failed with exit code {run.returncode}")
 
 
 def build(lib: Path, src: Path | None, stock_dir: Path) -> None:
