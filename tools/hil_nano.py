@@ -26,6 +26,7 @@ Console logs go to build/hil-nano/console.log.
 from __future__ import annotations
 
 import argparse
+import calendar
 import ipaddress
 import json
 import os
@@ -141,6 +142,14 @@ def private_ipv4(text: str) -> bool:
         return False
 
 
+def utc_seconds(text: str) -> float:
+    """Seconds since 1970 for "2026-10-11T09:30:00Z"; 0 when the text is not such a time."""
+    try:
+        return float(calendar.timegm(time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")))
+    except ValueError:
+        return 0.0
+
+
 def wifi_checks(board: Board) -> None:
     """Join the test network, with a network that is not in range saved ahead of it, then rejoin
     after a reset. The password is sent to the board only; it is never printed or logged."""
@@ -163,6 +172,8 @@ def wifi_checks(board: Board) -> None:
         check(failed.get("error") == "wifi_not_found", "the owl reports the network it cannot find")
     up = board.wait_event("network", "up", timeout=90, since=since)
     check(private_ipv4(up.get("ip", "")), f"then it joins {ssid} and gets an address ({up.get('ip')})")
+    synced = board.wait_event("time", "synced", timeout=60, since=since)
+    check(abs(utc_seconds(synced.get("utc", "")) - time.time()) < 120, f"the clock is set from NTP ({synced.get('utc')})")
     if not others:
         check(board.request("wifi_remove", ssid=MISSING_SSID).get("ok") is True, "the missing network is removed")
     info = board.command("info", "info")

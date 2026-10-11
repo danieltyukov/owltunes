@@ -1,5 +1,5 @@
-set(srcs main.c demo_state.c settings_store.c console.c shell.c status.c provisioning_task.c spotify_link.c
-         callback_server.c)
+set(srcs main.c demo_state.c settings_store.c console.c shell.c status.c timesync.c provisioning_task.c
+         spotify_link.c callback_server.c)
 if(CONFIG_OWL_NET_ETH_QEMU)
     list(APPEND srcs net_qemu.c)
 elseif(CONFIG_OWL_NET_WIFI)

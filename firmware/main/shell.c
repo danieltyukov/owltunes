@@ -15,6 +15,7 @@
 #include "provisioning_task.h"
 #include "sdkconfig.h"
 #include "status.h"
+#include "timesync.h"
 #if CONFIG_SPIRAM
 #include "esp_psram.h"
 #endif
@@ -52,9 +53,11 @@ static void reply_info(void)
 {
     net_info_t net;
     provisioning_view_t view;
+    char utc[24] = "";
     uint32_t flash_size = 0;
     net_info(&net);
     provisioning_view(&view);
+    timesync_utc(utc, sizeof utc);
     esp_flash_get_size(NULL, &flash_size);
     const esp_partition_t *running = esp_ota_get_running_partition();
     owl_status_t status = status_now(&view);
@@ -79,7 +82,7 @@ static void reply_info(void)
         .rssi = net.rssi,
         .ip = net.ip,
         .linked = view.linked,
-        .utc = "",
+        .utc = utc,
     };
     if (owl_shell_info_line(s_out, sizeof s_out, &info)) {
         owl_console_write(s_out);

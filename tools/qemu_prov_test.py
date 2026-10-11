@@ -214,6 +214,13 @@ def run_checks(flash: pathlib.Path) -> None:
         up = owl.wait_event("network", "up")
         check(up.get("ip") == QEMU_IP, "QEMU Ethernet comes up with the slirp address")
         check(owl.send("hello").get("setup") == "needs_spotify", "with a network the owl needs Spotify")
+        if os.environ.get("OWL_QEMU_NO_NTP"):
+            print("skip - the NTP clock check (OWL_QEMU_NO_NTP is set: this network blocks UDP 123)")
+        else:
+            # Bounded: without NTP this fails after 60 s with a clear message, it never hangs.
+            synced = owl.wait_event("time", "synced", timeout=60)
+            check(re.fullmatch(r"20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ", synced.get("utc", "")) is not None,
+                  f"the clock is set from NTP once the network is up ({synced.get('utc')})")
         shell_checks(owl)
 
         check(owl.send("wifi_add", ssid="Home", password="short").get("error") == "bad_password",

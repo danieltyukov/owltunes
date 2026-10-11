@@ -53,3 +53,9 @@ means a known command had a missing, extra or malformed argument.
 ### help
 
 `{"event":"help","commands":"help, info"}`
+
+### time
+
+`{"event":"time","state":"synced","utc":"2026-10-11T09:30:00Z"}` each time the clock is set from
+NTP: soon after the network comes up, then about once an hour. TLS does not depend on the clock,
+so the owl works on a network that blocks NTP; only the times in its lines stay empty.

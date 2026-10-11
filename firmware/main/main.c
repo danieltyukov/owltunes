@@ -20,6 +20,7 @@
 #include "settings_store.h"
 #include "shell.h"
 #include "status.h"
+#include "timesync.h"
 
 static const char *TAG = "owltunes";
 
@@ -36,6 +37,16 @@ static void owl_name(char *out, size_t cap)
     snprintf(out, cap, "OwlTunes-%02X%02X", mac[4], mac[5]);
 }
 
+/* Runs on a network task: provisioning hears about every change, and a new address asks NTP for the
+ * time at once. */
+static void on_network(bool up, const char *ip)
+{
+    provisioning_network(up, ip);
+    if (up) {
+        timesync_network_up();
+    }
+}
+
 void app_main(void)
 {
     static owl_app_t app;
@@ -48,8 +59,9 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     owl_name(name, sizeof name);
     snprintf(setup_url, sizeof setup_url, "%s?owl=%s", CONFIG_OWL_SETUP_URL, name);
+    timesync_start();
     provisioning_start(name, esp_app_get_description()->version);
-    net_start(provisioning_network, provisioning_network_failed);
+    net_start(on_network, provisioning_network_failed);
     /* The console starts last: a login (spotify_begin) cannot arrive before the network code has
      * turned the radio on, and only then is esp_fill_random a true random source for PKCE. */
     shell_start(name);
