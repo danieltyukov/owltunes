@@ -8,6 +8,6 @@ drc = false
 
 [[board]]
 name = "perch-dock"
-netlist = false
-contract = false
-drc = false
+netlist = true
+contract = false  # no generated contract; tools/tests/test_hw_perch.py checks the geometry
+drc = true  # accepted library warnings: 2 silk_edge_clearance on J1 (shell overhangs the edge by 0.5 mm), excluded in perch-dock.kicad_pro

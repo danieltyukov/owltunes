@@ -70,7 +70,16 @@
         }
       },
       "diff_pair_dimensions": [],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        [
+          "silk_edge_clearance|117000000|95300000|b6fd65c2-1e7e-482c-a904-0bcca1880ef0|85fbe687-89cd-4bb7-99c5-9b830205c4ae",
+          "J1 library silkscreen runs to the shell front, which overhangs the board edge by 0.5 mm by design"
+        ],
+        [
+          "silk_edge_clearance|117000000|104700000|b6fd65c2-1e7e-482c-a904-0bcca1880ef0|4690f325-42dd-4e5e-8b31-f1b0bb410a32",
+          "J1 library silkscreen runs to the shell front, which overhangs the board edge by 0.5 mm by design"
+        ]
+      ],
       "meta": {
         "version": 2
       },
