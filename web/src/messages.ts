@@ -12,6 +12,7 @@ const MESSAGES = new Map<string, string>(Object.entries({
   bad_client_id: "That is not a client ID. It is the 32 letters and digits on your Spotify app's page.",
   bad_redirect_uri: "The redirect URI must start with https://.",
   no_client_id: "Save your client ID first.",
+  offline: "The owl is not on Wi-Fi yet. Wait until this page shows it online (add a network above if there is none), then press Log in again.",
   no_session: "That login is no longer open. Press Log in with Spotify again.",
   expired: "That login took more than 10 minutes. Press Log in with Spotify again.",
   bad_state: "That login belongs to an earlier attempt. Press Log in with Spotify again.",

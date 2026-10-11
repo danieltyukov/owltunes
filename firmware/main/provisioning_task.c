@@ -67,8 +67,10 @@ static int64_t now_ms(void)
 }
 
 /* esp_fill_random is a true RNG only while Wi-Fi or Bluetooth runs. The real boards start Wi-Fi at
- * boot (net_wifi.c), so the PKCE verifier is truly random; QEMU builds are test-only and get weaker
- * randomness from the host. */
+ * boot, before the console (net_wifi.c, main.c), and owl_prov refuses spotify_begin while the owl
+ * is offline, so the PKCE verifier is made while the radio runs. bootloader_random_enable() is not
+ * used: ESP-IDF says it must not run while the radio or the ADC is in use. QEMU builds are
+ * test-only and get weaker randomness from the host. */
 static void hw_random(uint8_t *buf, size_t len)
 {
     esp_fill_random(buf, len);

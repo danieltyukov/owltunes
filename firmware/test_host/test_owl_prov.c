@@ -170,8 +170,36 @@ static void test_spotify_client_validates_and_resets_link_on_change(void)
 static void test_begin_requires_client(void)
 {
     fresh();
+    owl_prov_set_network(&prov, true, "192.168.1.23");
     send("{\"id\":1,\"cmd\":\"spotify_begin\"}");
     expect_error("no_client_id");
+}
+
+/* esp_fill_random is truly random only while the radio runs, and an owl that is online has its
+ * radio on. Offline, the login could not finish anyway and the state would carry no address. */
+static void test_begin_needs_the_network(void)
+{
+    linkable();
+    owl_prov_set_network(&prov, false, NULL);
+    s_next = 0;
+    send("{\"id\":2,\"cmd\":\"spotify_begin\"}");
+    expect_error("offline");
+    TEST_ASSERT_EQUAL_UINT8(0, s_next); /* no random bytes drawn */
+    TEST_ASSERT_EQUAL_INT64(0, prov.session_expires_ms);
+    fresh();
+    send("{\"id\":3,\"cmd\":\"spotify_begin\"}");
+    expect_error("offline"); /* the first thing to fix during setup is the Wi-Fi */
+}
+
+static void test_a_refused_begin_keeps_the_open_login(void)
+{
+    linkable();
+    send("{\"id\":2,\"cmd\":\"spotify_begin\"}");
+    TEST_ASSERT_TRUE(ok());
+    owl_prov_set_network(&prov, false, NULL);
+    send("{\"id\":3,\"cmd\":\"spotify_begin\"}");
+    expect_error("offline");
+    TEST_ASSERT_NULL(owl_prov_accept_code(&prov, "AQDcode", STATE, 2000));
 }
 
 static void test_begin_returns_authorize_url_with_ip_in_state(void)
@@ -388,6 +416,8 @@ int main(void)
     RUN_TEST(test_wifi_add_refuses_an_escaped_nul);
     RUN_TEST(test_spotify_client_validates_and_resets_link_on_change);
     RUN_TEST(test_begin_requires_client);
+    RUN_TEST(test_begin_needs_the_network);
+    RUN_TEST(test_a_refused_begin_keeps_the_open_login);
     RUN_TEST(test_begin_returns_authorize_url_with_ip_in_state);
     RUN_TEST(test_code_flow_exchanges_and_saves_token);
     RUN_TEST(test_wrong_state_is_rejected);

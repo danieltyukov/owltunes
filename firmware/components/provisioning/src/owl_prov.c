@@ -317,12 +317,19 @@ static const char *cmd_spotify_client(owl_prov_t *p, const cJSON *req)
 static void cmd_spotify_begin(owl_prov_t *p, int id, int64_t now_ms, char *out, size_t cap)
 {
     char url[768];
+    /* Offline, the login could not finish and the state would carry no address for the LAN route.
+     * Refusing also means the verifier is only made while the radio runs, which esp_fill_random
+     * needs to give truly random bytes (an online owl has its radio on). An open login stays open. */
+    if (!p->network_up) {
+        respond_error(id, "offline", out, cap);
+        return;
+    }
     if (p->settings.client_id[0] == '\0' || p->settings.redirect_uri[0] == '\0') {
         respond_error(id, "no_client_id", out, cap);
         return;
     }
     end_session(p);
-    spotify_pkce_new(&p->session, p->random, p->network_up ? p->ip : NULL);
+    spotify_pkce_new(&p->session, p->random, p->ip);
     if (!spotify_authorize_url(p->settings.client_id, p->settings.redirect_uri, &p->session, url,
                                sizeof url)) {
         end_session(p);

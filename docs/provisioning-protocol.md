@@ -33,7 +33,7 @@ Success is `{"id":N,"ok":true, ...}` with the fields below. Failure is
 | `wifi_add` | `ssid` (1 to 32 bytes), `password` (empty for an open network, else 8 to 64 bytes); neither may contain control characters (bytes below 0x20, and 0x7f) | none | `bad_ssid`, `bad_password`, `full` (four networks saved) |
 | `wifi_remove` | `ssid` | none | `not_found` |
 | `spotify_client` | `client_id` (32 lowercase hex characters), `redirect_uri` (`https://...` or `http://127.0.0.1:<port>...`, under 160 characters) | none | `bad_client_id`, `bad_redirect_uri` |
-| `spotify_begin` | none | `authorize_url` | `no_client_id`, `too_long` |
+| `spotify_begin` | none | `authorize_url` | `offline`, `no_client_id`, `too_long` |
 | `spotify_code` | `code`, `state` | `accepted` (true) | `no_session`, `expired`, `bad_state`, `bad_code`, `busy` |
 | `spotify_logout` | none | none | |
 
@@ -66,6 +66,7 @@ Errors in a reply (`"ok":false`):
 | `too_long` | The reply, or the authorize URL for `spotify_begin`, would not fit in one line. |
 | `bad_ssid`, `bad_password`, `full`, `not_found` | Wi-Fi network checks, see the table above. |
 | `bad_client_id`, `bad_redirect_uri` | Client ID or redirect URI checks, see the table above. |
+| `offline` | `spotify_begin` while the owl is not online. The login could not finish without a network, and the owl makes the PKCE verifier only while its radio runs, so its random numbers are truly random. A login that is already open stays open. |
 | `no_client_id` | `spotify_begin` before a client ID and redirect URI were saved. |
 | `no_session` | `spotify_code` without an open login. |
 | `expired` | The login was opened more than 10 minutes ago. |
@@ -99,9 +100,9 @@ The `error` of a `network` event:
 
 1. The page sends `spotify_client` with the person's client ID and, as the redirect URI, the
    address of the callback page next to it.
-2. `spotify_begin` makes the owl create a PKCE verifier (64 random bytes), its S256 challenge and
-   a `state`: 16 random bytes in base64url, then `.` and the owl's IPv4 address when it is
-   online. The reply is the full authorize URL. The login stays open for 10 minutes; a new
+2. `spotify_begin`, sent while the owl is online, makes the owl create a PKCE verifier (64 random
+   bytes), its S256 challenge and a `state`: 16 random bytes in base64url, then `.` and the owl's
+   IPv4 address. The reply is the full authorize URL. The login stays open for 10 minutes; a new
    `spotify_begin` replaces it.
 3. Spotify sends the browser to the redirect URI with `code` and `state`. The code reaches the owl
    by one of three routes, all ending in the same check:

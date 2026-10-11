@@ -150,6 +150,18 @@ test("a late Wi-Fi failure does not undo the network the owl is on", async ({ pa
   await expect(page.getByText("Not on Wi-Fi yet.")).toBeHidden();
 });
 
+test("setup asks for Wi-Fi before a Spotify login", async ({ page }) => {
+  await openSetup(page);
+  await page.getByLabel("Client ID").fill(CLIENT_ID);
+  await page.getByRole("button", { name: "Save client ID" }).click();
+  await expect(page.getByRole("status")).toHaveText("Client ID saved. Now log in.");
+  await page.getByRole("button", { name: "Log in with Spotify" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "The owl is not on Wi-Fi yet. Wait until this page shows it online (add a network above if there is none), then press Log in again.",
+  );
+  expect((await owlState(page)).state).toBeNull();
+});
+
 test("setup checks input before the owl sees it", async ({ page }) => {
   await openSetup(page);
   await page.getByLabel("Network name").fill("Home");

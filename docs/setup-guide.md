@@ -46,10 +46,10 @@ log in again. If you host your own copy of the setup site, set `CONFIG_OWL_SETUP
 
 ## 4. Log in
 
-Press **Log in with Spotify**. Spotify opens in a new tab: check the permissions and agree. That
-tab hands the login to the setup page, the setup page passes it to the owl, and the owl finishes
-the login with Spotify by itself. The setup page then says "Linked" and the owl leaves its setup
-screen.
+Once the page shows the owl online, press **Log in with Spotify**. Spotify opens in a new tab:
+check the permissions and agree. That tab hands the login to the setup page, the setup page passes
+it to the owl, and the owl finishes the login with Spotify by itself. The setup page then says
+"Linked" and the owl leaves its setup screen.
 
 If the setup page was closed, the Spotify tab offers two other ways:
 

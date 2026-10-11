@@ -19,8 +19,18 @@ GOOD_HELLO = {"fw": "v1.2.3", "protocol": 1, "name": "OwlTunes-7DF8"}
 
 
 class FakeBoard:
-    def __init__(self, info):
+    def __init__(self, info, begin_error="offline"):
         self.info = info
+        self.begin_error = begin_error
+        self.requests = []
+
+    def request(self, cmd, timeout=10.0, **params):
+        self.requests.append(cmd)
+        if cmd == "spotify_begin" and self.begin_error:
+            return {"ok": False, "error": self.begin_error}
+        if cmd == "spotify_begin":
+            return {"ok": True, "authorize_url": "https://accounts.spotify.com/authorize?state=s"}
+        raise BoardError(cmd)
 
     def command(self, text, event, state=None, timeout=10, where=None):
         if text == "info":
@@ -85,11 +95,24 @@ class BuiltVersionTest(unittest.TestCase):
 
 
 class BootChecksTest(unittest.TestCase):
-    def run_checks(self, hello=None, fresh=False, **changes):
-        info = {**GOOD_INFO, **changes}
+    def run_checks(self, hello=None, fresh=False, owl=None, **changes):
+        owl = owl or FakeBoard({**GOOD_INFO, **changes})
         with mock.patch.object(hil_nano, "built_version", return_value="v1.2.3"), \
                 mock.patch("builtins.print"):
-            return hil_nano.boot_checks(FakeBoard(info), hello or GOOD_HELLO, fresh)
+            return hil_nano.boot_checks(owl, hello or GOOD_HELLO, fresh)
+
+    def test_an_owl_without_a_network_refuses_to_start_a_login(self):
+        board = FakeBoard(GOOD_INFO)
+        self.run_checks(hello={**GOOD_HELLO, "networks": []}, owl=board)
+        self.assertEqual(board.requests, ["spotify_begin"])
+        for error in (None, "no_client_id"):
+            with self.subTest(error=error), self.assertRaises(hil_nano.Failure):
+                self.run_checks(hello={**GOOD_HELLO, "networks": []}, owl=FakeBoard(GOOD_INFO, begin_error=error))
+
+    def test_an_owl_with_a_saved_network_is_not_asked_for_a_login(self):
+        board = FakeBoard(GOOD_INFO, begin_error=None)
+        self.run_checks(hello={**GOOD_HELLO, "networks": ["Home"]}, owl=board)
+        self.assertEqual(board.requests, [])
 
     def test_a_good_board_passes(self):
         self.assertEqual(self.run_checks()["board"], "nano_esp32")

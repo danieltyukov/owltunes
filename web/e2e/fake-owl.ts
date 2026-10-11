@@ -88,6 +88,10 @@ export function installFakeOwl(options: FakeOwlOptions): void {
         reply(id, { ok: true });
         return;
       case "spotify_begin": {
+        if (!online()) {
+          reply(id, { ok: false, error: "offline" });
+          return;
+        }
         if (owl.clientId === "") {
           reply(id, { ok: false, error: "no_client_id" });
           return;

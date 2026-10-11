@@ -128,6 +128,9 @@ def boot_checks(board: Board, hello: dict, fresh: bool) -> dict:
               "a new owl asks for Wi-Fi with a slowly blinking blue LED")
     refused = board.command("frobnicate", "cmd", "refused")
     check(refused.get("error") == "unknown_cmd", "the console refuses an unknown command")
+    if not hello.get("networks"):  # with no network saved the owl cannot be online
+        begin = board.request("spotify_begin")
+        check(begin.get("error") == "offline", "an owl that is offline refuses to start a Spotify login")
     return info
 
 

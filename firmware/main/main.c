@@ -63,7 +63,8 @@ void app_main(void)
     provisioning_start(name, esp_app_get_description()->version);
     net_start(on_network, provisioning_network_failed);
     /* The console starts last: a login (spotify_begin) cannot arrive before the network code has
-     * turned the radio on, and only then is esp_fill_random a true random source for PKCE. */
+     * turned the radio on, and only then is esp_fill_random a true random source for PKCE. The
+     * protocol also refuses spotify_begin while the owl is offline. */
     shell_start(name);
 
     lv_init();
