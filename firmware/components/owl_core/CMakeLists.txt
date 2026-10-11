@@ -9,6 +9,7 @@ set(OWL_CORE_SRCS
     src/owl_app.c
     src/owl_crypto.c
     src/owl_status.c
+    src/owl_wifi.c
 )
 
 if(ESP_PLATFORM)
