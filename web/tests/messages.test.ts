@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { describeError, describeEvent } from "../src/messages";
+import { describeError, describeEvent, describeNetworkFailure } from "../src/messages";
 
 test("known error codes get a sentence", () => {
   expect(describeError("invalid_client")).toBe(
@@ -34,4 +34,18 @@ test("a logged-out owl asks for a new login, not a redirect check", () => {
     "Your Spotify login expired or was revoked. Log in again.",
   );
   expect(describeEvent("failed", "bad_request")).not.toBe(describeError("bad_request"));
+});
+
+test("a Wi-Fi failure names the network and what to check", () => {
+  expect(describeNetworkFailure("Home", "wifi_wrong_password")).toBe(
+    "The owl could not join Home: check the password, or move closer to the router. To change the password, remove the network and add it again.",
+  );
+  expect(describeNetworkFailure("Phone", "wifi_not_found")).toContain("2.4 GHz");
+  expect(describeNetworkFailure("Home", "wifi_no_address")).toContain("no address");
+});
+
+test("an unknown Wi-Fi failure still names the network", () => {
+  expect(describeNetworkFailure("Home", "wifi_failed")).toBe("The owl could not join Home (wifi_failed). It keeps trying.");
+  expect(describeNetworkFailure("Home", undefined)).toContain("no reason given");
+  expect(describeNetworkFailure("Home", "constructor")).toContain("(constructor)");
 });

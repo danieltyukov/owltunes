@@ -37,6 +37,26 @@ const EVENT_MESSAGES = new Map<string, string>(Object.entries({
   storage: "The owl could not save the login to its memory. Try again, and update the firmware if it keeps happening.",
 }));
 
+/** Why the owl could not join a saved Wi-Fi network: the error of a network event in state failed. */
+const WIFI_MESSAGES = new Map<string, (ssid: string) => string>(Object.entries({
+  // The owl also reports a wrong password when the signal is too weak to finish the handshake.
+  wifi_wrong_password: (ssid: string) =>
+    `The owl could not join ${ssid}: check the password, or move closer to the router. To change the password, remove the network and add it again.`,
+  wifi_not_found: (ssid: string) =>
+    `The owl cannot find ${ssid}. Check the name, and that the network is in range and uses 2.4 GHz.`,
+  wifi_no_address: (ssid: string) =>
+    `The owl got no address from ${ssid} in time. Check that the router is working; the owl keeps trying.`,
+}));
+
+/** The sentence for a network event in state failed; the owl keeps trying the next saved network. */
+export function describeNetworkFailure(ssid: string, error: string | undefined): string {
+  const known = error === undefined ? undefined : WIFI_MESSAGES.get(error);
+  if (known !== undefined) {
+    return known(ssid);
+  }
+  return `The owl could not join ${ssid} (${error ?? "no reason given"}). It keeps trying.`;
+}
+
 export function describeError(code: string): string {
   return MESSAGES.get(code) ?? `Something went wrong (${code}).`;
 }

@@ -126,6 +126,30 @@ test("a stray linked event does not cancel a login in progress", async ({ page }
   expect((await owlState(page)).codes).toEqual(["AQDtest-code"]);
 });
 
+test("setup explains a Wi-Fi network the owl could not join", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "player", status: "playing", title: "Night Flight", link: "api" }); // console lines are ignored
+    emit({ event: "network", state: "failed", ssid: "Home", error: "wifi_wrong_password" });
+  });
+  await expect(page.getByRole("status")).toHaveText(
+    "The owl could not join Home: check the password, or move closer to the router. To change the password, remove the network and add it again.",
+  );
+  await expect(page.getByText("Not on Wi-Fi yet.")).toBeVisible();
+});
+
+test("a late Wi-Fi failure does not undo the network the owl is on", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "up", ip: "192.168.1.20" });
+    emit({ event: "network", state: "failed", ssid: "Old", error: "wifi_not_found" });
+  });
+  await expect(page.getByText("192.168.1.20")).toBeVisible();
+  await expect(page.getByText("Not on Wi-Fi yet.")).toBeHidden();
+});
+
 test("setup checks input before the owl sees it", async ({ page }) => {
   await openSetup(page);
   await page.getByLabel("Network name").fill("Home");

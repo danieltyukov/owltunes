@@ -2,7 +2,7 @@
 
 import { $ } from "./dom";
 import { CHANNEL, type Handoff } from "./callback";
-import { describeError, describeEvent } from "./messages";
+import { describeError, describeEvent, describeNetworkFailure } from "./messages";
 import { OwlClient, OwlError, type OwlEvent, type OwlReply, type Transport } from "./protocol";
 import { openSerial, serialSupported } from "./serial";
 import { clientIdValid, defaultRedirectUri, normalizeClientId, redirectUriValid, ssidValid, wifiPasswordValid } from "./validate";
@@ -98,7 +98,10 @@ async function firstHello(): Promise<OwlReply> {
 }
 
 function onEvent(event: OwlEvent): void {
-  if (event.event === "network") {
+  if (event.event === "network" && event.state === "failed") {
+    // Failures queue behind the newest up/down state, so this says nothing about the current network.
+    status(describeNetworkFailure(typeof event.ssid === "string" ? event.ssid : "", typeof event.error === "string" ? event.error : undefined));
+  } else if (event.event === "network") {
     $("owl-network").textContent = networkText(event.state === "up" ? event.ip : "");
   } else if (event.event === "spotify") {
     if (event.state === "linking") {
