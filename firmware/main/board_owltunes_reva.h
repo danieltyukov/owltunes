@@ -2,10 +2,10 @@
 
 /* OwlTunes main board rev A: ESP32-S3-WROOM-1-N16R8 pin map, bus addresses and board rules.
  *
- * Header only: nothing in the firmware includes it yet. The rev A board support package arrives
- * with the P3 board selection and takes its pins from here. tools/hw/hw_pinmap.py checks every
- * OWL_PIN_ value against the KiCad netlist of hardware/owl-mainboard (macro OWL_PIN_<NET> must
- * sit on the module pin of net <NET>), and firmware/test_host/test_board_reva.c checks the
+ * Header only: nothing in the firmware build includes it yet. The rev A board support package
+ * arrives with the P3 board selection and takes its pins from here. tools/hw/hw_pinmap.py checks
+ * every OWL_PIN_ value against the KiCad netlist of hardware/owl-mainboard (macro OWL_PIN_<NET>
+ * must sit on the module pin of net <NET>), and firmware/test_host/test_board_reva.c checks the
  * ESP32-S3 rules: strapping pins, RTC wake pins, ADC1, the pins taken by the octal PSRAM. */
 
 /* Display: CO5300 QSPI on the FSPI IO_MUX pins, so the bus can run at 80 MHz. */
