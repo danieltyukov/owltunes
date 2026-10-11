@@ -51,8 +51,10 @@ gap adds 0.1 mm of depth.
 Charger (BQ24073, TI SLUS810N section 8.5):
 - Fast charge: ICHG = KISET / RISET = 890 / 2000 = 0.445 A (0.399 to 0.488 A over KISET 797 to 975).
 - Input limit: IIN = KILIM / RILIM with R102 = 3.3k: 1525 / 3300 = 0.46 A (0.40 to 0.52 A over
-  KILIM 1330 to 1720). This stays inside USB 2.0 default power: the board has plain 5.1k Rd on CC1
-  and CC2 and does not read CC, the ESP32-S3 is a USB 2.0 device, and VIN-DPM is off in ILIM mode.
+  KILIM 1330 to 1720). The typical 0.46 A stays inside USB 2.0 default power (500 mA); the
+  worst-case 0.52 A is 4 % above it. USB 2.0 default power is the target because the board has
+  plain 5.1k Rd on CC1 and CC2 and does not read CC, the ESP32-S3 is a USB 2.0 device, and VIN-DPM
+  is off in ILIM mode.
   When the system load plus the charge current reaches the limit, the charger takes the
   difference out of the charge current. Faster charging needs CC sensing (rev B).
 - EN2 is tied high through R103, so firmware chooses between the ILIM limit (CHG_SUSPEND low)

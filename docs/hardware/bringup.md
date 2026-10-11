@@ -34,7 +34,8 @@ steps that drive pins need a test build that takes its pins from
    protection; see [assembly.md](assembly.md) step 6). Connect the pack: CHG_STAT (GPIO8) low
    while charging, the MAX17048 reports a sensible state of charge, and the charge current
    measured in the battery lead is up to about 0.45 A (less by the system load, since the input
-   is limited to about 0.46 A). The TS pin reads about 0.75 V at 25 C (75 uA into 10k).
+   is limited to about 0.46 A). BAT_NTC (J101 pin 2, the charger's TS pin) reads about 0.75 V at
+   25 C (75 uA into 10k).
 10. **Perch.** Dock on a powered perch: DOCK_DET (GPIO1) about 330 mV, CHG_PGOOD low, LED on
     the perch lit.
 11. **Power.** Measure deep-sleep current from the pack (target about 44 uA, see `rev-a.md`),
