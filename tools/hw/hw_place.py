@@ -76,7 +76,7 @@ PLACE = {
     "C107": (15.5, -0.2, 0, "back"),
     "C108": (15.5, 1.4, 0, "back"),
     "C109": (12.8, 0.0, 0, "back"),
-    "R107": (11.0, -2.5, 90, "back"),
+    "R107": (11.0, -2.5, 270, "back"),
     "R108": (9.8, -2.5, 90, "back"),
     "TP104": (18.3, 2.6, 0, "back"),
     # Display switch left of the module, above the battery (U104 is 1.45 mm) and clear of the H2 boss.
