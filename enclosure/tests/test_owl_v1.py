@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from build123d import Box, Compound, Cylinder, Edge, Pos, Vector, Vertex
+from build123d import Box, Compound, Cylinder, Edge, Pos, Vector, Vertex, import_step
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import owl_params as P  # noqa: E402
@@ -357,10 +357,15 @@ def test_mark_clears_every_feature_and_keeps_a_structural_wall(parts, plain_cove
 RING_Y = C.RING_CLEAR_R - 0.5  # just inside the ring opening at x = 0
 
 
-def test_export_writes_step_and_stl(tmp_path):
+def test_export_writes_step_and_stl(parts, tmp_path):
     written = V.export_all(tmp_path)
     assert len(written) == 24
     assert all(p.stat().st_size > 500 for p in written)
+    # every STEP reads back as the same single solid (the mark's outlines once came back empty)
+    for name, part in parts.items():
+        back = import_step(str(tmp_path / f"{name}.step"))
+        assert len(back.solids()) == 1, name
+        assert back.volume == pytest.approx(part.volume, rel=1e-6), name
 
 
 def test_glass_envelope_matches_the_panel_data():

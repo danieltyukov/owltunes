@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from build123d import Box, Pos, Vector
+from build123d import Box, Pos, Vector, import_step
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -172,3 +172,11 @@ def test_mark_keeps_solid_material_round_it(perch, plain_perch):
     size = (cut.size.X + 2 * m, cut.size.Y + 2 * m, P.MARK_DEPTH + m)
     block = Pos(cut.center().X, cut.center().Y, size[2] / 2) * Box(*size)
     assert common_volume(plain_perch, block) == pytest.approx(block.volume, rel=1e-6)
+
+
+def test_export_reads_back_as_one_solid(perch, tmp_path):
+    written = Q.export_all(tmp_path)
+    assert [p.name for p in written] == ["perch_body.step", "perch_body.stl"]
+    back = import_step(str(written[0]))
+    assert len(back.solids()) == 1
+    assert back.volume == pytest.approx(perch.volume, rel=1e-6)

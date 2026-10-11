@@ -35,6 +35,7 @@ from build123d import (
     make_face,
     offset,
 )
+from OCP.BRepBuilderAPI import BRepBuilderAPI_NurbsConvert
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import owl_params as P  # noqa: E402
@@ -193,17 +194,19 @@ def body() -> Part:
 
 def mark_faces() -> list[Face]:
     """The owner mark on the XY plane, reading along +X with its bounding box centred on the origin.
-    Each glyph is closed by MARK_ROUND and the glyphs are spread MARK_TRACK apart (owl_params)."""
+    Each glyph is closed by MARK_ROUND and the glyphs are spread MARK_TRACK apart (owl_params). The
+    closed outlines are offset curves, which STEP readers drop, so they are converted to B-splines."""
     if not Path(P.MARK_FONT).is_file():
         raise FileNotFoundError(f"{P.MARK_FONT} not found: install the fonts-inter package")
     text = Text(P.MARK_TEXT, P.MARK_CAP_H / P.MARK_FONT_CAP, font_path=P.MARK_FONT, align=(Align.CENTER, Align.CENTER))
     glyphs = sorted(text.faces(), key=lambda f: f.center().X)
     mid = (len(glyphs) - 1) / 2
     r = P.MARK_ROUND
-    return [
-        Pos((i - mid) * P.MARK_TRACK, 0) * offset(offset(g, r, kind=Kind.ARC), -r, kind=Kind.ARC).face()
-        for i, g in enumerate(glyphs)
-    ]
+    out = []
+    for i, g in enumerate(glyphs):
+        closed = offset(offset(g, r, kind=Kind.ARC), -r, kind=Kind.ARC).face()
+        out.append(Pos((i - mid) * P.MARK_TRACK, 0) * Face(BRepBuilderAPI_NurbsConvert(closed.wrapped, True).Shape()))
+    return out
 
 
 def mark_cut(plane: Plane) -> Part:
