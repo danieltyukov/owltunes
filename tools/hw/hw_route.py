@@ -7,7 +7,7 @@ neck down to 0.25 or 0.3 mm only where a track leaves a 0.5 mm pitch pin. Runnin
 first removes the tracks it drew before, so a group can be re-routed after a placement change.
 GND vias, pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
 
-Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger usb ...]
+Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb ...]
 Needs KiCad's pcbnew Python module.
 """
 
@@ -39,6 +39,29 @@ GROUPS = {
         ("+3V3", 0.2, [(12.32, 0.0), (11.0, -1.2), (11.0, -1.99)]),
         ("TPS_FB", 0.15, [(13.1, -2.5), (11.9, -2.5), (11.4, -3.01), (11.0, -3.01), (9.8, -3.01)]),
         ("GND", 0.25, [(13.1, -3.5), (13.1, -3.0), (14.0, -3.0)]),
+    ],
+    # Charger (BQ24073): VIN_CHG from pin 13 to C101, on to the D101 and D102 cathodes; VSYS from
+    # pins 10 and 11 to C102 and TP102 (the run to the TPS63802 is the In2 VSYS pour); VBAT from
+    # pins 2 and 3 to C103, then up between C103 and R103, clear of the H1 boss ring, to J101 pin 1,
+    # with TP103 on the way. 0.5 mm except the necks at the 0.5 mm pitch pins and 0.4 mm between
+    # C103 and R103.
+    "charger": [
+        ("VIN_CHG", 0.25, [(25.25, -1.438), (25.25, -2.25)]),
+        ("VIN_CHG", 0.5, [(25.25, -2.25), (24.725, -3.2), (24.1, -4.0), (24.1, -5.3), (24.1, -7.9)]),
+        ("VSYS", 0.25, [(25.938, 0.25), (25.938, -0.25), (26.7, -0.25)]),
+        ("VSYS", 0.5, [(26.7, -0.25), (27.6, -0.775), (28.2, -0.775), (29.3, -0.775), (29.3, 3.0)]),
+        ("VBAT", 0.25, [(23.062, 0.25), (23.062, -0.25), (22.1, -0.25)]),
+        ("VBAT", 0.5, [(22.1, -0.25), (21.4, -0.775), (20.8, -0.775)]),
+        ("VBAT", 0.4, [(21.75, -0.51), (21.75, 4.5)]),
+        ("VBAT", 0.4, [(20.6, 3.4), (21.75, 3.4)]),
+        ("VBAT", 0.5, [(21.75, 4.5), (22.6, 5.2), (22.6, 14.0), (23.6, 16.0)]),
+    ],
+    # Fuel gauge Kelvin tap (R37): CELL and VDD (pins 2 and 3) on their own trace to J101 pin 1,
+    # apart from the charger's VBAT path, with C104 at pin 3.
+    "gauge": [
+        ("VBAT", 0.25, [(26.25, 16.0), (26.25, 12.0), (26.25, 10.99)]),
+        ("VBAT", 0.2, [(25.75, 10.99), (26.25, 10.99)]),
+        ("VBAT", 0.25, [(26.25, 12.0), (27.4, 12.0), (27.4, 10.32), (28.2, 10.32)]),
     ],
 }
 
