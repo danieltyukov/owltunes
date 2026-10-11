@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "board.h"
+#include "bsp.h"
 #include "demo_state.h"
 #include "esp_app_desc.h"
 #include "esp_event.h"
@@ -50,7 +50,7 @@ void app_main(void)
 
     lv_init();
     lv_tick_set_cb(tick_ms);
-    lv_display_t *disp = board_display_init();
+    lv_display_t *disp = bsp_display_init();
 
     owl_app_init(&app);
     owl_player_init(&player);
@@ -70,7 +70,8 @@ void app_main(void)
         owl_ui_render(ui, &app, &player, &inputs, esp_timer_get_time() / 1000);
         uint32_t wait = lv_timer_handler();
         if (!announced) {
-            ESP_LOGI(TAG, "OWL_BOOT_OK track=\"%s\" name=%s", player.track.title, name);
+            ESP_LOGI(TAG, "OWL_BOOT_OK board=%s track=\"%s\" name=%s", CONFIG_OWL_BOARD_NAME,
+                     player.track.title, name);
             announced = true;
         }
         vTaskDelay(pdMS_TO_TICKS(wait < 5 ? 5 : (wait > 50 ? 50 : wait)));

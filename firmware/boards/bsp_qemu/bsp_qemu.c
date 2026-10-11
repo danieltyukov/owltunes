@@ -1,4 +1,5 @@
-#include "board.h"
+/* QEMU emulator: the virtual RGB panel that idf.py qemu --graphics shows in a window. */
+#include "bsp.h"
 
 #include "esp_err.h"
 #include "esp_lcd_panel_ops.h"
@@ -12,7 +13,7 @@ static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
     lv_display_flush_ready(disp);
 }
 
-lv_display_t *board_display_init(void)
+lv_display_t *bsp_display_init(void)
 {
     static uint16_t buf[OWL_UI_RES * 40]; /* 40 lines of RGB565 */
     esp_lcd_panel_handle_t panel = NULL;
