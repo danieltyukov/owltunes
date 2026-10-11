@@ -31,6 +31,21 @@ class BoardError(Exception):
     """The board did not answer as expected."""
 
 
+def blocking_reads(fd: int) -> None:
+    """Put VMIN back to its default of 1 before the port is closed. pyserial sets it to 0 and Linux
+    keeps a tty's settings after it is closed; Chrome's Web Serial then takes an empty read for a
+    lost device, and the setup page loses the owl."""
+    import termios  # POSIX only, like the ports this module opens
+
+    try:
+        attrs = termios.tcgetattr(fd)
+        attrs[6][termios.VMIN] = 1
+        attrs[6][termios.VTIME] = 0
+        termios.tcsetattr(fd, termios.TCSANOW, attrs)
+    except termios.error:
+        pass  # the board was unplugged: its next tty starts with the default
+
+
 def parse_line(line: str) -> Message | None:
     """The JSON object of an @owl line; None for log lines and anything malformed."""
     if not line.startswith(PREFIX):
@@ -138,6 +153,7 @@ class Board:
     def close(self) -> None:
         if self._ser is not None:
             try:
+                blocking_reads(self._ser.fd)
                 self._ser.close()
             except (OSError, self._serial.SerialException):
                 pass

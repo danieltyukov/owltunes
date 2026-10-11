@@ -3,6 +3,7 @@ import os
 import pathlib
 import sys
 import tempfile
+import termios
 import threading
 import unittest
 
@@ -73,6 +74,11 @@ class LoadEnvFileTest(unittest.TestCase):
         self.assertEqual(load_env_file(pathlib.Path("/nonexistent/hil.env")), {})
 
 
+def vmin(fd):
+    value = termios.tcgetattr(fd)[6][termios.VMIN]
+    return value if isinstance(value, int) else value[0]
+
+
 class FakeOwl:
     """A pseudo-terminal that answers like the firmware: log noise, split writes, @owl replies."""
 
@@ -124,6 +130,15 @@ class BoardTest(unittest.TestCase):
     def tearDown(self):
         self.board.close()
         self.owl.close()
+
+    def test_close_leaves_blocking_reads_for_the_next_program(self):
+        # pyserial sets VMIN to 0 and Linux keeps a tty's settings after it is closed. Chrome's Web
+        # Serial then takes an empty read for a lost device, so the setup page lost the owl
+        # (11 Oct 2026). Closing puts VMIN back to its default of 1.
+        self.board.hello(timeout=10)
+        self.assertEqual(vmin(self.owl.slave), 0)
+        self.board.close()
+        self.assertEqual(vmin(self.owl.slave), 1)
 
     def test_hello_is_retried_until_the_board_answers(self):
         hello = self.board.hello(timeout=10)
