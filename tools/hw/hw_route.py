@@ -79,6 +79,17 @@ GROUPS = {
         ("VBAT", 0.4, [(20.6, 3.4), (21.75, 3.4)]),
         ("VBAT", 0.5, [(21.75, 4.5), (22.6, 5.2), (22.6, 14.0), (23.6, 16.0)]),
     ],
+    # VIN_CHG taps from the D101/D102 cathode run: east to TP101 above the diode anodes (D101's
+    # VBUS_USB anode stays open to the east and south of TP101); and to R103, the CHG_EN2 pull-up,
+    # which sits between the VBAT and VSYS runs north of U101, so that tap crosses on F.Cu west of
+    # U101 and leaves the ground below U101 pin 1 free for BAT_NTC.
+    "vin_chg_taps": [
+        ("VIN_CHG", 0.5, [(24.1, -4.0), (24.3, -4.2), (29.3, -4.2), (29.3, -5.5)]),
+        ("VIN_CHG", 0.25, [(24.1, -4.0), (23.4, -4.1)]),
+        ("VIN_CHG", 0.25, [(23.4, -4.1), (22.5, -3.2), (22.5, 2.2)], "F"),
+        ("VIN_CHG", 0.25, [(22.5, 2.2), (22.5, 2.99)]),
+        ("VIN_CHG", "via", [(23.4, -4.1), (22.5, 2.2)]),
+    ],
     # Fuel gauge Kelvin tap (R37): CELL and VDD (pins 2 and 3) on their own trace to J101 pin 1,
     # apart from the charger's VBAT path, with C104 at pin 3.
     "gauge": [

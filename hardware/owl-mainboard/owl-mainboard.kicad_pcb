@@ -26193,6 +26193,60 @@
 		(uuid "fca07fe4-3f04-4a4e-9233-d908b1d7905c")
 	)
 	(segment
+		(start 122.5 103.2)
+		(end 122.5 97.8)
+		(width 0.25)
+		(locked yes)
+		(layer "F.Cu")
+		(net "VIN_CHG")
+		(uuid "09b33663-0867-4cee-ae65-3d51774457c2")
+	)
+	(segment
+		(start 123.4 104.1)
+		(end 122.5 103.2)
+		(width 0.25)
+		(locked yes)
+		(layer "F.Cu")
+		(net "VIN_CHG")
+		(uuid "dd527c29-740c-4ff8-8b3a-8b6cd9c81c0a")
+	)
+	(via
+		(at 122.5 97.8)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "VIN_CHG")
+		(uuid "137a9c34-888c-43d7-be5f-e439bc0fc247")
+	)
+	(via
+		(at 123.4 104.1)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "VIN_CHG")
+		(uuid "5030a18f-3056-468c-bdeb-77dbe88a2b05")
+	)
+	(segment
+		(start 124.1 104)
+		(end 124.3 104.2)
+		(width 0.5)
+		(locked yes)
+		(layer "B.Cu")
+		(net "VIN_CHG")
+		(uuid "11915246-d184-4ceb-b68c-a3ec325214bb")
+	)
+	(segment
+		(start 129.3 104.2)
+		(end 129.3 105.5)
+		(width 0.5)
+		(locked yes)
+		(layer "B.Cu")
+		(net "VIN_CHG")
+		(uuid "131329a3-74b9-485e-95ec-25e90692adaf")
+	)
+	(segment
 		(start 125.25 101.438)
 		(end 125.25 102.25)
 		(width 0.25)
@@ -26211,6 +26265,15 @@
 		(uuid "29314d35-1abe-4216-8006-f9ede8e475c6")
 	)
 	(segment
+		(start 124.3 104.2)
+		(end 129.3 104.2)
+		(width 0.5)
+		(locked yes)
+		(layer "B.Cu")
+		(net "VIN_CHG")
+		(uuid "353d478b-6e60-4028-a3c5-4f71ae56cae0")
+	)
+	(segment
 		(start 125.25 102.25)
 		(end 124.725 103.2)
 		(width 0.5)
@@ -26218,6 +26281,24 @@
 		(layer "B.Cu")
 		(net "VIN_CHG")
 		(uuid "3e340474-eaf4-4b9e-a77d-8e46dd04f174")
+	)
+	(segment
+		(start 124.1 104)
+		(end 123.4 104.1)
+		(width 0.25)
+		(locked yes)
+		(layer "B.Cu")
+		(net "VIN_CHG")
+		(uuid "464d2736-eb40-43e5-a93f-a2a52b4a192b")
+	)
+	(segment
+		(start 122.5 97.8)
+		(end 122.5 97.01)
+		(width 0.25)
+		(locked yes)
+		(layer "B.Cu")
+		(net "VIN_CHG")
+		(uuid "4ef0e2ef-048a-4a23-9648-54651d1990ce")
 	)
 	(segment
 		(start 124.725 103.2)
@@ -26671,6 +26752,15 @@
 			"db30371b-8430-412c-8d1c-727fc9a85d16" "e633197c-5fd6-4d42-8743-64e6c68b9c0b"
 			"e739d8c6-b827-46f7-a2ac-ba25b9c4df32" "ea60f35a-5c81-4ec4-9a98-2e66b83b6ee7"
 			"f3963101-994e-4d57-8fca-36dc86667e3f" "fb587331-41d4-4aaa-a735-870256d80275"
+		)
+	)
+	(group "hw_route vin_chg_taps"
+		(uuid "53d48392-2583-4735-bdcf-012fffb82e99")
+		(members "09b33663-0867-4cee-ae65-3d51774457c2" "11915246-d184-4ceb-b68c-a3ec325214bb"
+			"131329a3-74b9-485e-95ec-25e90692adaf" "137a9c34-888c-43d7-be5f-e439bc0fc247"
+			"353d478b-6e60-4028-a3c5-4f71ae56cae0" "464d2736-eb40-43e5-a93f-a2a52b4a192b"
+			"4ef0e2ef-048a-4a23-9648-54651d1990ce" "5030a18f-3056-468c-bdeb-77dbe88a2b05"
+			"dd527c29-740c-4ff8-8b3a-8b6cd9c81c0a"
 		)
 	)
 	(group "hw_route tps63802_gnd"
