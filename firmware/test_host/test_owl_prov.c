@@ -350,6 +350,22 @@ static void test_wifi_add_refuses_control_bytes(void)
     TEST_ASSERT_EQUAL_UINT8(1, prov.settings.n_networks);
 }
 
+static void test_wifi_add_refuses_an_escaped_nul(void)
+{
+    fresh();
+    /* The escape decodes to a zero byte; the old check stopped there and saved "Home". */
+    send("{\"id\":1,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\u0000evil\",\"password\":\"password1\"}");
+    expect_error("bad_request");
+    send("{\"id\":2,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"password\\u0000evil\"}");
+    expect_error("bad_request");
+    TEST_ASSERT_EQUAL_UINT8(0, prov.settings.n_networks);
+    TEST_ASSERT_EQUAL_UINT32(0, owl_prov_take_actions(&prov));
+    /* An escaped backslash followed by the text u0000 is not an escape for NUL. */
+    send("{\"id\":3,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\\\u0000\",\"password\":\"password1\"}");
+    TEST_ASSERT_TRUE(ok());
+    TEST_ASSERT_EQUAL_STRING("Home\\u0000", prov.settings.networks[0].ssid);
+}
+
 static void test_network_failure_event_names_the_network(void)
 {
     TEST_ASSERT_TRUE(owl_prov_network_failed(out, sizeof out, "Home \"5G\"", "wifi_wrong_password"));
@@ -369,6 +385,7 @@ int main(void)
     RUN_TEST(test_wifi_add_validates_saves_and_updates);
     RUN_TEST(test_wifi_remove);
     RUN_TEST(test_wifi_add_refuses_control_bytes);
+    RUN_TEST(test_wifi_add_refuses_an_escaped_nul);
     RUN_TEST(test_spotify_client_validates_and_resets_link_on_change);
     RUN_TEST(test_begin_requires_client);
     RUN_TEST(test_begin_returns_authorize_url_with_ip_in_state);

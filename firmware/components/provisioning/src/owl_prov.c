@@ -232,8 +232,27 @@ static bool has_control_byte(const char *s)
     return false;
 }
 
-static const char *cmd_wifi_add(owl_prov_t *p, const cJSON *req)
+/* cJSON decodes the escape for U+0000 into a zero byte, which ends the C string early: "Home" plus
+ * that escape plus "evil" would be saved as "Home". Look for the escape in the raw request instead. */
+static bool has_nul_escape(const char *json, size_t len)
 {
+    for (size_t i = 0; i + 1 < len; i++) {
+        if (json[i] != '\\') {
+            continue;
+        }
+        if (json[i + 1] == 'u' && i + 6 <= len && strncmp(json + i + 2, "0000", 4) == 0) {
+            return true;
+        }
+        i++; /* skip the escaped character, so an escaped backslash does not start an escape */
+    }
+    return false;
+}
+
+static const char *cmd_wifi_add(owl_prov_t *p, const cJSON *req, bool nul_escape)
+{
+    if (nul_escape) {
+        return "bad_request";
+    }
     const char *ssid = str_param(req, "ssid");
     const char *password = str_param(req, "password");
     size_t ssid_len = ssid ? strlen(ssid) : 0;
@@ -342,7 +361,7 @@ bool owl_prov_handle_line(owl_prov_t *p, const char *line, int64_t now_ms, char 
         cmd_hello(p, id, out, cap);
         replied = true;
     } else if (strcmp(cmd, "wifi_add") == 0) {
-        error = cmd_wifi_add(p, req);
+        error = cmd_wifi_add(p, req, has_nul_escape(json, len));
     } else if (strcmp(cmd, "wifi_remove") == 0) {
         error = cmd_wifi_remove(p, req);
     } else if (strcmp(cmd, "spotify_client") == 0) {

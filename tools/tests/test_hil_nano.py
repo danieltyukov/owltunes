@@ -134,11 +134,12 @@ class WifiCredentialsTest(unittest.TestCase):
 
 class PrivateIpv4Test(unittest.TestCase):
     def test_lan_addresses(self):
-        for ip in ("192.168.1.23", "10.0.0.5", "172.16.4.1"):
+        for ip in ("192.168.1.23", "10.0.0.5", "172.16.4.1", "172.31.255.254", "169.254.3.4"):
             self.assertTrue(hil_nano.private_ipv4(ip), ip)
 
     def test_public_empty_or_garbage(self):
-        for ip in ("8.8.8.8", "", "192.168.1", "fe80::1"):
+        for ip in ("8.8.8.8", "", "192.168.1", "fe80::1", "0.0.0.0", "127.0.0.1", "255.255.255.255",
+                   "172.32.0.1", "11.0.0.1"):
             self.assertFalse(hil_nano.private_ipv4(ip), ip)
 
 
@@ -211,6 +212,114 @@ class MissingNetworkChecksTest(unittest.TestCase):
     def test_not_waiting_after_a_failure_fails(self):
         with self.assertRaises(hil_nano.Failure):
             self.run_checks(MissingNetworkBoard(wifi_after_failure="joining"))
+
+
+class PasswordNotLoggedTest(unittest.TestCase):
+    def check_log(self, text, password):
+        with tempfile.TemporaryDirectory() as d, mock.patch("builtins.print"):
+            log = pathlib.Path(d, "console.log")
+            log.write_text(text)
+            hil_nano.password_not_logged(log, password)
+
+    def test_a_clean_log_passes(self):
+        self.check_log("ssid owltunes-hil-missing\n", hil_nano.DUMMY_PASSWORD)
+
+    def test_a_password_in_the_log_fails(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.check_log(f"I wifi: password {hil_nano.DUMMY_PASSWORD}\n", hil_nano.DUMMY_PASSWORD)
+
+    def test_the_dummy_password_is_not_part_of_the_dummy_ssid(self):
+        self.assertNotIn(hil_nano.DUMMY_PASSWORD, hil_nano.MISSING_SSID)
+        self.assertNotIn(hil_nano.MISSING_SSID, hil_nano.DUMMY_PASSWORD)
+
+
+class WifiBoard:
+    """A board for wifi_checks: events are numbered, and wait_event only sees those after since."""
+
+    def __init__(self, saved=(), heap_min_kb=200, up_ip="192.168.1.23", stale_up=True):
+        self.saved = list(saved)
+        self.heap_min_kb = heap_min_kb
+        self.up_ip = up_ip
+        self.events = [{"event": "network", "state": "up", "ip": "10.9.9.9"}] if stale_up else []
+        self.requests = []
+        self.pending = []
+        self.rebooted = False
+
+    def hello(self):
+        return {"networks": list(self.saved)}
+
+    def mark(self):
+        return len(self.events)
+
+    def request(self, cmd, **params):
+        self.requests.append((cmd, params["ssid"], params.get("password")))
+        if cmd == "wifi_add":
+            self.saved.append(params["ssid"])
+            if params["ssid"] == hil_nano.MISSING_SSID:
+                self.events.append({"event": "network", "state": "failed", "ssid": params["ssid"],
+                                    "error": "wifi_not_found"})
+            else:
+                # the join happens seconds later, after the script has taken its marker
+                self.pending = [{"event": "network", "state": "up", "ip": self.up_ip},
+                                {"event": "time", "state": "synced", "utc": "2026-10-11T09:30:00Z"}]
+        else:
+            self.saved.remove(params["ssid"])
+        return {"ok": True}
+
+    def wait_event(self, event, state=None, timeout=30, since=0, where=None):
+        if state == "up" and self.pending:
+            self.events += self.pending
+            self.pending = []
+        for msg in self.events[since:]:
+            if msg["event"] == event and msg.get("state") == state and (where is None or where(msg)):
+                return msg
+        raise hil_nano.Failure(f"no {event} {state} after {since}")
+
+    def command(self, text, event, state=None, timeout=10, where=None):
+        return {"wifi": "online", "ssid": "Lab", "rssi": -50, "status": "ok", "ip": "192.168.1.23",
+                "heap_min_kb": self.heap_min_kb}
+
+    def reset(self):
+        return 0
+
+    def wait_boot(self, since=0, timeout=20):
+        self.rebooted = True
+
+
+class WifiChecksTest(unittest.TestCase):
+    def run_checks(self, board):
+        with mock.patch.object(hil_nano, "wifi_credentials", return_value=("Lab", "labpass12")), \
+                mock.patch.object(hil_nano.time, "time", return_value=hil_nano.utc_seconds("2026-10-11T09:30:30Z")), \
+                mock.patch.object(hil_nano.time, "sleep"), mock.patch("builtins.print"):
+            hil_nano.wifi_checks(board)
+
+    def test_the_missing_network_goes_first_and_is_removed_again(self):
+        board = WifiBoard()
+        self.run_checks(board)
+        self.assertEqual(board.requests, [("wifi_add", hil_nano.MISSING_SSID, hil_nano.DUMMY_PASSWORD),
+                                          ("wifi_add", "Lab", "labpass12"),
+                                          ("wifi_remove", hil_nano.MISSING_SSID, None)])
+        self.assertTrue(board.rebooted)
+
+    def test_an_up_event_from_before_the_removals_is_stale(self):
+        board = WifiBoard(saved=["Lab"])
+        board.events.append({"event": "network", "state": "up", "ip": "192.168.1.5"})
+        board.up_ip = "8.8.8.8"  # the real join reports a public address, so only the stale one is good
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(board)
+
+    def test_other_saved_networks_skip_the_not_found_report(self):
+        board = WifiBoard(saved=["Cafe"])
+        self.run_checks(board)
+        self.assertNotIn(hil_nano.MISSING_SSID, [r[1] for r in board.requests])
+
+    def test_a_non_lan_address_fails(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(WifiBoard(up_ip="127.0.0.1"))
+
+    def test_the_ram_floor_is_checked_after_joining(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(WifiBoard(heap_min_kb=hil_nano.HEAP_FLOOR_KB - 1))
 
 
 if __name__ == "__main__":

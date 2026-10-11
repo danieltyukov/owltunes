@@ -44,6 +44,10 @@ WORK = ROOT / "build" / "hil-nano"
 NVS_OFFSET, NVS_SIZE = 0x9000, 0x14000  # firmware/partitions.csv
 HEAP_FLOOR_KB = 32  # internal RAM that must stay free at the lowest point since boot
 MISSING_SSID = "owltunes-hil-missing"  # a network that is never in range
+DUMMY_PASSWORD = "dummy-pw-5f3a9c71"  # for that network; unlike its SSID it appears nowhere else
+# The ranges the setup page accepts as a LAN address (P2): 10/8, 172.16/12, 192.168/16, 169.254/16.
+LAN_NETWORKS = tuple(ipaddress.IPv4Network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16",
+                                                         "169.254.0.0/16"))
 
 
 class Failure(Exception):
@@ -137,9 +141,17 @@ def wifi_credentials() -> tuple[str, str]:
 
 def private_ipv4(text: str) -> bool:
     try:
-        return ipaddress.IPv4Address(text).is_private
+        address = ipaddress.IPv4Address(text)
     except ValueError:
         return False
+    return any(address in network for network in LAN_NETWORKS)
+
+
+def password_not_logged(log: pathlib.Path, password: str) -> None:
+    """The console log holds everything the board printed; a Wi-Fi password must never be in it."""
+    if password:
+        check(password not in log.read_text(encoding="utf-8", errors="replace"),
+              "the console log never shows the Wi-Fi password sent in this run")
 
 
 def utc_seconds(text: str) -> float:
@@ -156,21 +168,23 @@ def wifi_checks(board: Board) -> None:
     ssid, password = wifi_credentials()
     saved = board.hello().get("networks", [])
     others = [name for name in saved if name not in (ssid, MISSING_SSID)]
-    since = board.mark()
     for name in (MISSING_SSID, ssid):
         if name in saved:
             board.request("wifi_remove", ssid=name)
+    since = board.mark()  # events from before the removals are stale
     if others:
         print(f"note - not checking the not-found report: other networks are saved ({', '.join(others)})")
     else:
-        check(board.request("wifi_add", ssid=MISSING_SSID, password="owltunes-hil").get("ok") is True,
+        check(board.request("wifi_add", ssid=MISSING_SSID, password=DUMMY_PASSWORD).get("ok") is True,
               "a network that is never in range is saved first")
     check(board.request("wifi_add", ssid=ssid, password=password).get("ok") is True, f"{ssid} is saved next")
+    up_since = board.mark()  # after the removals took effect: an "up" from before them is stale
     if not others:
         failed = board.wait_event("network", "failed", timeout=60, since=since,
                                   where=lambda m: m.get("ssid") == MISSING_SSID)
+        up_since = board.mark()  # the missing network is tried first, so the join follows this event
         check(failed.get("error") == "wifi_not_found", "the owl reports the network it cannot find")
-    up = board.wait_event("network", "up", timeout=90, since=since)
+    up = board.wait_event("network", "up", timeout=90, since=up_since)
     check(private_ipv4(up.get("ip", "")), f"then it joins {ssid} and gets an address ({up.get('ip')})")
     synced = board.wait_event("time", "synced", timeout=60, since=since)
     check(abs(utc_seconds(synced.get("utc", "")) - time.time()) < 120, f"the clock is set from NTP ({synced.get('utc')})")
@@ -187,6 +201,8 @@ def wifi_checks(board: Board) -> None:
             raise Failure("after a reset the owl did not rejoin its network within 60 s")
         time.sleep(2)
     check(info.get("ssid") == ssid, "after a reset the owl rejoins the saved network by itself")
+    check(info.get("heap_min_kb", 0) >= HEAP_FLOOR_KB,
+          f"internal RAM stayed above {HEAP_FLOOR_KB} KB while joining ({info.get('heap_min_kb')} KB at its lowest)")
 
 
 def missing_network_checks(board: Board) -> None:
@@ -200,7 +216,7 @@ def missing_network_checks(board: Board) -> None:
     if MISSING_SSID in saved:
         board.request("wifi_remove", ssid=MISSING_SSID)
     since = board.mark()
-    check(board.request("wifi_add", ssid=MISSING_SSID, password="owltunes-hil").get("ok") is True,
+    check(board.request("wifi_add", ssid=MISSING_SSID, password=DUMMY_PASSWORD).get("ok") is True,
           "a network that is never in range is saved")
     seen: list[float] = []
     for attempt in range(3):
@@ -259,10 +275,15 @@ def main() -> int:
             flash(port, args.rom, args.fresh)
             board, hello = connect(port, log)
         boot_checks(board, hello, args.fresh)
+        passwords = []
         if args.missing_network:
             missing_network_checks(board)
+            passwords.append(DUMMY_PASSWORD)
         if args.wifi:
             wifi_checks(board)
+            passwords += [DUMMY_PASSWORD, wifi_credentials()[1]]
+        for password in passwords:
+            password_not_logged(log, password)
     except (Failure, BoardError) as err:
         print(f"FAIL - {err} (console log in {log})", file=sys.stderr)
         return 1
