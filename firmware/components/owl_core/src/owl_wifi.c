@@ -57,10 +57,12 @@ void owl_wifi_init(owl_wifi_t *w)
 
 owl_wifi_step_t owl_wifi_set_networks(owl_wifi_t *w, uint8_t n_networks, int keep, int64_t now_ms)
 {
+    bool was_connected = w->state == OWL_WIFI_JOINING || w->state == OWL_WIFI_ONLINE;
     w->n_networks = n_networks > OWL_WIFI_MAX_NETWORKS ? OWL_WIFI_MAX_NETWORKS : n_networks;
     w->failed_rounds = 0;
     if (w->n_networks == 0) {
         w->state = OWL_WIFI_IDLE;
+        w->expect_leave = was_connected;
         owl_wifi_step_t step = nothing();
         step.action = OWL_WIFI_DO_STOP;
         return step;
@@ -69,6 +71,7 @@ owl_wifi_step_t owl_wifi_set_networks(owl_wifi_t *w, uint8_t n_networks, int kee
         w->index = (uint8_t)keep;
         return nothing();
     }
+    w->expect_leave = was_connected;
     return join(w, 0, now_ms);
 }
 
@@ -83,7 +86,9 @@ owl_wifi_step_t owl_wifi_got_address(owl_wifi_t *w)
 
 owl_wifi_step_t owl_wifi_disconnected(owl_wifi_t *w, int reason, int64_t now_ms)
 {
-    if (reason == OWL_WIFI_REASON_ASSOC_LEAVE) {
+    bool expected = w->expect_leave;
+    w->expect_leave = false;
+    if (expected && reason == OWL_WIFI_REASON_ASSOC_LEAVE) {
         return nothing();
     }
     if (w->state == OWL_WIFI_JOINING) {
@@ -98,6 +103,7 @@ owl_wifi_step_t owl_wifi_disconnected(owl_wifi_t *w, int reason, int64_t now_ms)
 owl_wifi_step_t owl_wifi_tick(owl_wifi_t *w, int64_t now_ms)
 {
     if (w->state == OWL_WIFI_JOINING && now_ms >= w->deadline_ms) {
+        w->expect_leave = true;
         return give_up(w, OWL_WIFI_FAIL_NO_ADDRESS, now_ms);
     }
     if (w->state == OWL_WIFI_WAITING && now_ms >= w->deadline_ms) {

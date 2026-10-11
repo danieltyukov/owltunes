@@ -13,6 +13,9 @@ extern "C" {
  * starts after 5 s, then 10, 20 and 40 s, and from then on every 60 s. A dropped connection starts
  * a new round at once. */
 
+/* Every now_ms is monotonic milliseconds since boot as a 64-bit integer (for example
+ * esp_timer_get_time() / 1000), never a 32-bit tick count. */
+
 #define OWL_WIFI_MAX_NETWORKS 4
 #define OWL_WIFI_ATTEMPT_MS 20000
 #define OWL_WIFI_BACKOFF_FIRST_MS 5000
@@ -64,6 +67,7 @@ typedef struct {
     uint8_t n_networks;
     uint8_t index;         /* JOINING or ONLINE: the network in use */
     uint8_t failed_rounds; /* rounds in a row in which every network failed */
+    bool expect_leave;     /* the owl itself is leaving a connected or joining network */
     int64_t deadline_ms;   /* JOINING: give up on the attempt; WAITING: start the next round */
 } owl_wifi_t;
 
@@ -76,8 +80,10 @@ owl_wifi_step_t owl_wifi_set_networks(owl_wifi_t *w, uint8_t n_networks, int kee
 
 owl_wifi_step_t owl_wifi_got_address(owl_wifi_t *w);
 
-/* reason is the ESP-IDF disconnect reason. OWL_WIFI_REASON_ASSOC_LEAVE is the owl leaving on its
- * own (every OWL_WIFI_DO_CONNECT and OWL_WIFI_DO_STOP causes one) and is ignored. */
+/* reason is the ESP-IDF disconnect reason. When the owl itself leaves a connected or joining
+ * network (a new list or an attempt that timed out), the next disconnect with
+ * OWL_WIFI_REASON_ASSOC_LEAVE is its own doing and is ignored once. Any other
+ * OWL_WIFI_REASON_ASSOC_LEAVE is the access point dropping the owl and counts as a drop. */
 owl_wifi_step_t owl_wifi_disconnected(owl_wifi_t *w, int reason, int64_t now_ms);
 
 /* Call when owl_wifi_deadline() has passed. */
