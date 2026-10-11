@@ -12,7 +12,8 @@ The perch board goes in from the back of the rest, components first, into a pock
 wall holds the pins' window, a cavity for the parts and two bosses at H1 and H2; two M2 x 5
 self-tapping screws from the back hold it against the bosses. The base's back face continues the
 rest's back face so nothing behind the rest is in the way. The USB-C plug enters from the right side of the
-rest (see USB_SLOT); the right alignment bump gives way to it. Run `uv run --project enclosure python enclosure/perch_v1.py` to export to
+rest (see USB_SLOT); the right alignment bump gives way to it. The owner mark is debossed into the
+underside beside the weight pocket (STRIP_X). Run `uv run --project enclosure python enclosure/perch_v1.py` to export to
 build/enclosure/perch-v1/. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
 """
 
@@ -22,7 +23,7 @@ import math
 import sys
 from pathlib import Path
 
-from build123d import Align, Box, Cylinder, Location, Part, Pos, Rot, export_step, export_stl
+from build123d import Align, Box, Cylinder, Location, Part, Plane, Pos, Rot, export_step, export_stl
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import owl_v1 as V  # noqa: E402
@@ -70,6 +71,12 @@ PERCH_MAGNET_H = 2.1
 MAGNET_SKIN = 0.8  # rest face over each magnet (R7: 0.8 mm non-critical wall)
 BUMP_D = 3.6  # alignment bumps that sit in the owl's 4.0 mm recesses
 BUMP_H = 0.5
+# Owner mark (owl_params MARK_*) on the underside: on the left strip beside the weight pocket (the USB
+# channel is on the right), reading front to back with the letter tops towards the pocket, so it reads
+# from the left side when the perch is turned over. FOOT_ZONE at each end of the strip stays clear for
+# the silicone feet; the right strip is clear along its whole length.
+STRIP_X = (-BASE[0] / 2, -WEIGHT_POCKET[0] / 2)  # x -48 to -36
+FOOT_ZONE = 6.0
 
 
 def owl_to_perch(x: float, y: float, z_owl_back: float = 0.0) -> tuple[float, float, float]:
@@ -108,6 +115,20 @@ def rest_rod(x: float, along: float, into0: float, into1: float, d: float) -> Pa
 PAD_UP = V.DOCK_PAD_Y - Y_BOT  # pin row, mm up the tilt from the owl's bottom edge
 
 
+def underside_y() -> tuple[float, float]:
+    """Front and back edges of the base's underside (z = 0). The back edge is where the rest's back
+    face, to which the base is trimmed, meets the desk."""
+    t = math.radians(TILT_DEG)
+    up = (REST[1] * math.sin(t) - BASE[2]) / math.cos(t)
+    return BASE_BACK_Y - BASE[1], owl_to_perch(0.0, Y_BOT + up, REST[1])[1]
+
+
+def mark_plane() -> Plane:
+    """The underside at the middle of the left strip, facing down, reading towards the back."""
+    y0, y1 = underside_y()
+    return Plane((sum(STRIP_X) / 2, (y0 + y1) / 2, 0), x_dir=(0, 1, 0), z_dir=(0, 0, -1))
+
+
 def board_envelope() -> Part:
     """The assembled perch board: PCB, the parts on its top side and the free pogo pins."""
     w, h, t = PERCH_BOARD
@@ -121,7 +142,7 @@ def board_envelope() -> Part:
     return env
 
 
-def perch_body() -> Part:
+def perch_body(mark: bool = True) -> Part:
     body = Pos(0, BASE_BACK_Y - BASE[1] / 2, BASE[2] / 2) * Box(*BASE)
     body -= rest_box(0, -25.0, REST[1] + 30.0, (BASE[0] + 2, 60.0, 70.0))  # base back flush with the rest back
     body += rest_box(0, REST[2] / 2, REST[1] / 2, (REST[0], REST[1], REST[2]))
@@ -156,6 +177,8 @@ def perch_body() -> Part:
         if bx > usb_x0 and abs(by - Y_BOT - usb_along) < USB_SLOT[0] / 2 + BUMP_D / 2:
             continue  # the right bump's face is the USB channel; the left bump and the seat locate the owl
         body += rest_rod(bx, by - Y_BOT, -BUMP_H, 0.01, BUMP_D)
+    if mark:
+        body -= V.mark_cut(mark_plane())
     return body
 
 
