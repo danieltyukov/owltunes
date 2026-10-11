@@ -72,3 +72,16 @@ online owl shows until playback support arrives).
 | Amber | `no_device` | No Spotify device is active: start Spotify on a phone or computer |
 | Magenta, slow blink | `rate_limited` | Spotify asked the owl to slow down for a moment |
 | Magenta | `quota` | Spotify's quota for the app is used up until its Retry-After time |
+
+## Hardware test
+
+`tools/hil_nano.py` flashes the build, resets the board and checks that it runs the firmware just
+built, finds its 8 MB of PSRAM, runs from the first OTA slot, keeps at least 32 KB of internal RAM
+free and answers on the console. `--fresh` erases the saved settings first, `--no-flash` only
+resets the board, and `--rom` flashes a board that waits in ROM download mode. The console log of
+the run is in `build/hil-nano/console.log`.
+
+Opening the serial port resets the board: the USB-Serial/JTAG controller restarts the chip
+whenever a program opens the port (reset reason `usb` in `info`), whatever DTR and RTS are set to.
+Every open therefore starts the firmware again, and the scripts wait for its `OWL_BOOT_OK` line
+before they send anything. A terminal opened while a test runs restarts the board too.

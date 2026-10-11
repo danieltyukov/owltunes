@@ -10,8 +10,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: Style checker tests
-        run: python3 -m unittest discover -s tools/tests -v
+      - name: Tool tests
+        run: |
+          sudo apt-get update && sudo apt-get install -y python3-serial
+          python3 -m unittest discover -s tools/tests -v
       - name: Style check
         run: python3 tools/check_style.py
       - name: C formatting
