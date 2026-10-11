@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 from build123d import Pos, Vector
 
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import owl_v1 as V  # noqa: E402
 import perch_v1 as Q  # noqa: E402
@@ -82,7 +84,29 @@ def test_board_rests_on_bosses_with_screw_holes(perch):
 def test_usb_channel_runs_from_j1_to_the_side(perch):
     plug = Q.BOARD_TOP_INTO - Q.J1_PLUG_H
     for x in (Q.PERCH_BOARD[0] / 2 + 0.5, 30.0, Q.REST[0] / 2 - 0.5):
-        assert not perch.is_inside(rest_point(x, Q.PAD_UP, plug))
+        assert not perch.is_inside(rest_point(x, Q.PAD_UP + Q.J1_ALONG, plug))
+
+
+def test_usb_channel_takes_the_largest_type_c_overmold(perch):
+    # R48: 12.35 x 6.5 mm overmold, slot at least 13.0 x 7.0, from J1's face out of the side
+    assert Q.USB_SLOT[0] >= 13.0 and Q.USB_SLOT[1] >= 7.0
+    x0 = Q.PERCH_BOARD[0] / 2 + 0.5
+    length = Q.BASE[0] / 2 + 2.0 - x0
+    plug = Q.rest_box(x0 + length / 2, Q.PAD_UP + Q.J1_ALONG, Q.BOARD_TOP_INTO - Q.J1_PLUG_H,
+                      (length, Q.OVERMOLD[1], Q.OVERMOLD[0]))
+    assert common_volume(perch, plug) < 1e-3
+
+
+def test_neck_nub_has_relief_in_both_pockets(perch):
+    # R46: the board envelope carries a 0.6 mm nub (zero-interference test above); the owl's
+    # dock-pad recess has the same relief at the board's top edge, clear of the battery margin
+    cover = V.back_cover()
+    rw, rd = V.DOCK_NECK_RELIEF
+    y = V.DOCK_BOARD_Y + V.DOCK_BOARD[1] / 2 + Q.NUB - 0.05
+    z = V.BATTERY_BACK_Z - V.DOCK_BOARD[2] / 2
+    assert rd >= Q.NUB + 0.2 and rw >= Q.NECK + 0.8
+    assert not cover.is_inside(Vector(0.0, y, z))
+    assert cover.is_inside(Vector(rw / 2 + 0.3, y, z))
 
 
 def test_steel_weight_pocket_holds_200_g():
@@ -91,9 +115,26 @@ def test_steel_weight_pocket_holds_200_g():
 
 
 def test_pins_use_the_drawing_stroke_and_stand_two_mm_proud():
-    # R29: 7.0 mm free above the board, 1.0 mm working stroke
-    assert Q.PIN_FREE_LEN == pytest.approx(7.0)
+    # R29: 7.0 mm free above the board (design.toml height), 1.0 mm working stroke
+    design = tomllib.loads((ROOT / "hardware" / "perch-dock" / "design.toml").read_text())
+    pins = [p for p in design["part"] if p["ref"] in ("P1", "P2", "P3")]
+    assert [p["height"] for p in pins] == [Q.PIN_FREE_LEN] * 3
     assert Q.PIN_FREE_LEN - Q.PIN_WORK_LEN == pytest.approx(1.0)
     assert Q.PIN_PROUD == pytest.approx(2.0)
-    # docked: the pad face sits PAD_RECESS past the rest face, so each pin is at its working height
-    assert Q.BOARD_TOP_INTO + Q.PAD_RECESS == pytest.approx(Q.PIN_WORK_LEN)
+
+
+def test_docked_owl_compresses_each_pin_to_its_working_height():
+    # the pad face is the back cover's recess floor, seen through the pad window; measure where it
+    # lands in the docked owl and how long each pin is when it touches it
+    t = Q.math.radians(Q.TILT_DEG)
+    n = Vector(0, Q.math.cos(t), -Q.math.sin(t))  # into the rest
+    cover = V.back_cover()
+    face_z = V.BATTERY_BACK_Z - V.DOCK_BOARD[2]
+    for x in (-V.DOCK_PAD_PITCH, 0.0, V.DOCK_PAD_PITCH):
+        assert not cover.is_inside(Vector(x, V.DOCK_PAD_Y, face_z - 0.5))  # window open to the pin
+        assert cover.is_inside(Vector(x + 2.5, V.DOCK_PAD_Y, face_z - 0.5))
+        pad = (Q.owl_location() * Pos(x, V.DOCK_PAD_Y, face_z)).position
+        into = (pad - Vector(*Q.owl_to_perch(x, V.DOCK_PAD_Y, 0.0))).dot(n)
+        length = Q.BOARD_TOP_INTO - into
+        assert length == pytest.approx(Q.PIN_WORK_LEN, abs=0.05)
+        assert Q.PIN_FREE_LEN - length >= 0.95

@@ -95,6 +95,7 @@ DOCK_PAD_ORDER = P.DOCK_PAD_ORDER
 DOCK_PAD_WINDOW_D = 3.6
 DOCK_BOARD = (28.4, 8.4, 0.5)  # recess for the 28 x 8 mm dock-pad board in the cover's inner face
 DOCK_BOARD_Y = P.DOCK_PAD_Y - 0.5  # board spans y -35.5 to -27.5, clear of the battery
+DOCK_NECK_RELIEF = (3.3, 0.8)  # recess relief at the board's top edge for the breakaway neck nub (R46)
 DOCK_MAGNETS = ((-20.0, -22.0), (20.0, -22.0))  # D6 x 2 mm N52 discs
 DOCK_MAGNET_D = 6.1
 DOCK_MAGNET_H = 2.1
@@ -189,6 +190,10 @@ def back_cover() -> Part:
         plate -= by_depth(x, y, SCREW_HEAD_D / 2, BACK_Z - EPS, BACK_Z + SCREW_HEAD_DEPTH)
     recess_z0 = BATTERY_BACK_Z - DOCK_BOARD[2]
     plate -= Pos(0, DOCK_BOARD_Y, (recess_z0 + BATTERY_BACK_Z + EPS) / 2) * Box(*DOCK_BOARD[:2], DOCK_BOARD[2] + EPS)
+    rw, rd = DOCK_NECK_RELIEF
+    plate -= Pos(0, DOCK_BOARD_Y + DOCK_BOARD[1] / 2 + rd / 2 - EPS, (recess_z0 + BATTERY_BACK_Z + EPS) / 2) * Box(
+        rw, rd + EPS, DOCK_BOARD[2] + EPS
+    )
     for k in (-1, 0, 1):
         plate -= by_depth(k * DOCK_PAD_PITCH, DOCK_PAD_Y, DOCK_PAD_WINDOW_D / 2, BACK_Z - EPS, BATTERY_BACK_Z)
     magnet_top = BACK_Z + DOCK_MAGNET_FLOOR + DOCK_MAGNET_H

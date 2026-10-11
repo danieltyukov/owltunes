@@ -12,7 +12,7 @@ The perch board goes in from the back of the rest, components first, into a pock
 wall holds the pins' window, a cavity for the parts and two bosses at H1 and H2; two M2 x 5
 self-tapping screws from the back hold it against the bosses. The base's back face continues the
 rest's back face so nothing behind the rest is in the way. The USB-C plug enters from the right side of the
-rest (see USB_SLOT). Run `uv run --project enclosure python enclosure/perch_v1.py` to export to
+rest (see USB_SLOT); the right alignment bump gives way to it. Run `uv run --project enclosure python enclosure/perch_v1.py` to export to
 build/enclosure/perch-v1/. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
 """
 
@@ -53,14 +53,18 @@ PIN_WINDOW = (16.0, 6.0)  # width by height along the tilt
 PERCH_BOARD = (34.0, 16.0, 1.6)
 BOARD_CLEAR = 0.2  # per side in the pocket
 HOLES = ((-14.0, 5.0), (-14.0, -5.0))  # H1, H2: x, along offset from the pin row
-BOSS_D = 4.6  # inside the 2.5 mm keep-out ring of each hole
 PILOT_D = 1.6  # M2 self-tapping screw into the boss
 PILOT_DEPTH = 4.0  # from the board top towards the face; leaves 1.0 at the rest face
 PARTS_H = 1.4  # cavity for the small parts (tallest 1.1 mm, D1)
 PARTS_X = (-11.0, 9.8)  # LED1 and R4 courtyards start at x -10.5; J1 starts at 8.5
+J1_ALONG = -1.5  # J1 sits 1.5 mm below the pin row (KiCad y 101.5)
 J1_BOX = (7.9, 17.6, 5.6, 3.6)  # x from (joins the pin window), x to, half height along the tilt, depth (3.26 mm part)
 J1_PLUG_H = 1.63  # receptacle centre above the board top (HRO TYPE-C-31-M-12)
-USB_SLOT = (10.0, 0.8)  # plug opening along the tilt; front skin left at the rest face
+USB_SLOT = (13.0, 7.0)  # plug opening along the tilt by thickness: the USB-C 12.35 x 6.5 overmold with clearance (R48)
+OVERMOLD = (12.35, 6.5)  # largest USB-C plug overmold in the Type-C specification
+NECK = 2.5  # breakaway neck width; snapping leaves a nub of up to NUB on the board edge
+NUB = 0.6
+NECK_RELIEF = (3.3, 0.8)  # pocket relief at the neck: width, depth past the pocket edge (R46)
 PERCH_MAGNET_D = 6.1  # D6 x 2 mm N52 discs, opposite pole to the owl's magnets
 PERCH_MAGNET_H = 2.1
 MAGNET_SKIN = 0.8  # rest face over each magnet (R7: 0.8 mm non-critical wall)
@@ -110,7 +114,8 @@ def board_envelope() -> Part:
     env = rest_box(0, PAD_UP, BOARD_TOP_INTO + t / 2, (w, t, h))
     top = BOARD_TOP_INTO
     env += rest_box(sum(PARTS_X) / 2, PAD_UP, top - 0.55, (PARTS_X[1] - PARTS_X[0] - 0.4, 1.1, h - 0.4))
-    env += rest_box(13.0, PAD_UP, top - J1_PLUG_H, (9.0, 3.26, 8.94))  # J1 shell, x 8.5 to 17.5
+    env += rest_box(13.0, PAD_UP + J1_ALONG, top - J1_PLUG_H, (9.0, 3.26, 8.94))  # J1 shell, x 8.5 to 17.5
+    env += rest_box(0, PAD_UP - h / 2 - NUB / 2, BOARD_TOP_INTO + t / 2, (NECK, t, NUB))  # unfiled neck nub
     for x in (-V.DOCK_PAD_PITCH, 0.0, V.DOCK_PAD_PITCH):
         env += rest_rod(x, PAD_UP, top - PIN_FREE_LEN, top, PIN_D)
     return env
@@ -133,19 +138,23 @@ def perch_body() -> Part:
     # cavity for the small parts and for J1, leaving bosses at H1 and H2
     cavity = rest_box(sum(PARTS_X) / 2, PAD_UP, top - PARTS_H / 2, (PARTS_X[1] - PARTS_X[0], PARTS_H + 0.02, h + 2 * BOARD_CLEAR))
     x0, x1, half, deep = J1_BOX
-    cavity += rest_box((x0 + x1) / 2, PAD_UP, top - deep / 2, (x1 - x0, deep + 0.02, 2 * half))
+    cavity += rest_box((x0 + x1) / 2, PAD_UP + J1_ALONG, top - deep / 2, (x1 - x0, deep + 0.02, 2 * half))
+    rw, rd = NECK_RELIEF
+    cavity += rest_box(0, PAD_UP - h / 2 - BOARD_CLEAR - rd / 2 + 0.005, (top + back) / 2, (rw, back - top, rd + 0.01))
     body -= cavity
     body -= rest_box(0, PAD_UP, top / 2, (PIN_WINDOW[0], top + 0.2, PIN_WINDOW[1]))  # pin window
     for hx, ha in HOLES:
         body -= rest_rod(hx, PAD_UP + ha, top - PILOT_DEPTH, top + 0.01, PILOT_D)
     # USB-C plug channel from J1 out of the right side of the rest, open to the back
-    usb_x0 = w / 2 - 0.3
-    usb_len = REST[0] / 2 - usb_x0 + 1.0
-    skin = USB_SLOT[1]
-    body -= rest_box(usb_x0 + usb_len / 2, PAD_UP, (skin + back) / 2, (usb_len, back - skin, USB_SLOT[0]))
+    usb_x0, usb_along = w / 2 - 0.3, PAD_UP + J1_ALONG
+    usb_len = BASE[0] / 2 - usb_x0 + 1.0  # through the rest side and the base edge below it
+    front = top - J1_PLUG_H - USB_SLOT[1] / 2  # opens the rest face: the docked owl covers it
+    body -= rest_box(usb_x0 + usb_len / 2, usb_along, (front + back) / 2, (usb_len, back - front, USB_SLOT[0]))
     for mx, my in V.DOCK_MAGNETS:
         body -= rest_rod(mx, my - Y_BOT, MAGNET_SKIN, MAGNET_SKIN + PERCH_MAGNET_H, PERCH_MAGNET_D)
     for bx, by in V.ALIGN_RECESSES:
+        if bx > usb_x0 and abs(by - Y_BOT - usb_along) < USB_SLOT[0] / 2 + BUMP_D / 2:
+            continue  # the right bump's face is the USB channel; the left bump and the seat locate the owl
         body += rest_rod(bx, by - Y_BOT, -BUMP_H, 0.01, BUMP_D)
     return body
 

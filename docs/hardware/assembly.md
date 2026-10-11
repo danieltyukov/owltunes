@@ -31,6 +31,8 @@ from the ring test; see [ring-test.md](ring-test.md).
 7. **Dock pads.** Snap the dock-pad section off the perch board at the mouse bites, file the
    neck flush, glue it into the back cover recess with the gold pads facing out. Plug a straight
    4-pin JST SH cable (pin 1 to pin 1) into its J2; the other end goes to J303 on the main board.
+   Snap at the bite row with pliers on the tab and file the nub flat after snapping; the owl recess
+   and the perch pocket have a 0.8 mm relief at the neck, but a nub over 0.4 mm reaches the battery margin.
 8. **Stack.** Put the main board into the body from the back, then the bezel and ring into the
    face opening so the bezel lugs rest on the board. Put the battery, motor plug and dock cable
    in place (J101, J302, J303) and close the back cover. Screw four ISO 7380 M2 x 6 from the
