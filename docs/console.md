@@ -35,11 +35,11 @@ Commands are lowercase words.
 Commands for the Spotify runtime wait in a queue of eight on their way to it; when it is full they
 are refused with `busy`.
 
-Every command counts as activity. For five minutes after the last one the owl asks Spotify for the
-playback state as often as it would with its screen on (every 4 s while playing, every 15 s
-otherwise, and half a second after each command); after that it falls back to the hot-standby
-rate: once near the end of each track, at most once a minute, and not at all while paused
-(spec section 9.4).
+Every command except `help` and `info` counts as activity. For five minutes after the last one the
+owl asks Spotify for the playback state as often as it would with its screen on (every 4 s while
+playing, every 15 s otherwise, and half a second after each command); after that it falls back to
+the hot-standby rate: once near the end of each track, at most once a minute, and not at all while
+paused (spec section 9.4).
 
 ## Lines
 
@@ -62,11 +62,13 @@ A playback command goes through these states:
 @owl {"event":"cmd","state":"refused","cmd":"volume","error":"volume_unsupported"}
 ```
 
-`toggle` is reported as the `play` or `pause` it became, and `vol` as `volume`. Volume commands
-that are still waiting are merged into the newest one, and a command undone by the next one
-(`play` right after `pause`, while both still wait) leaves the queue without a `done`. The owl
-shows each command's effect before Spotify confirms it, so a failed command is followed by a
-`player` line too, with the state Spotify reports, once Spotify may be called again.
+`toggle` is reported as the `play` or `pause` it became, and `vol` as `volume`. Commands typed
+while a request is under way wait, and all of them join the queue before the next request goes out.
+Volume commands that are still waiting are merged into the newest one (three quick `vol +5` become
+one request), and a command undone by the next one (`play` right after `pause`, while both still
+wait) leaves the queue without a `done`. The owl shows each command's effect before Spotify
+confirms it, so a failed command is followed by a `player` line too, with the state Spotify
+reports, once Spotify may be called again.
 
 `{"event":"cmd","state":"refused","error":"unknown_cmd"}` (without `cmd`) means the line was not a
 command.

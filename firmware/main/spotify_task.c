@@ -227,6 +227,18 @@ static void report_auth(bool force)
     }
 }
 
+/* The stack's low point once the first answer (and its TLS handshake) is in, so the 12 KB the
+ * task gets is a measured number. */
+static void log_stack_once(void)
+{
+    static bool logged;
+    if (!logged) {
+        logged = true;
+        ESP_LOGI(TAG, "stack: %u bytes never used after the first request",
+                 (unsigned)uxTaskGetStackHighWaterMark(NULL));
+    }
+}
+
 /* Send one request with a valid access token and record Spotify's answer in the gate. A 401 gets
  * one forced token refresh and one more try. Nothing goes out while the gate is closed. error
  * receives the console's error code when the outcome is not OK. A request that could not get a
@@ -250,6 +262,7 @@ static spotify_outcome_t call(const spotify_request_t *req, spotify_http_respons
             *error = "network";
             return SPOTIFY_OUTCOME_WAIT;
         }
+        log_stack_once();
         spotify_error_t err;
         spotify_classify_error(resp->status, resp->body, resp->len, resp->retry_after_s, &err);
         spotify_outcome_t outcome = api_gate_record_web(&err, now_ms());
@@ -519,11 +532,22 @@ static void publish(void)
     xSemaphoreGive(s_view_lock);
 }
 
+/* Every console command that waits, the first awaited for up to wait. All of them reach the
+ * coalescing queue before the next request goes out, so presses made while a request was in
+ * flight can merge there (P33). */
+static void take_commands(const provisioning_view_t *view, TickType_t wait)
+{
+    static owl_shell_cmd_t cmd;
+    while (xQueueReceive(s_commands, &cmd, wait) == pdTRUE) {
+        take(&cmd, view);
+        wait = 0;
+    }
+}
+
 static void runtime_task(void *arg)
 {
     (void)arg;
     static provisioning_view_t view;
-    static owl_shell_cmd_t cmd;
     bool clock_checked = false;
     while (true) {
         provisioning_view(&view);
@@ -541,13 +565,13 @@ static void runtime_task(void *arg)
             forget_token();
             forget_devices();
             spotify_http_close();
+            owl_player_init(&s_player); /* the old account's state: poll the new one at once */
+            s_last_poll_ms = -1;
         }
         if (ready != s_active) {
             become(ready, &view);
         }
-        if (xQueueReceive(s_commands, &cmd, next_wait()) == pdTRUE) {
-            take(&cmd, &view);
-        }
+        take_commands(&view, next_wait());
         if (s_active) {
             work();
             announce(now_ms());

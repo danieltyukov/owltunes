@@ -34,6 +34,7 @@ static int s_sent;
 static spotify_request_t s_sent_req[MAX_ANSWERS];
 static char s_sent_token[MAX_ANSWERS][32];
 static int s_closes;
+static const char *s_typed_during_send[4]; /* console lines that arrive while the next request runs */
 
 static provisioning_token_t s_token_results[MAX_ANSWERS]; /* OK when not scripted */
 static int s_token_scripted;
@@ -69,27 +70,40 @@ void *heap_caps_calloc(size_t n, size_t size, uint32_t caps)
     return calloc(n, size);
 }
 
+/* The runtime's one queue: console commands, oldest first. */
+static owl_shell_cmd_t s_posted[8];
+static int s_posted_head;
+static int s_posted_count;
+
 QueueHandle_t xQueueCreate(uint32_t length, uint32_t item_size)
 {
-    (void)length;
-    (void)item_size;
-    return &s_prov; /* any non-NULL handle */
+    TEST_ASSERT_EQUAL_UINT32(8, length);
+    TEST_ASSERT_EQUAL_UINT32(sizeof(owl_shell_cmd_t), item_size);
+    return s_posted;
 }
 
 BaseType_t xQueueSend(QueueHandle_t queue, const void *item, TickType_t wait)
 {
-    (void)queue;
-    (void)item;
     (void)wait;
+    TEST_ASSERT_EQUAL_PTR(s_posted, queue);
+    if (s_posted_count == 8) {
+        return pdFALSE;
+    }
+    memcpy(&s_posted[(s_posted_head + s_posted_count++) % 8], item, sizeof(owl_shell_cmd_t));
     return pdTRUE;
 }
 
 BaseType_t xQueueReceive(QueueHandle_t queue, void *item, TickType_t wait)
 {
-    (void)queue;
-    (void)item;
     (void)wait;
-    return pdFALSE;
+    TEST_ASSERT_EQUAL_PTR(s_posted, queue);
+    if (s_posted_count == 0) {
+        return pdFALSE;
+    }
+    memcpy(item, &s_posted[s_posted_head], sizeof(owl_shell_cmd_t));
+    s_posted_head = (s_posted_head + 1) % 8;
+    s_posted_count--;
+    return pdTRUE;
 }
 
 SemaphoreHandle_t xSemaphoreCreateMutex(void)
@@ -121,6 +135,12 @@ BaseType_t xTaskCreatePinnedToCore(TaskFunction_t fn, const char *name, uint32_t
     (void)handle;
     (void)core;
     return pdPASS;
+}
+
+UBaseType_t uxTaskGetStackHighWaterMark(TaskHandle_t task)
+{
+    (void)task;
+    return 4096;
 }
 
 void owl_console_write(const char *line)
@@ -165,6 +185,12 @@ esp_err_t spotify_http_call(const spotify_request_t *req, const char *access_tok
                             spotify_http_response_t *out)
 {
     TEST_ASSERT_TRUE_MESSAGE(s_sent < s_answers_scripted, "a request went out that the test did not expect");
+    for (int i = 0; i < 4 && s_typed_during_send[i] != NULL; i++) {
+        static owl_shell_cmd_t typed;
+        owl_shell_parse(s_typed_during_send[i], &typed);
+        TEST_ASSERT_TRUE(spotify_task_post(&typed)); /* what shell.c does on the console task */
+        s_typed_during_send[i] = NULL;
+    }
     s_sent_req[s_sent] = *req;
     snprintf(s_sent_token[s_sent], sizeof s_sent_token[0], "%s", access_token);
     const answer_t *a = &s_answers[s_sent++];
@@ -259,6 +285,8 @@ static void start_playing(void)
     s_prov.network_up = true;
     s_active = false;
     s_line_count = 0;
+    s_posted_head = 0;
+    s_posted_count = 0;
     owl_player_init(&s_player);
     owl_cmdq_init(&s_buf->queue);
     forget_token();
@@ -518,10 +546,46 @@ static void test_stopping_fails_waiting_commands_and_forgets_the_devices(void)
     expect_line("\"state\":\"refused\"", "\"cmd\":\"transfer\"", "\"error\":\"no_such_device\"");
 }
 
+static void test_presses_made_during_a_request_merge_before_the_next_one_goes_out(void)
+{
+    start_playing(); /* volume 64 */
+    console("next");
+    s_typed_during_send[0] = "vol +5";
+    s_typed_during_send[1] = "vol +5";
+    s_typed_during_send[2] = "vol +5";
+    answer(204, -1, NULL);
+    work(); /* "next" is in flight while the three presses arrive */
+    TEST_ASSERT_EQUAL_INT(3, s_posted_count);
+    take_commands(&s_prov, 0); /* the next pass takes all of them first (P33) */
+    TEST_ASSERT_EQUAL_INT(0, s_posted_count);
+    TEST_ASSERT_EQUAL_INT(3, lines_with("\"state\":\"queued\",\"cmd\":\"volume\""));
+    TEST_ASSERT_EQUAL_UINT8(1, owl_cmdq_count(&s_buf->queue)); /* merged into the newest */
+    answer(204, -1, NULL);
+    work();
+    TEST_ASSERT_EQUAL_INT(2, s_sent);
+    TEST_ASSERT_EQUAL_STRING("/v1/me/player/volume?volume_percent=79", s_sent_req[1].path);
+    advance_ms(OWL_POLL_AFTER_COMMAND_MS + 100);
+    answer(200, -1, s_player_json);
+    work(); /* then the confirming poll, not another volume step */
+    TEST_ASSERT_EQUAL_STRING("/v1/me/player?additional_types=episode", s_sent_req[2].path);
+
+    start_playing();
+    console("next");
+    s_typed_during_send[0] = "pause";
+    s_typed_during_send[1] = "play";
+    answer(204, -1, NULL);
+    work();
+    take_commands(&s_prov, 0);
+    TEST_ASSERT_EQUAL_UINT8(0, owl_cmdq_count(&s_buf->queue)); /* play undid pause: nothing to send */
+}
+
 int main(void)
 {
     size_t len;
     s_player_json = read_fixture("player_track.json", &len);
+    char *no_volume = strstr(s_player_json, "\"supports_volume\": false");
+    TEST_ASSERT_NOT_NULL(no_volume); /* this test's phone allows volume changes */
+    memcpy(no_volume, "\"supports_volume\":  true", strlen("\"supports_volume\": false"));
     s_devices_json = read_fixture("devices.json", &len);
     s_quota_json = read_fixture("error_quota.json", &len);
     UNITY_BEGIN();
@@ -538,6 +602,7 @@ int main(void)
     RUN_TEST(test_a_quota_lockout_switches_the_link_to_ble);
     RUN_TEST(test_devices_are_listed_and_numbered_for_transfer);
     RUN_TEST(test_stopping_fails_waiting_commands_and_forgets_the_devices);
+    RUN_TEST(test_presses_made_during_a_request_merge_before_the_next_one_goes_out);
     int failures = UNITY_END();
     free(s_player_json);
     free(s_devices_json);
