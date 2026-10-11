@@ -46,6 +46,20 @@ Values from `enclosure/owl_params.py` and `enclosure/owl_v1.py`.
 Outside size 66 x 84 x 23.5 mm (spec 7.1: about 66 x 84 x 22). Every 0.1 mm added to the Hall
 gap adds 0.1 mm of depth.
 
+## Off-board parts at the battery
+
+Bought separately and fitted at assembly ([assembly.md](assembly.md) steps 6 and 8):
+
+- Battery: any 1S LiPo 803040 (8 x 30 x 40 mm, about 1000 mAh) with a protection circuit and a
+  2-wire lead on a JST PH 2.0 2-pin plug (see Protection and known limits for the polarity).
+- Thermal gap pad: a piece of soft, electrically insulating silicone gap pad, about 5 x 5 mm,
+  1.5 mm thick (it compresses into the 1.2 mm battery gap), 1 to 3 W/mK. It goes on the back of
+  the board, centred on RT101's copper patch: the 4.5 x 3 mm copper rectangle under the solder
+  mask at owl (-0.4, -9.5), 4.5 mm below the centre of U303 (the 2 x 2 mm LIS2DW12 on the
+  board's centre line), with RT101 just past its end (on the right, seen from the back). The
+  cell presses on it, so the patch, and RT101 through its neck, follow the cell more closely
+  than across the air gap alone.
+
 ## Calculations
 
 Charger (BQ24073, TI SLUS810N section 8.5):
@@ -205,11 +219,12 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 - Touch I2C at 3.3 V: the VIEWE drawing notes touch I2C at 1.8 V; the Waveshare kit runs it at
   3.3 V.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
-- RT101 against the cell: during a USB charge (about 0.42 A less the system load) from about
-  3.5 V, compare RT101's temperature (from the TS voltage, 75 uA x R) with a thermocouple taped
-  to the cell. If it reads more than a few degrees off, a piece of thermal gap pad between the
-  cell and RT101's copper patch couples them better. Check the hot cut-off (47.2 C nominal, 43.2
-  to 51.5 C worst case) against the bought cell's charge temperature limit.
+- RT101 against the cell: with the gap pad fitted (Off-board parts), during a USB charge (about
+  0.42 A less the system load) from about 3.5 V, compare RT101's temperature (from the TS
+  voltage, 75 uA x R) with a thermocouple taped to the cell. If it reads more than a few degrees
+  off, check that the pad touches both the patch and the cell, or try a 3 W/mK pad. Check the
+  hot cut-off (47.2 C nominal, 43.2 to 51.5 C worst case) against the bought cell's charge
+  temperature limit.
 - RTC crystal drift (18 pF load capacitors).
 - Deep-sleep current against the 44 uA estimate, and DISP_3V3 near 0 V with the panel off (no
   back-powering through an I/O pin).

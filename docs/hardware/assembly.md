@@ -4,7 +4,8 @@ Tools: a soldering iron with a heat-set insert tip (for the inserts only, 220 C)
 tool (Engineer PA-09 or similar), a multimeter, a 1.3 mm hex key for the ISO 7380 M2 button
 heads, cyanoacrylate glue, 0.2 mm double-sided tape, and a glue that does not fog glass (two-part
 epoxy or UV-curing glue) for the glass retainer. Keep cyanoacrylate away from the cover glass: its
-vapour leaves a white film.
+vapour leaves a white film. Also a piece of soft silicone thermal gap pad, about 5 x 5 mm and
+1.5 mm thick, 1 to 3 W/mK, electrically insulating (see step 8).
 
 The ring variant (A with the 6710 bearing, B with the printed bushing) and the magnet count come
 from the ring test; see [ring-test.md](ring-test.md).
@@ -36,11 +37,14 @@ from the ring test; see [ring-test.md](ring-test.md).
    Snap at the bite row with pliers on the tab and file the nub flat after snapping; the owl recess
    and the perch pocket have a 0.8 mm relief at the neck, but a nub over 0.4 mm reaches the battery margin.
 8. **Stack.** Put the main board into the body from the back, then the bezel and ring into the
-   face opening so the bezel lugs rest on the board. Put the battery, motor plug and dock cable
-   in place (J101, J302, J303) and close the back cover. Screw four ISO 7380 M2 x 6 from the
-   front through the bezel lugs and the board into the cover standoffs, and four ISO 7380
-   M2 x 14 from the back through the cover spacers and the board into the body bosses. The back
-   screw heads sit just below the cover's back face.
+   face opening so the bezel lugs rest on the board. Press the thermal gap pad onto the back of
+   the board, centred on RT101's copper patch (the 4.5 x 3 mm rectangle under the mask, 4.5 mm
+   below the centre of U303, with RT101 just past its right-hand end seen from the back; see
+   [rev-a.md](rev-a.md), Off-board parts), so the cell rests on it. Put the battery, motor plug
+   and dock cable in place (J101, J302, J303) and close the back cover. Screw four ISO 7380
+   M2 x 6 from the front through the bezel lugs and the board into the cover standoffs, and four
+   ISO 7380 M2 x 14 from the back through the cover spacers and the board into the body bosses.
+   The back screw heads sit just below the cover's back face.
 9. **Display.** The cover glass is laminated to the panel. Insert the panel's adapter FPC into
    J301 contacts down (the connector is bottom contact) and close the latch; check that the FPC's
    pin 1 marking is at the J301 `31` end (connector pin k = panel pin 32 - k). Fold the flex
