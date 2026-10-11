@@ -122,7 +122,12 @@ static esp_err_t perform(const spotify_request_t *req, const char *access_token)
             err = esp_http_client_set_post_field(s_client, req->body, (int)strlen(req->body));
         }
     } else if (err == ESP_OK) {
-        err = esp_http_client_set_post_field(s_client, NULL, 0); /* also drops the Content-Type */
+        /* Also drops the last request's Content-Type. ESP-IDF 6.1 answers ESP_ERR_NOT_FOUND when
+         * there was none, which is the state wanted, not a failure. */
+        err = esp_http_client_set_post_field(s_client, NULL, 0);
+        if (err == ESP_ERR_NOT_FOUND) {
+            err = ESP_OK;
+        }
     }
     if (err == ESP_OK) {
         err = esp_http_client_perform(s_client);

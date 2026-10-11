@@ -113,6 +113,9 @@ esp_err_t esp_http_client_set_header(esp_http_client_handle_t client, const char
     (void)client;
     char *slot = strcmp(key, "Authorization") == 0 ? s_authorization : s_content_type;
     size_t cap = slot == s_authorization ? sizeof s_authorization : sizeof s_content_type;
+    if (value == NULL && slot[0] == '\0') {
+        return ESP_ERR_NOT_FOUND; /* as ESP-IDF 6.1 does when it deletes a header that is not set */
+    }
     snprintf(slot, cap, "%s", value != NULL ? value : ""); /* the client keeps its own copy */
     return ESP_OK;
 }
@@ -126,7 +129,7 @@ esp_err_t esp_http_client_set_post_field(esp_http_client_handle_t client, const 
 {
     snprintf(s_post, sizeof s_post, "%.*s", data != NULL ? len : 0, data != NULL ? data : "");
     if (data == NULL) {
-        esp_http_client_set_header(client, "Content-Type", NULL); /* as ESP-IDF does */
+        return esp_http_client_set_header(client, "Content-Type", NULL); /* as ESP-IDF does */
     }
     return ESP_OK;
 }
