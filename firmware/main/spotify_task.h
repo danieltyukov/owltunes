@@ -8,8 +8,10 @@
 #include "owl_shell.h"
 #include "spotify_gate.h"
 
-/* The Spotify runtime: while the owl is linked and online it holds an access token and answers
- * console commands with JSON lines (docs/console.md). It runs on core 0, next to Wi-Fi. */
+/* The Spotify runtime: while the owl is linked and online it polls the playback state on the budget
+ * of spec section 9.4, sends player commands to the Web API one at a time, honours Retry-After,
+ * backoffs and QUOTA_EXCEEDED, and reports everything on the console as JSON lines
+ * (docs/console.md). It runs on core 0, next to Wi-Fi. */
 
 typedef struct {
     bool active;     /* linked and online: the runtime talks to Spotify */

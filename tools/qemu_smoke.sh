@@ -18,7 +18,7 @@ fi
 # The virtual RGB panel needs a graphics backend; SDL's dummy driver provides one without a window.
 SDL_VIDEODRIVER=dummy timeout 90 "${IDF_PY[@]}" -C firmware -B build/firmware qemu --graphics >"${LOG}" 2>&1 || true
 if grep -q "OWL_BOOT_OK" "${LOG}"; then
-    grep "OWL_BOOT_OK\|demo player parsed" "${LOG}"
+    grep "OWL_BOOT_OK" "${LOG}"
     echo "QEMU smoke test passed"
     exit 0
 fi
