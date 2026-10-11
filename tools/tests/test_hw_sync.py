@@ -21,7 +21,7 @@ class SyncTest(unittest.TestCase):
         self.assertEqual(hw_sync.value(comp, "value"), '4.7k "x"')
         self.assertEqual([hw_sync.value(n, "name") for n in hw_sync.children(hw_sync.child(tree, "nets"), "net")], ["GND"])
 
-    def test_main_board_footprints_and_pad_nets_follow_the_design(self):
+    def test_main_board_footprints_sides_and_pad_nets_follow_the_design(self):
         board = pcbnew.LoadBoard(str(ROOT / "hardware" / "owl-mainboard" / "owl-mainboard.kicad_pcb"))
         design = {p["ref"]: p for p in load_design("owl-mainboard")["part"]}
         fps = {fp.GetReference(): fp for fp in board.GetFootprints()}
@@ -29,6 +29,8 @@ class SyncTest(unittest.TestCase):
         for ref, part in design.items():
             fp = fps[ref]
             self.assertEqual(fp.GetFPIDAsString(), part["footprint"], ref)
+            if not part["footprint"].startswith("MountingHole:"):  # a bare hole has no side
+                self.assertEqual(fp.IsFlipped(), part.get("side", "front") == "back", f"{ref} side")
             for pad in fp.Pads():
                 want = part.get("pins", {}).get(pad.GetNumber())
                 if want is not None:

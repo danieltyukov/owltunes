@@ -1,4 +1,5 @@
 import pathlib
+import re
 import sys
 import tomllib
 import unittest
@@ -9,6 +10,11 @@ import hw_stackup  # noqa: E402
 
 ROOT = HW.parent.parent
 PCB = '(kicad_pcb\n\t(setup\n\t\t(pad_to_mask_clearance 0)\n\t)\n)\n'
+
+
+def tokens(text):
+    # pcbnew re-indents the stackup block when it saves a board; compare the S-expression only.
+    return re.findall(r'\(|\)|"(?:[^"\\]|\\.)*"|[^\s()]+', text)
 
 
 def setup(board):
@@ -42,7 +48,7 @@ class StackupTest(unittest.TestCase):
     def test_the_committed_pcbs_carry_the_stackup(self):
         for board in ("owl-mainboard", "perch-dock"):
             text = (ROOT / "hardware" / board / f"{board}.kicad_pcb").read_text()
-            self.assertEqual(hw_stackup.apply(text, setup(board)), text, board)
+            self.assertEqual(tokens(hw_stackup.apply(text, setup(board))), tokens(text), board)
 
 
 if __name__ == "__main__":

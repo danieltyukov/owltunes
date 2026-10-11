@@ -59,10 +59,12 @@ class ContractTest(unittest.TestCase):
             fp.SetReference(ref)
             board.Add(fp)
         pcbnew.SaveBoard(str(self.folder / "b.kicad_pcb"), board)
+        self.saved_roots = hw_contract.ROOT, sys.modules["hw_netlist"].ROOT
         hw_contract.ROOT = root
         sys.modules["hw_netlist"].ROOT = root
 
     def tearDown(self):
+        hw_contract.ROOT, sys.modules["hw_netlist"].ROOT = self.saved_roots
         self.tmp.cleanup()
 
     def write_contract(self, contract):

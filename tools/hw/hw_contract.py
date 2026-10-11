@@ -131,14 +131,6 @@ def draw(board, layer: int, shape: int, width: float, **geom) -> None:
 
 def apply(board_name: str) -> int:
     path, board, c = load(board_name)
-    for d in list(board.GetDrawings()):
-        if d.GetLayer() in (pcbnew.Edge_Cuts, pcbnew.Cmts_User):
-            board.Remove(d)
-    for seg in c["outline"]:
-        if seg["kind"] == "line":
-            draw(board, pcbnew.Edge_Cuts, pcbnew.SHAPE_T_SEGMENT, 0.05, start=seg["start"], end=seg["end"])
-        else:
-            draw(board, pcbnew.Edge_Cuts, pcbnew.SHAPE_T_ARC, 0.05, arc=(seg["start"], seg["mid"], seg["end"]))
     for p in c["placements"]:
         fp = board.FindFootprintByReference(p["ref"])
         if fp is None:
@@ -157,6 +149,16 @@ def apply(board_name: str) -> int:
         fp.SetLocked(False)
         fp.SetPosition(pt((h["x"], h["y"])))
         fp.SetLocked(True)
+    # Drawings go last: once pcbnew 10.0.6 has removed a drawing, FindFootprintByReference hands
+    # back an untyped SWIG object. Keep the removed ones referenced until the board is saved.
+    removed = [d for d in board.GetDrawings() if d.GetLayer() in (pcbnew.Edge_Cuts, pcbnew.Cmts_User)]
+    for d in removed:
+        board.Remove(d)
+    for seg in c["outline"]:
+        if seg["kind"] == "line":
+            draw(board, pcbnew.Edge_Cuts, pcbnew.SHAPE_T_SEGMENT, 0.05, start=seg["start"], end=seg["end"])
+        else:
+            draw(board, pcbnew.Edge_Cuts, pcbnew.SHAPE_T_ARC, 0.05, arc=(seg["start"], seg["mid"], seg["end"]))
     x0, y0, x1, y1 = c["battery_zone"]["kicad"]
     draw(board, pcbnew.Cmts_User, pcbnew.SHAPE_T_RECT, 0.1, start=(x0, y0), end=(x1, y1))
     for k in c.get("keepouts", []):
