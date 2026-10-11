@@ -6,6 +6,7 @@ set(SPOTIFY_SRCS
     src/spotify_parse_list.c
     src/spotify_auth.c
     src/spotify_gate.c
+    src/spotify_parse_liked.c
 )
 
 if(ESP_PLATFORM)

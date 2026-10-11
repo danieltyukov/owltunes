@@ -54,3 +54,4 @@ target_sources(test_callback_server PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/ca
 target_include_directories(test_callback_server PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
                            ${CMAKE_CURRENT_LIST_DIR}/../main)
 owl_add_test(test_spotify_gate spotify owl_core)
+owl_add_test(test_spotify_liked spotify owl_core)
