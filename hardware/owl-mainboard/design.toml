@@ -1004,3 +1004,412 @@ side = "back"
 height = 0.0
 assembled = false
 pins = { 1 = "U0RXD" }
+
+# ---------------------------------------------------------------------------------------------
+# Sheet periph: display FPC, touch bus, haptics, ring sensor, IMU, light sensor, dock link
+# ---------------------------------------------------------------------------------------------
+
+# J301 follows the Waveshare ESP32-S3-Touch-AMOLED-1.75 J3: connector pin k carries panel pin
+# 32 - k (the bottom-contact connector takes the FPC contacts down, which mirrors its order).
+# Panel pins (VIEWE spec page 7): 1 GND, 2 TP_INT, 3 TP_RST, 4 TP_SDA, 5 TP_SCL, 6 TP_3.3V,
+# 7 GND, 8 IOVCC, 9 VCI, 10 VBAT, 11 VCI_EN, 12 GND, 13 MTP_PWR (open), 14 RESET, 15 CSX,
+# 16 SDI = QSPI D0, 17 DCX = QSPI D1, 18 SCL, 19 D(1) = QSPI D3, 20 D(0) = QSPI D2, 21 TE,
+# 22 GND, 23 to 30 MIPI (open), 25 and 28 GND, 31 GND.
+# Panel supplies (ruling R18): VCI, IOVCC, VCI_EN, VBAT and TP_3.3V all run from DISP_3V3 and the
+# touch bus is pulled up to DISP_3V3, as on the Waveshare kit. The VIEWE application circuit
+# (page 12) gives VBAT 3.3 to 5.5 V, but its pin table (page 7) lists VBAT 3.7 to 4.5 V and its
+# drawing notes touch I2C at 1.8 V. Both are open items for bring-up (VSYS bodge to VBAT possible).
+[[part]]
+ref = "J301"
+sheet = "periph"
+symbol = "Connector_Generic_MountingPin:Conn_01x31_MountingPin"
+footprint = "owltunes:Hirose_FH26W-31S-0.3SHW_1x31-1MP_P0.30mm_Horizontal"
+value = "AMOLED FPC"
+lcsc = "C2973806"
+mpn = "FH26W-31S-0.3SHW(60)"
+manufacturer = "Hirose"
+alt = "C3168451 FH26W-31S-0.3SHW(97), same part on another reel"
+side = "front"
+height = 1.0
+pins = { 1 = "GND", 4 = "GND", 7 = "GND", 10 = "GND", 11 = "LCD_TE", 12 = "LCD_D2", 13 = "LCD_D3", 14 = "LCD_CLK", 15 = "LCD_D1", 16 = "LCD_D0", 17 = "LCD_CS", 18 = "LCD_RST", 20 = "GND", 21 = "DISP_3V3", 22 = "DISP_3V3", 23 = "DISP_3V3", 24 = "DISP_3V3", 25 = "GND", 26 = "DISP_3V3", 27 = "TP_SCL", 28 = "TP_SDA", 29 = "TP_RST", 30 = "TP_INT", 31 = "GND", MP = "GND" }
+nc = ["2", "3", "5", "6", "8", "9", "19"]
+
+[[part]]
+ref = "C301"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "4.7uF"
+lcsc = "C23733"
+mpn = "CL05A475MP5NRNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "front"
+height = 0.6
+pins = { 1 = "DISP_3V3", 2 = "GND" }
+
+[[part]]
+ref = "C302"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "front"
+height = 0.6
+pins = { 1 = "DISP_3V3", 2 = "GND" }
+
+# Touch bus (I2C1): pull-ups to the switched DISP_3V3, so a powered-off CST9217 sees no voltage
+# on its pins and cannot be back-powered through them (Review Focus 2).
+[[part]]
+ref = "R301"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "DISP_3V3", 2 = "TP_SDA" }
+
+[[part]]
+ref = "R302"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "DISP_3V3", 2 = "TP_SCL" }
+
+[[part]]
+ref = "R303"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "DISP_3V3", 2 = "TP_INT" }
+
+# DRV2605L on +3V3 with EN tied high: SDA, SCL, EN and IN/TRIG may not exceed VDD + 0.3 V
+# (SLOS854D section 6.1), so it stays powered while the sensor bus is. Standby by register
+# draws 4.1 uA, shutdown by EN 4 uA. IN/TRIG to GND (unused, I2C trigger), VDD/NC to VDD.
+[[part]]
+ref = "U301"
+sheet = "periph"
+symbol = "Driver:DRV2605LDGS"
+footprint = "Package_SO:TSSOP-10_3x3mm_P0.5mm"
+value = "DRV2605LDGSR"
+lcsc = "C527464"
+mpn = "DRV2605LDGSR"
+manufacturer = "Texas Instruments"
+alt = "C425927 DRV2605LDGST (small reel, same part)"
+side = "back"
+height = 1.1
+pins = { 1 = "DRV_REG", 2 = "I2C_SCL", 3 = "I2C_SDA", 4 = "GND", 5 = "+3V3", 6 = "+3V3", 7 = "LRA_P", 8 = "GND", 9 = "LRA_N", 10 = "+3V3" }
+
+[[part]]
+ref = "C303"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1uF"
+lcsc = "C52923"
+mpn = "CL05A105KA5NQNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "DRV_REG", 2 = "GND" }
+
+[[part]]
+ref = "C304"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1uF"
+lcsc = "C52923"
+mpn = "CL05A105KA5NQNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "C305"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+# LRA Leader LD0832AA-0099F (off board): 8 mm, 1.8 V rms, 235 Hz, 24 ohm, AWG32 leads 27 mm long,
+# crimped into a JST SHR-02V-S-B housing with SSH-003T-P0.2-H contacts (C263995).
+[[part]]
+ref = "J302"
+sheet = "periph"
+symbol = "Connector_Generic_MountingPin:Conn_01x02_MountingPin"
+footprint = "Connector_JST:JST_SH_SM02B-SRSS-TB_1x02-1MP_P1.00mm_Horizontal"
+value = "LRA"
+lcsc = "C160402"
+mpn = "SM02B-SRSS-TB(LF)(SN)"
+manufacturer = "JST"
+side = "back"
+height = 2.95
+pins = { 1 = "LRA_P", 2 = "LRA_N", MP = "GND" }
+
+# TMAG5273A2 (+-133 / +-266 mT, address 0x35) on the board back at (-28, 0) under the magnet
+# track. INT is open drain with a 47k pull-up (wake source); pin 3 (TEST) to GND as TI requires.
+[[part]]
+ref = "U302"
+sheet = "periph"
+symbol = "owltunes:TMAG5273A2QDBVR"
+footprint = "Package_TO_SOT_SMD:SOT-23-6"
+value = "TMAG5273A2QDBVR"
+lcsc = "C3715882"
+mpn = "TMAG5273A2QDBVR"
+manufacturer = "Texas Instruments"
+alt = "C41935525 TMAG5273B2QDBVR: same pins, I2C address 0x22"
+side = "back"
+height = 1.45
+pins = { 1 = "I2C_SCL", 2 = "GND", 3 = "GND", 4 = "+3V3", 5 = "HALL_INT", 6 = "I2C_SDA" }
+
+[[part]]
+ref = "C306"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "R304"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "47k"
+lcsc = "C25792"
+mpn = "0402WGF4702TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "HALL_INT" }
+
+# LIS2DW12: CS high selects I2C, SDO/SA0 high gives 0x19, RES to GND (ST DS11811 table 12),
+# INT1 push-pull (firmware sets it active low), INT2 and NC open. SDO/SA0 is an I/O (SPI SDO),
+# so it reaches +3V3 through R309 10k instead of a hard tie to the TPS63802 output; ST's internal
+# SA0 pull-up (20 to 30k at 3.3 V, DS11811 table 2) is in parallel and the address stays 0x19.
+[[part]]
+ref = "U303"
+sheet = "periph"
+symbol = "owltunes:LIS2DW12TR"
+footprint = "Package_LGA:LGA-12_2x2mm_P0.5mm"
+value = "LIS2DW12TR"
+lcsc = "C189624"
+mpn = "LIS2DW12TR"
+manufacturer = "STMicroelectronics"
+alt = "C50385411 LIS2DW12TR-MS (MSKSEMI second source, test before use)"
+side = "back"
+height = 0.7
+pins = { 1 = "I2C_SCL", 2 = "+3V3", 3 = "IMU_SA0", 4 = "I2C_SDA", 6 = "GND", 7 = "GND", 8 = "GND", 9 = "+3V3", 10 = "+3V3", 12 = "IMU_INT1" }
+nc = ["5", "11"]
+
+[[part]]
+ref = "C307"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "C308"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1uF"
+lcsc = "C52923"
+mpn = "CL05A105KA5NQNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "R309"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "IMU_SA0" }
+
+# OPT3001: ADDR to GND gives 0x44, thermal pad to GND (TI recommends it), INT unused.
+[[part]]
+ref = "U304"
+sheet = "periph"
+symbol = "owltunes:OPT3001DNPR"
+footprint = "owltunes:TI_DNP_USON-6-1EP_2x2mm_P0.65mm"
+value = "OPT3001DNPR"
+lcsc = "C90462"
+mpn = "OPT3001DNPR"
+manufacturer = "Texas Instruments"
+alt = "C2655153 OPT3004DNPR, same pins and address"
+side = "front"
+height = 0.65
+pins = { 1 = "+3V3", 2 = "GND", 3 = "GND", 4 = "I2C_SCL", 6 = "I2C_SDA", 7 = "GND" }
+nc = ["5"]
+
+[[part]]
+ref = "C309"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "front"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+# Sensor bus (I2C0) pull-ups to +3V3: TMAG5273A2 0x35, MAX17048 0x36, LIS2DW12 0x19,
+# OPT3001 0x44, DRV2605L 0x5A. Every device on this bus is powered from +3V3.
+[[part]]
+ref = "R305"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "I2C_SDA" }
+
+[[part]]
+ref = "R306"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "I2C_SCL" }
+
+# Dock link: J303 pin for pin with the dock-pad board (Task 11): GND, VBUS_DOCK, DOCK_PAD, GND.
+# DOCK_DET = 3.3 V x (1k + 10k) / (100k + 1k + 10k) = 0.33 V on the perch (10k ID resistor
+# there), 3.3 V undocked, 0.03 V with the pad shorted to GND. R307 1k and D302 protect GPIO1
+# on an exposed contact; C310 100 nF filters the ADC input.
+[[part]]
+ref = "J303"
+sheet = "periph"
+symbol = "Connector_Generic_MountingPin:Conn_01x04_MountingPin"
+footprint = "Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal"
+value = "DOCK: GND, VBUS, DET, GND"
+lcsc = "C160404"
+mpn = "SM04B-SRSS-TB(LF)(SN)"
+manufacturer = "JST"
+alt = "C51940130 XY-SM04B-SRSS-TB, same footprint"
+side = "back"
+height = 2.95
+pins = { 1 = "GND", 2 = "VBUS_DOCK", 3 = "DOCK_PAD", 4 = "GND", MP = "GND" }
+
+[[part]]
+ref = "D301"
+sheet = "periph"
+symbol = "Device:D_Zener"
+footprint = "Diode_SMD:D_SOD-123F"
+value = "SMF5.0A"
+lcsc = "C193402"
+mpn = "SMF5.0A"
+manufacturer = "MDD"
+alt = "C151296 Littelfuse SMF5.0A"
+side = "back"
+height = 1.1
+pins = { 1 = "VBUS_DOCK", 2 = "GND" }
+
+[[part]]
+ref = "D302"
+sheet = "periph"
+symbol = "Device:D_TVS"
+footprint = "Diode_SMD:D_SOD-523"
+value = "LESD5D5.0CT1G"
+lcsc = "C5274290"
+mpn = "LESD5D5.0CT1G"
+manufacturer = "LRC"
+alt = "C475685 ESD5Z5.0 (unidirectional, also fine on a 0 to 3.3 V line)"
+side = "back"
+height = 0.7
+pins = { 1 = "DOCK_PAD", 2 = "GND" }
+
+[[part]]
+ref = "R307"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "1k"
+lcsc = "C11702"
+mpn = "0402WGF1001TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "DOCK_PAD", 2 = "DOCK_DET" }
+
+[[part]]
+ref = "R308"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "DOCK_DET" }
+
+[[part]]
+ref = "C310"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "DOCK_DET", 2 = "GND" }

@@ -2,7 +2,7 @@
 # netlist after the schematic matches design.toml, contract after placement, drc after routing.
 [[board]]
 name = "owl-mainboard"
-netlist = false
+netlist = true
 contract = false
 drc = false
 
