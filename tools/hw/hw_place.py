@@ -205,24 +205,31 @@ def place_references(board) -> list[str]:
 # J101, so this is what the person plugging the pack in checks.
 J101_MARKS = (("+", 28.4, 17.0), ("-", 28.4, 19.0))
 J101_PIN1_DOT = (27.35, 17.0, 0.2)
-J101_MARK_AREA = (26.9, 15.0, 29.6, 21.0)  # owl x0, y0, x1, y1 of these marks and of the 3-pin J101's
+# What the 3-pin J101 had ("+ NTC -" for pins 1 to 3 at y 16, 18 and 20, the dot at y 16), and the
+# area round both sets of marks (owl x0, y0, x1, y1). Only these marks are cleared, and only there.
+J101_OLD_TEXTS = ("NTC",)
+J101_OLD_DOT_Y = 16.0
+J101_MARK_AREA = (26.9, 15.0, 29.6, 21.0)
 
 
 def clear_j101_marks(board) -> None:
-    """Delete the marks a previous run drew: every board text and dot on the back silkscreen
-    beside J101's pins. Delete, not Remove: Remove hands the C++ item to its Python wrapper, and
-    once that wrapper is freed pcbnew's bindings return untyped SwigPyObjects for every board
-    (KiCad 10.0.6)."""
+    """Delete the marks this tool drew beside J101's pins on the back silkscreen: the texts of
+    J101_MARKS and J101_OLD_TEXTS inside J101_MARK_AREA, and the pin 1 dots of the 2-pin and the
+    3-pin J101. Other silkscreen there stays. Delete, not Remove: Remove hands the C++ item to
+    its Python wrapper, and once that wrapper is freed pcbnew's bindings return untyped
+    SwigPyObjects for every board (KiCad 10.0.6)."""
     x0, y0, x1, y1 = J101_MARK_AREA
+    texts = {m[0] for m in J101_MARKS} | set(J101_OLD_TEXTS)
+    dots = {(pcbnew.FromMM(100 + J101_PIN1_DOT[0]), pcbnew.FromMM(100 - y)) for y in (J101_PIN1_DOT[1], J101_OLD_DOT_Y)}
 
-    def beside(d) -> bool:
-        p = d.GetTextPos() if isinstance(d, pcbnew.PCB_TEXT) else d.GetCenter()
+    def beside(p) -> bool:
         x, y = pcbnew.ToMM(p.x) - 100, 100 - pcbnew.ToMM(p.y)
         return x0 <= x <= x1 and y0 <= y <= y1
 
-    old = [d for d in board.GetDrawings() if d.GetLayer() == pcbnew.B_SilkS and beside(d)
-           and (isinstance(d, pcbnew.PCB_TEXT)
-                or (isinstance(d, pcbnew.PCB_SHAPE) and d.GetShape() == pcbnew.SHAPE_T_CIRCLE))]
+    old = [d for d in board.GetDrawings() if d.GetLayer() == pcbnew.B_SilkS
+           and ((isinstance(d, pcbnew.PCB_TEXT) and d.GetText() in texts and beside(d.GetTextPos()))
+                or (isinstance(d, pcbnew.PCB_SHAPE) and d.GetShape() == pcbnew.SHAPE_T_CIRCLE
+                    and (d.GetCenter().x, d.GetCenter().y) in dots))]
     for d in old:
         board.Delete(d)
 

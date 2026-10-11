@@ -60,6 +60,29 @@ class MarkJ101Test(unittest.TestCase):
         texts, dots, refs = self.run_fresh(["hw_place.clear_j101_marks(board)", "gc.collect()"])
         self.assertEqual((texts, dots, refs), ([], 0, ["R1"]))
 
+    def test_clearing_keeps_other_silkscreen_beside_j101(self):
+        # Only the marks hw_place draws go: the same texts just outside J101_MARK_AREA, another
+        # text and another dot inside it, all stay. The 3-pin J101's pin 1 dot (y 16) goes.
+        board = pcbnew.LoadBoard(str(self.path))
+        x0, y0, x1, y1 = hw_place.J101_MARK_AREA
+        for text, x, y in (("+", x0 - 0.05, 17.0), ("-", x1 + 0.05, 19.0), ("fab", 28.0, 20.5)):
+            t = pcbnew.PCB_TEXT(board)
+            t.SetText(text)
+            t.SetLayer(pcbnew.B_SilkS)
+            t.SetTextPos(pcbnew.VECTOR2I(pcbnew.FromMM(100 + x), pcbnew.FromMM(100 - y)))
+            board.Add(t)
+        for x, y in ((28.0, 15.5), (27.35, 16.0)):
+            dot = pcbnew.PCB_SHAPE(board)
+            dot.SetShape(pcbnew.SHAPE_T_CIRCLE)
+            dot.SetLayer(pcbnew.B_SilkS)
+            dot.SetFilled(True)
+            dot.SetCenter(pcbnew.VECTOR2I(pcbnew.FromMM(100 + x), pcbnew.FromMM(100 - y)))
+            dot.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(100 + x + 0.2), pcbnew.FromMM(100 - y)))
+            board.Add(dot)
+        pcbnew.SaveBoard(str(self.path), board)
+        texts, dots, refs = self.run_fresh(["hw_place.clear_j101_marks(board)", "gc.collect()"])
+        self.assertEqual((texts, dots, refs), (["+", "-", "fab"], 1, ["R1"]))
+
     def test_rerun_replaces_the_marks(self):
         texts, dots, refs = self.run_fresh([
             "hw_place.mark_j101(board)",
