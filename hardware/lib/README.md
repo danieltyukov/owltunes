@@ -1,6 +1,6 @@
 # OwlTunes KiCad library
 
-Parts the KiCad 10 stock library lacks: five symbols (`owltunes.kicad_sym`) and seven footprints
+Parts the KiCad 10 stock library lacks: five symbols (`owltunes.kicad_sym`) and eight footprints
 (`owltunes.pretty/`). `tools/hw/hw_lib_build.py` writes them all from tables typed from the
 datasheets: pin names and electrical types for the symbols, the manufacturers' land patterns for
 the footprints. `tools/tests/test_hw_library.py` checks the files against a second set of tables,
@@ -35,6 +35,7 @@ Pages are those of the document named, as printed on the page.
 | `PogoPin_Xinyangze_YZ71215080P-02` | C5157364 | (stock symbol) | Xinyangze drawing YZ71215080P-02 (part only, no land pattern) | p. 3 of the LCSC file |
 | `L_Murata_DFE201612E` | C668312 | (stock `Device:L`) | Murata reference specification J(E)TE243A-0006B-01, recommended PCB pattern | p. 5 pattern, p. 1 size, p. 7 no copper under the coil |
 | `ESP32-S3-WROOM-1_Drill0.3` | C2913202 | (stock symbol) | KiCad stock footprint, thermal vias opened from 0.2 to 0.3 mm; antenna keep-out and courtyard cut to the owl notch plus 3 mm strips (Espressif's 15 mm keep-out does not fit in the 66 x 84 mm owl; bring-up RSSI and the ring test decide WROOM-1 or WROOM-1U) | via spacing 0.99 mm, ring 0.15 mm |
+| `VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3` | C15220 | (stock `BQ24073RGT`) | KiCad stock ThermalVias footprint, its four corner vias opened from 0.2 to 0.3 mm and left open; the stock paste windows sat over the vias and are redrawn round them (review I2): a 1.5 x 0.6 bar and two 0.6 x 0.35 arms, 0.1 mm webs | no paste on a 0.5 mm via pad (0.1 mm from each drill), 51.6 % of the 1.6 x 1.6 pad printed (TI: roughly 50 to 80 %) |
 
 Stock footprints the boards use, checked against the manufacturers (the test repeats these
 checks wherever KiCad is installed):
@@ -56,7 +57,8 @@ checks wherever KiCad is installed):
   tab openings 0.3 x 0.7 on the tab's outer side). KiCad's paste margins shrink a pad evenly, so
   the FH26W contacts carry no paste of their own and the openings are separate paste-only pads
   (unnumbered, as in KiCad's ESP32 module footprint). Maxim gives no stencil for the TDFN; its
-  exposed pad prints 0.05 mm in from the edge (81 %). Other pads print in full.
+  exposed pad prints 0.05 mm in from the edge (81 %). The BQ24073's exposed pad prints round its
+  open thermal vias (51.6 %). Other pads print in full.
 - Each footprint keeps the orientation of the part's EasyEDA footprint, which is JLC's zero
   rotation, so the placement file needs no rotation offset for these parts (confirm in JLC's
   placement preview when ordering). TPS63802: pin 1 top left, pins 1 to 5 down the left side.

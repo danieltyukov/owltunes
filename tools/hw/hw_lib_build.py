@@ -6,7 +6,9 @@ land patterns in FOOTPRINTS (pages cited there and in hardware/lib/README.md). E
 keeps the orientation of the part's LCSC/EasyEDA footprint, which is JLC's zero rotation, so the
 placement file needs no rotation offset for these parts. ESP32-S3-WROOM-1_Drill0.3 is KiCad's
 module footprint with its twelve thermal vias opened from 0.2 to 0.3 mm (JLCPCB's no-fee size;
-the 0.6 mm pads keep a 0.15 mm ring).
+the 0.6 mm pads keep a 0.15 mm ring). VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3
+is KiCad's ThermalVias QFN for the BQ24073 with its four vias opened to 0.3 mm and its paste
+windows moved off them.
 
 JLC2KiCadLib downloads the EasyEDA symbols, footprints and STEP models into build/jlclib (or the
 script reads them from --from DIR). The STEP models are copied to hardware/lib/3dmodels, which
@@ -271,6 +273,18 @@ FOOTPRINTS = {
 
 # Stock footprints copied with their 0.2 mm thermal-via drills opened to 0.3 mm.
 STOCK_COPIES = {"ESP32-S3-WROOM-1_Drill0.3": "RF_Module.pretty/ESP32-S3-WROOM-1.kicad_mod"}
+
+# U101 (BQ24073 RGT, review I2): KiCad's ThermalVias footprint, its four vias at the corners of
+# the 1.6 mm exposed pad opened to 0.3 mm. The vias stay open (plugging is a paid option on JLC's
+# 4-layer boards), and open vias under paste wick the solder off the pad, so the stock paste
+# windows, which sit over the vias, are redrawn round them: a bar across the middle and an arm
+# above and below it, 0.1 mm webs, 0.05 mm in from the pad edge. No window touches a 0.5 mm via
+# pad (0.1 mm from each drill) and they print 51.6 % of the pad (TI: roughly 50 to 80 %).
+QFN_COPIES = {"VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3":
+              "Package_DFN_QFN.pretty/VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias.kicad_mod"}
+QFN_PASTE = ((0.0, 0.0, 1.5, 0.6), (0.0, -0.575, 0.6, 0.35), (0.0, 0.575, 0.6, 0.35))  # x, y, w, h
+QFN_NOTE = ("Thermal vias opened from 0.2 to 0.3 mm (JLCPCB no-fee drill) and left open; paste windows "
+            "redrawn clear of them (0.1 mm from each drill, 51.6 % of the exposed pad). ")
 
 SILK_W = 0.15  # JLCPCB's minimum silkscreen line
 FAB_W = 0.1
@@ -649,6 +663,24 @@ def stock_copy(name: str, rel: str, stock_dir: Path) -> str:
     return text.replace("(drill 0.2)", "(drill 0.3)")
 
 
+def qfn_copy(name: str, rel: str, stock_dir: Path) -> str:
+    text = (stock_dir / rel).read_text()
+    if text.count("(drill 0.2)") != 4:
+        raise SystemExit(f"{rel}: expected 4 thermal vias drilled 0.2 mm")
+    window = re.compile(r'\t\(pad "" smd roundrect\n\t\t\(at [-\d. ]+\)\n\t\t\(size [\d. ]+\)\n'
+                        r'\t\t\(layers "F\.Paste"\)\n\t\t\(roundrect_rratio [\d.]+\)\n\t\)\n')
+    if len(window.findall(text)) != 4:
+        raise SystemExit(f"{rel}: expected the 4 stock paste windows")
+    first = window.search(text).start()
+    text = window.sub("", text)
+    windows = "".join(f'\t(pad "" smd rect\n\t\t(at {num(x)} {num(y)})\n\t\t(size {num(w)} {num(h)})\n'
+                      f'\t\t(layers "F.Paste")\n\t)\n' for x, y, w, h in QFN_PASTE)
+    text = text[:first] + windows + text[first:]
+    text = re.sub(r'\(footprint "[^"]+"', f'(footprint "{name}"', text, count=1)
+    text = text.replace('(descr "', '(descr "' + QFN_NOTE, 1)
+    return text.replace("(drill 0.2)", "(drill 0.3)")
+
+
 # --------------------------------------------------------------------------------------------
 # EasyEDA cross-check
 # --------------------------------------------------------------------------------------------
@@ -734,6 +766,8 @@ def build(lib: Path, src: Path | None, stock_dir: Path) -> None:
             shutil.copy(tmp / "fp.pretty" / f"{name}.kicad_mod", lib / "owltunes.pretty" / f"{name}.kicad_mod")
     for name, rel in STOCK_COPIES.items():
         (lib / "owltunes.pretty" / f"{name}.kicad_mod").write_text(stock_copy(name, rel, stock_dir))
+    for name, rel in QFN_COPIES.items():
+        (lib / "owltunes.pretty" / f"{name}.kicad_mod").write_text(qfn_copy(name, rel, stock_dir))
     if src is not None:
         models = lib / "3dmodels"
         models.mkdir(exist_ok=True)
@@ -766,7 +800,7 @@ def main(argv: list[str]) -> int:
         compare_with_easyeda(src)
     build(args.lib, src, args.stock)
     print(f"{args.lib.relative_to(ROOT) if args.lib.is_relative_to(ROOT) else args.lib}: {len(PARTS)} symbols, "
-          f"{len(FOOTPRINTS) + len(STOCK_COPIES)} footprints" + ("" if src is None else ", 3D models"))
+          f"{len(FOOTPRINTS) + len(STOCK_COPIES) + len(QFN_COPIES)} footprints" + ("" if src is None else ", 3D models"))
     return 0
 
 

@@ -439,6 +439,32 @@ class LibraryTest(unittest.TestCase):
             theirs = pads(stock.read_text())
             self.assertEqual([{**p, "drill": None} for p in mine], [{**p, "drill": None} for p in theirs])
 
+    def test_charger_copy_keeps_its_paste_off_the_open_thermal_vias(self):
+        # U101, BQ24073 RGT (review I2): open vias under paste wick the solder off the exposed pad.
+        # No opening may touch a via pad, and the openings print 50 to 80 % of the 1.6 x 1.6 pad
+        # (TI's land pattern guidance for RGT). The copper is KiCad's ThermalVias footprint's.
+        name = "VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3"
+        text = (LIB / "owltunes.pretty" / f"{name}.kicad_mod").read_text()
+        have = pads(text)
+        vias = [p for p in have if p["drill"]]
+        self.assertEqual(sorted((p["x"], p["y"], p["w"], p["drill"]) for p in vias),
+                         [(sx * 0.55, sy * 0.55, 0.5, 0.3) for sx in (-1, 1) for sy in (-1, 1)])
+        openings = [o for o in paste_openings(text) if abs(o[0]) < 0.8 and abs(o[1]) < 0.8]  # not the pins'
+        self.assertEqual(len(openings), 3)
+        for x, y, w, h in openings:
+            self.assertLessEqual(max(abs(x) + w / 2, abs(y) + h / 2), 0.8 - 0.05 + 1e-6)  # inside the pad
+            for v in vias:
+                gap_x = max(abs(v["x"] - x) - w / 2, 0.0)
+                gap_y = max(abs(v["y"] - y) - h / 2, 0.0)
+                self.assertGreaterEqual((gap_x ** 2 + gap_y ** 2) ** 0.5, v["w"] / 2 - 1e-6)
+        coverage = sum(w * h for _, _, w, h in openings) / (1.6 * 1.6)
+        self.assertTrue(0.5 <= coverage <= 0.8, coverage)
+        stock = STOCK / "Package_DFN_QFN.pretty" / "VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias.kicad_mod"
+        if stock.is_file():  # the copper pads are KiCad's; only the drills and the paste differ
+            copper = [{**p, "drill": None} for p in have if "Cu" in p["layers"]]
+            theirs = [{**p, "drill": None} for p in pads(stock.read_text()) if "Cu" in p["layers"]]
+            self.assertEqual(copper, theirs)
+
     @unittest.skipUnless(STOCK.is_dir(), "KiCad footprint library not installed")
     def test_stock_footprints_match_the_datasheets(self):
         for name, want in STOCK_LANDS.items():  # KiCad rounds the EVQP7A rows to 0.72 (catalogue 0.725)

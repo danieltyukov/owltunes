@@ -7180,7 +7180,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Package_DFN_QFN:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm"
+		(property "Footprint" "owltunes:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3"
 			(at 147.32 62.23 0)
 			(hide yes)
 			(show_name no)
