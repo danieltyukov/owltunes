@@ -14,7 +14,7 @@ pours exist; the pours and the rest of the nets are Steps 2 and 3 (Freerouting a
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
 Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
-qspi bat_ntc.
+qspi bat_ntc vsys_link v3v3_feed vbus_usb.
 Needs KiCad's pcbnew Python module.
 """
 
@@ -261,6 +261,57 @@ GROUPS = {
                          (-3.02, -10.22), (-4.11, -10.22), (-4.11, -11.3), (-4.91, -11.3), (-4.91, -10.22),
                          (-5.18, -10.22)], "B"),
         ("", "no pour", [(-2.62, -8.0), (1.88, -8.0), (1.88, -11.0), (-2.62, -11.0)], "In2"),
+    ],
+    # VSYS from the charger to the TPS63802 (up to 0.8 A). The charger's VSYS copper is sealed in
+    # on B.Cu (VBAT north, VIN_CHG south) and In2 stays GND under U101, U103 and their caps, so
+    # the link is F.Cu over the In1 GND plane: two vias beside C105's VSYS pad (the bulk input
+    # cap), north at x 13.075 between U103's west and channel GND vias (0.275 mm from each), east
+    # at y -1.625 between the channel via and C109's, north at x 16.0 west of the C107/C108 GND
+    # vias (not under L101 or the switch pins), east at y 3.25 above the VIN_CHG tap's via, and
+    # two vias on the charger's VSYS run below TP102. 0.5 mm all the way.
+    "vsys_link": [
+        ("VSYS", 0.5, [(13.825, -6.7), (12.85, -6.7), (12.85, -7.55)]),
+        ("VSYS", 0.5, [(12.85, -7.55), (12.85, -6.7), (13.075, -6.475), (13.075, -1.625), (15.75, -1.625),
+                       (16.0, -1.375), (16.0, 2.5), (16.75, 3.25), (28.35, 3.25), (29.3, 2.3), (29.3, 1.1)], "F"),
+        ("VSYS", "via", [(12.85, -6.7), (12.85, -7.55), (29.3, 1.1), (29.3, 1.9)]),
+    ],
+    # +3V3 from the TPS63802 output to the In2 +3V3 pour under the module (x -9 to 9, above the
+    # module's bottom pin row; In2 is GND everywhere else). B.Cu from C108 north-west to two vias
+    # west of the TPS_PG F.Cu run, F.Cu north-west and up at x 7.0 (east of J301, over the In1
+    # GND plane; the B.Cu USB pair below it is a wall) to two vias under the module, inside its
+    # pin ring. Module pin 2 (3V3) reaches the pour through two vias beside it. 0.5 mm.
+    "v3v3_feed": [
+        ("+3V3", 0.5, [(14.725, 1.4), (14.725, 2.3), (12.4, 4.6), (11.8, 5.2)]),
+        ("+3V3", 0.5, [(12.4, 4.6), (11.8, 5.2), (7.0, 10.0), (7.0, 21.0)], "F"),
+        ("+3V3", 0.5, [(8.75, 34.34), (7.3, 34.34), (7.3, 33.55)]),
+        ("+3V3", "via", [(12.4, 4.6), (11.8, 5.2), (7.0, 20.0), (7.0, 21.0), (7.3, 34.34), (7.3, 33.55)]),
+    ],
+    # VBUS_USB from both J201 VBUS pads through the D201 TVS to the D101 anode, 0.5 mm. The west
+    # pad goes straight up into D201. The east pad cannot cross CC1 (its pull-down R201 sits east
+    # of it), so it hooks round R201: up, east, north past R201 and back west above D201's GND pad
+    # into D201. CC1 stays inside the hook on B.Cu; CC2 crosses the west leg on F.Cu (via beside
+    # its pad, via below R202). D201's and R201's GND pads, inside the hook, share two GND vias.
+    # From the hook's north-east corner VBUS drops to F.Cu (the B.Cu USB pair and VBUS_DOCK are
+    # walls on B.Cu), runs east at y -24.55 and up the right side over the In1 GND plane, south of
+    # the BAT_NTC run, and comes back to B.Cu through two vias between TP101 and D102, east of
+    # D101's anode, which the VIN_CHG tap and VBUS_DOCK box in on B.Cu.
+    "vbus_usb": [
+        ("VBUS_USB", 0.5, [(-14.45, -29.3), (-14.45, -27.25), (-13.4, -26.3)]),
+        ("VBUS_USB", 0.5, [(-9.55, -29.3), (-9.55, -28.3), (-7.6, -28.3), (-7.6, -25.2), (-12.85, -25.2),
+                           (-13.4, -25.75), (-13.4, -26.3)]),
+        ("VBUS_USB", 0.5, [(-7.6, -25.2), (-7.6, -24.55), (-6.9, -24.55)]),
+        ("VBUS_USB", 0.5, [(-7.6, -24.55), (-6.9, -24.55), (26.85, -24.55), (28.6, -22.8), (28.6, -7.1),
+                           (28.0, -6.6)], "F"),
+        ("VBUS_USB", 0.5, [(28.6, -7.1), (28.0, -6.6), (26.9, -5.3)]),
+        ("VBUS_USB", "via", [(-7.6, -24.55), (-6.9, -24.55), (28.6, -7.1), (28.0, -6.6)]),
+        ("USB_CC1", 0.15, [(-10.75, -29.3), (-10.75, -28.05), (-10.4, -27.7), (-8.4, -27.7)]),
+        ("USB_CC2", 0.15, [(-13.75, -29.3), (-13.7, -28.3)]),
+        ("USB_CC2", 0.15, [(-13.7, -28.3), (-15.6, -28.3)], "F"),
+        ("USB_CC2", 0.15, [(-15.6, -28.3), (-15.6, -27.51)]),
+        ("USB_CC2", "via", [(-13.7, -28.3), (-15.6, -28.3)]),
+        ("GND", 0.3, [(-10.6, -26.3), (-9.4, -26.25), (-8.4, -26.49)]),
+        ("GND", 0.3, [(-9.4, -26.25), (-9.4, -26.95)]),
+        ("GND", "via", [(-9.4, -26.25), (-9.4, -26.95)]),
     ],
 }
 
