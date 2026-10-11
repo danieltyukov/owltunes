@@ -148,6 +148,34 @@ test("a late Wi-Fi failure does not undo the network the owl is on", async ({ pa
   });
   await expect(page.getByText("192.168.1.20")).toBeVisible();
   await expect(page.getByText("Not on Wi-Fi yet.")).toBeHidden();
+  await expect(page.getByRole("status")).not.toContainText("could not");
+  await expect(page.getByRole("status")).not.toContainText("cannot find");
+});
+
+test("a Wi-Fi failure message clears once the owl comes up", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "failed", ssid: "Wrong", error: "wifi_not_found" });
+  });
+  await expect(page.getByRole("status")).toContainText("cannot find Wrong");
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "up", ip: "192.168.1.20" });
+  });
+  await expect(page.getByText("Online at 192.168.1.20.")).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("");
+});
+
+test("coming up keeps an unrelated status message", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "failed", ssid: "Wrong", error: "wifi_not_found" });
+    emit({ event: "spotify", state: "linking" });
+    emit({ event: "network", state: "up", ip: "192.168.1.20" });
+  });
+  await expect(page.getByRole("status")).toHaveText("Your owl is linking to Spotify...");
 });
 
 test("setup asks for Wi-Fi before a Spotify login", async ({ page }) => {
