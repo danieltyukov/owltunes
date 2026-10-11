@@ -66,18 +66,19 @@ GROUPS = {
     # Charger (BQ24073): VIN_CHG from pin 13 to C101, on to the D101 and D102 cathodes; VSYS from
     # pins 10 and 11 to C102 and TP102 (the run to the TPS63802 is the In2 VSYS pour); VBAT from
     # pins 2 and 3 to C103, then up between C103 and R103, clear of the H1 boss ring, to J101 pin 1,
-    # with TP103 on the way. 0.5 mm except the necks at the 0.5 mm pitch pins and 0.4 mm between
-    # C103 and R103.
+    # with TP103 on the way. 0.5 mm except the necks at the 0.5 mm pitch pins; between C103 and
+    # R103 the run steps from x 21.75 to 21.65 so the full 0.5 mm keeps 0.2 mm from both (review
+    # M1). Branches start at a vertex of the run they leave (review M2).
     "charger": [
         ("VIN_CHG", 0.25, [(25.25, -1.438), (25.25, -2.25)]),
         ("VIN_CHG", 0.5, [(25.25, -2.25), (24.725, -3.2), (24.1, -4.0), (24.1, -5.3), (24.1, -7.9)]),
         ("VSYS", 0.25, [(25.938, 0.25), (25.938, -0.25), (26.7, -0.25)]),
         ("VSYS", 0.5, [(26.7, -0.25), (27.6, -0.775), (28.2, -0.775), (29.3, -0.775), (29.3, 3.0)]),
         ("VBAT", 0.25, [(23.062, 0.25), (23.062, -0.25), (22.1, -0.25)]),
-        ("VBAT", 0.5, [(22.1, -0.25), (21.4, -0.775), (20.8, -0.775)]),
-        ("VBAT", 0.4, [(21.75, -0.51), (21.75, 4.5)]),
-        ("VBAT", 0.4, [(20.6, 3.4), (21.75, 3.4)]),
-        ("VBAT", 0.5, [(21.75, 4.5), (22.6, 5.2), (22.6, 14.0), (23.6, 16.0)]),
+        ("VBAT", 0.5, [(22.1, -0.25), (21.75, -0.5125), (21.4, -0.775), (20.8, -0.775)]),
+        ("VBAT", 0.5, [(21.75, -0.5125), (21.75, 1.6), (21.65, 1.7), (21.65, 3.4), (21.65, 4.5)]),
+        ("VBAT", 0.5, [(20.6, 3.4), (21.65, 3.4)]),
+        ("VBAT", 0.5, [(21.65, 4.5), (22.6, 5.2), (22.6, 14.0), (23.6, 16.0)]),
     ],
     # VIN_CHG taps from the D101/D102 cathode run: east to TP101 above the diode anodes (D101's
     # VBUS_USB anode stays open to the east and south of TP101); and to R103, the CHG_EN2 pull-up,
