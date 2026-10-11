@@ -544,6 +544,20 @@ static void take_commands(const provisioning_view_t *view, TickType_t wait)
     }
 }
 
+/* A new login replaced the one the token came from, maybe for another account: nothing of the old
+ * one may reach the new one, neither its token, its device numbers, its player nor its waiting
+ * commands. */
+static void login_changed(uint32_t login_seq)
+{
+    s_login_seq = login_seq;
+    forget_token();
+    forget_devices();
+    spotify_http_close();
+    drop_queue("login_changed", 0);
+    owl_player_init(&s_player); /* poll the new account at once */
+    s_last_poll_ms = -1;
+}
+
 static void runtime_task(void *arg)
 {
     (void)arg;
@@ -560,13 +574,7 @@ static void runtime_task(void *arg)
             continue;
         }
         if (view.login_seq != s_login_seq) {
-            /* A new login replaced the one this token came from, maybe for another account. */
-            s_login_seq = view.login_seq;
-            forget_token();
-            forget_devices();
-            spotify_http_close();
-            owl_player_init(&s_player); /* the old account's state: poll the new one at once */
-            s_last_poll_ms = -1;
+            login_changed(view.login_seq);
         }
         if (ready != s_active) {
             become(ready, &view);

@@ -64,11 +64,12 @@ A playback command goes through these states:
 
 `toggle` is reported as the `play` or `pause` it became, and `vol` as `volume`. Commands typed
 while a request is under way wait, and all of them join the queue before the next request goes out.
-Volume commands that are still waiting are merged into the newest one (three quick `vol +5` become
-one request), and a command undone by the next one (`play` right after `pause`, while both still
-wait) leaves the queue without a `done`. The owl shows each command's effect before Spotify
-confirms it, so a failed command is followed by a `player` line too, with the state Spotify
-reports, once Spotify may be called again.
+Volume commands that are still waiting are merged into the newest one: three `vol +5` typed while
+another request is under way go out as one request, while from idle the first goes out alone and
+the two typed during it merge. A command undone by the next one (`play` right after `pause`, while
+both still wait) leaves the queue without a `done`. The owl shows each command's effect before
+Spotify confirms it, so a failed command is followed by a `player` line too, with the state
+Spotify reports, once Spotify may be called again.
 
 `{"event":"cmd","state":"refused","error":"unknown_cmd"}` (without `cmd`) means the line was not a
 command.
@@ -95,6 +96,7 @@ command.
 | `server_error` | failed | Spotify had a server error. The owl backs off (`backoff`) before it sends anything else. |
 | `network` | failed | No answer from Spotify (Wi-Fi, DNS or TLS), or no access token could be had. The owl backs off. |
 | `logged_out` | failed | Spotify refused the saved login. Log in again on the setup page. |
+| `login_changed` | failed | A new Spotify login replaced the one the command was typed for; it was not sent. |
 | `storage` | failed | A new login from Spotify could not be written to flash yet. |
 | `bad_request` | failed | The owl could not build the request (a bug: please report it). |
 

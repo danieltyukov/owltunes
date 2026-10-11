@@ -579,6 +579,30 @@ static void test_presses_made_during_a_request_merge_before_the_next_one_goes_ou
     TEST_ASSERT_EQUAL_UINT8(0, owl_cmdq_count(&s_buf->queue)); /* play undid pause: nothing to send */
 }
 
+static void test_a_login_change_drops_the_old_accounts_waiting_commands(void)
+{
+    start_playing();
+    console("devices");
+    answer(200, -1, s_devices_json);
+    work();
+    console("next");
+    console("transfer 2");
+    TEST_ASSERT_EQUAL_UINT8(2, owl_cmdq_count(&s_buf->queue));
+    login_changed(s_login_seq + 1);
+    TEST_ASSERT_EQUAL_UINT8(0, owl_cmdq_count(&s_buf->queue));
+    expect_line("\"state\":\"failed\"", "\"cmd\":\"next\"", "\"error\":\"login_changed\"");
+    expect_line("\"state\":\"failed\"", "\"cmd\":\"transfer\"", "\"error\":\"login_changed\"");
+    TEST_ASSERT_EQUAL_INT(1, s_closes);
+    TEST_ASSERT_EQUAL(OWL_PLAYER_UNKNOWN, s_player.status);
+    answer(200, -1, s_player_json);
+    work(); /* the new account's player is read at once, and nothing of the old one is sent */
+    TEST_ASSERT_EQUAL_INT(2, s_sent);
+    TEST_ASSERT_EQUAL_STRING("/v1/me/player?additional_types=episode", s_sent_req[1].path);
+    TEST_ASSERT_EQUAL_STRING("tok-2", s_sent_token[1]); /* the old token was forgotten */
+    console("transfer 2");                              /* and its device numbers */
+    expect_line("\"state\":\"refused\"", "\"cmd\":\"transfer\"", "\"error\":\"no_such_device\"");
+}
+
 int main(void)
 {
     size_t len;
@@ -603,6 +627,7 @@ int main(void)
     RUN_TEST(test_devices_are_listed_and_numbered_for_transfer);
     RUN_TEST(test_stopping_fails_waiting_commands_and_forgets_the_devices);
     RUN_TEST(test_presses_made_during_a_request_merge_before_the_next_one_goes_out);
+    RUN_TEST(test_a_login_change_drops_the_old_accounts_waiting_commands);
     int failures = UNITY_END();
     free(s_player_json);
     free(s_devices_json);
