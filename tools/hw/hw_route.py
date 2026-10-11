@@ -4,7 +4,8 @@
 Each group is a list of (net, width mm, [owl points]) polylines on B.Cu, with "F" as a fourth
 item for F.Cu, (net, "via", [owl points]) for through vias, ("", "no pour", [owl polygon],
 layer) for a rule area that keeps copper pours out but allows tracks, vias, pads and footprints
-(layer "F", "B" or "In2"), or (net, "pour", [owl polygon], layer, priority) for a copper pour
+(layer "F", "B" or "In2"), ("", "keepout", [owl polygon], layer) for one that also keeps tracks
+and vias out (pads and footprints allowed), or (net, "pour", [owl polygon], layer, priority) for a copper pour
 (layer "F", "In1", "In2" or "B"; the fill is clipped to the board outline, so a pour may run
 past it); owl coordinates are x right as seen from the front, y up, origin at the display centre
 (KiCad x = 100 + x, y = 100 - y). Widths neck down to 0.25 or 0.3 mm only where a track leaves a
@@ -17,7 +18,7 @@ planes); the outer GND pours and the stitching vias come after the session impor
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
 Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
-qspi bat_ntc vsys_link v3v3_feed vbus_usb planes.
+qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 planes.
 Needs KiCad's pcbnew Python module.
 """
 
@@ -28,6 +29,24 @@ import sys
 import pcbnew
 
 from hw_netlist import ROOT
+
+
+def j301_comb() -> list[tuple[float, float]]:
+    """F.Cu between J301's pads, as one polygon: the band between its two rows (y 10.888 to
+    13.037) and the 0.3 mm gaps between neighbouring pads of each row (top row, odd pins, at
+    x 4.5 down to -4.5; bottom row, even pins, at 4.2 down to -4.2; pads 0.3 mm wide, rows
+    10.237 to 10.888 and 13.037 to 13.838). A track may only reach a pad from outside the rows."""
+    bottom = [round(-4.2 + 0.6 * k, 3) for k in range(15)]
+    top = [round(-4.5 + 0.6 * k, 3) for k in range(16)]
+    pts = [(-4.65, 10.888)]
+    for a, b in zip(bottom, bottom[1:]):
+        pts += [(a + 0.15, 10.888), (a + 0.15, 10.237), (b - 0.15, 10.237), (b - 0.15, 10.888)]
+    pts += [(4.65, 10.888), (4.65, 13.037)]
+    for a, b in reversed(list(zip(top, top[1:]))):
+        pts += [(b - 0.15, 13.037), (b - 0.15, 13.838), (a + 0.15, 13.838), (a + 0.15, 13.037)]
+    pts.append((-4.65, 13.037))
+    return [(round(x, 3), round(y, 3)) for x, y in pts]
+
 
 GROUPS = {
     # TPS63802 (TI datasheet section 11): L1 and L2 straight to L101 (entering its pads on the
@@ -198,7 +217,9 @@ GROUPS = {
     # D1 serpentine (F.Cu) and the CS and D3 trombones (B.Cu, under J301) keep every length within
     # 5 mm of LCD_CLK. TE leaves the module's left column, drops to F.Cu there and comes down into
     # its pad east of D3. GND vias sit beside each layer change (B.Cu returns on In2, F.Cu on In1);
-    # the two below J301 also feed its GND pins 10 and 20 and the C301/C302 GND pads.
+    # the two below J301 also feed its GND pins 10 and 20 and the C301/C302 GND pads. An F.Cu
+    # keep-out (j301_comb) holds every other route, Freerouting's included, out from between
+    # J301's rows and pads.
     "qspi": [
         ("LCD_D2", 0.1, [(-1.905, 17.85), (-1.905, 16.75), (-2.4, 16.255), (-2.4, 8.5), (-2.1, 8.2), (1.2, 8.2)]),
         ("LCD_CLK", 0.1, [(0.635, 17.85), (0.635, 16.0), (-1.75, 16.0), (-2.05, 15.7), (-2.05, 9.0), (-1.7, 8.65),
@@ -229,6 +250,7 @@ GROUPS = {
         ("LCD_TE", "via", [(-10.25, 24.18)]),
         ("GND", "via", [(-1.35, 16.6), (-1.05, 14.45), (2.1, 14.35), (-1.1, 9.65), (1.8, 9.6), (0.6, 7.65),
                         (-11.0, 24.18)]),
+        ("", "keepout", j301_comb(), "F"),
     ],
     # BAT_NTC from U101 pin 1 (TS) to RT101, the board NTC under the middle of the cell (the pack
     # is 2-wire). B.Cu down at x 22.75 and west at y -2.0 between C103 and R101 (CHG_ISET can pass
@@ -316,6 +338,58 @@ GROUPS = {
         ("GND", 0.3, [(-9.4, -26.25), (-9.4, -26.95)]),
         ("GND", "via", [(-9.4, -26.25), (-9.4, -26.95)]),
     ],
+    # J301's other pins, each led out of the connector to a via or its first part, so that nothing
+    # (Freerouting included, held off by the qspi group's keep-out) runs between the rows or pads.
+    # Top row pins leave upwards, bottom row pins downwards. The B.Cu QSPI lanes under J301 (x -2.4
+    # to -1.7) leave no room for a via between x -2.9 and -1.4, so the top row's vias sit west of
+    # them, staggered at y 14.35, 15.0 and 14.4: TP_SCL, TP_RST, GND pin 25, and GND pin 31 with
+    # the west mounting pad. Pin 1 joins the east mounting pad and a via beside it, pin 7 the qspi
+    # GND via at (2.1, 14.35), pin 4 a via below it. TP_SDA and TP_INT drop to vias below their
+    # pads, LCD_RST to a via below the QSPI vias (part B review). Freerouting takes them on.
+    "j301_fanout": [
+        ("GND", 0.25, [(-4.5, 13.44), (-4.5, 13.95), (-5.1, 14.4)], "F"),
+        ("GND", 0.25, [(-5.2, 13.2), (-5.2, 14.0), (-5.1, 14.4)], "F"),
+        ("TP_RST", 0.1, [(-3.9, 13.44), (-3.9, 15.0)], "F"),
+        ("TP_SCL", 0.1, [(-3.3, 13.44), (-3.3, 14.35)], "F"),
+        ("GND", 0.25, [(-2.7, 13.44), (-2.7, 14.6), (-3.0, 15.0)], "F"),
+        ("GND", 0.25, [(4.5, 13.44), (5.2, 13.44), (5.2, 14.0), (5.05, 14.35)], "F"),
+        ("GND", 0.25, [(2.7, 13.44), (2.7, 14.05), (2.4, 14.35), (2.1, 14.35)], "F"),
+        ("GND", 0.25, [(3.6, 10.562), (3.6, 9.6)], "F"),
+        ("TP_SDA", 0.1, [(-3.6, 10.562), (-3.6, 9.55)], "F"),
+        ("TP_INT", 0.1, [(-4.2, 10.562), (-4.2, 9.3), (-4.45, 8.95)], "F"),
+        ("LCD_RST", 0.1, [(-0.6, 10.562), (-0.55, 10.05), (-0.55, 7.5)], "F"),
+        ("GND", "via", [(-5.1, 14.4), (-3.0, 15.0), (5.05, 14.35), (3.6, 9.6)]),
+        ("TP_RST", "via", [(-3.9, 15.0)]),
+        ("TP_SCL", "via", [(-3.3, 14.35)]),
+        ("TP_SDA", "via", [(-3.6, 9.55)]),
+        ("TP_INT", "via", [(-4.45, 8.95)]),
+        ("LCD_RST", "via", [(-0.55, 7.5)]),
+    ],
+    # DISP_3V3, the panel supply from U104 (TPS22917): J301's top row pins 21 and 23 cannot reach
+    # its bottom row pins 22, 24 and 26 between the rows, so an F.Cu loop runs from the top pins
+    # west at y 15.7 (above the top row's vias), down at x -6.4 and east at y 8.0 into C301, then
+    # up through C302 to the bottom pins. A via on the loop's west side feeds the B.Cu side: the
+    # R301 to R303 pull-ups (pad 1 row), TP105, C111 and C112 and U104's outputs (pins 5 and 6).
+    # 0.4 mm on B.Cu (0.3 mm between C112 and R109), 0.3 mm on the loop, 0.25 mm at J301's 0.3 mm pads.
+    "disp_3v3": [
+        ("DISP_3V3", 0.25, [(-1.5, 13.44), (-1.5, 13.95), (-2.1, 14.55)], "F"),
+        ("DISP_3V3", 0.25, [(-2.1, 13.44), (-2.1, 14.55)], "F"),
+        ("DISP_3V3", 0.3, [(-2.1, 14.55), (-2.1, 15.7), (-6.4, 15.7), (-6.4, 10.4), (-6.4, 8.6), (-5.8, 8.0),
+                           (-2.73, 8.0)], "F"),
+        ("DISP_3V3", 0.3, [(-2.73, 8.0), (-2.73, 9.1), (-2.73, 9.95)], "F"),
+        ("DISP_3V3", 0.25, [(-3.0, 10.562), (-3.0, 9.95), (-2.73, 9.95), (-2.4, 9.95), (-1.8, 9.95),
+                            (-1.8, 10.562)], "F"),
+        ("DISP_3V3", 0.25, [(-2.4, 9.95), (-2.4, 10.562)], "F"),
+        ("DISP_3V3", 0.4, [(-6.4, 10.4), (-6.4, 10.8)]),
+        ("DISP_3V3", 0.4, [(-7.4, 11.49), (-7.4, 10.8), (-6.4, 10.8), (-6.2, 10.8), (-5.0, 10.8), (-5.0, 11.49)]),
+        ("DISP_3V3", 0.4, [(-6.2, 10.8), (-6.2, 11.49)]),
+        ("DISP_3V3", 0.4, [(-7.4, 10.8), (-8.6, 9.6)]),
+        ("DISP_3V3", 0.4, [(-8.6, 9.6), (-9.2, 10.22), (-11.0, 10.22), (-12.38, 11.6), (-12.38, 12.4)]),
+        ("DISP_3V3", 0.4, [(-12.38, 12.4), (-12.38, 13.18), (-12.6, 13.4), (-12.6, 14.56)]),
+        ("DISP_3V3", 0.4, [(-12.6, 14.56), (-13.55, 14.56)]),
+        ("DISP_3V3", 0.3, [(-13.55, 14.56), (-13.55, 13.2), (-14.68, 13.2), (-14.68, 12.4)]),
+        ("DISP_3V3", "via", [(-6.4, 10.4)]),
+    ],
     # Inner planes. In1 is solid GND. In2 is GND too (the reference for the B.Cu parts: U101,
     # U103 and their caps, the crystal, the QSPI block and the USB corridor) except for a +3V3
     # pour under the module, inside its pin ring: x -8.4 to 8.4, from y 18.8 (above the bottom pin
@@ -365,7 +439,7 @@ def remove_old(board: pcbnew.BOARD, name: str) -> None:
         board.Delete(group)
     segs = set()
     for _, width, pts, *_ in GROUPS[name]:
-        if width in ("no pour", "pour"):
+        if width in ("no pour", "keepout", "pour"):
             continue
         if width == "via":
             segs |= {(pt(a).x, pt(a).y, pt(a).x, pt(a).y) for a in pts}
@@ -390,15 +464,16 @@ def route(board_name: str, groups: list[str]) -> int:
         board.Add(group)
         length = {}
         for net, width, pts, *layer in GROUPS[name]:
-            if width == "no pour":
+            if width in ("no pour", "keepout"):
                 area = pcbnew.ZONE(board)
                 area.SetIsRuleArea(True)
                 area.SetDoNotAllowZoneFills(True)
-                for allowed in (area.SetDoNotAllowTracks, area.SetDoNotAllowVias, area.SetDoNotAllowPads,
-                                area.SetDoNotAllowFootprints):
-                    allowed(False)
+                area.SetDoNotAllowTracks(width == "keepout")
+                area.SetDoNotAllowVias(width == "keepout")
+                area.SetDoNotAllowPads(False)
+                area.SetDoNotAllowFootprints(False)
                 area.SetLayer(LAYERS[layer[0]])
-                area.SetZoneName(f"{tag(name)} no pour")
+                area.SetZoneName(f"{tag(name)} {width}")
                 outline = area.Outline()
                 outline.NewOutline()
                 for a in pts:

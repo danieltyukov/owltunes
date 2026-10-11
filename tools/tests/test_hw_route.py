@@ -114,13 +114,15 @@ class RouteTest(unittest.TestCase):
                         group.GetName() if group else None, pts))
         return sorted(out)
 
-    def test_no_pour_rule_areas_are_drawn_and_replaced(self):
+    def test_rule_areas_are_drawn_and_replaced(self):
         square = [(0, 0), (1, 0), (1, 1), (0, 1)]
         self.route({"g": [("N1", 0.2, [(0, 0), (1, 0)]), ("", "no pour", square, "B")]}, "g")
         board = self.route({"g": [("N1", 0.2, [(0, 0), (1, 0)]), ("", "no pour", [(0, 0), (2, 0), (2, 1)], "B"),
-                                  ("", "no pour", square, "In2")]}, "g")
+                                  ("", "no pour", square, "In2"), ("", "keepout", square, "F")]}, "g")
         self.assertEqual(self.rule_areas(board), [
             ("B.Cu", True, False, False, False, False, True, "hw_route g", [(0.0, 0.0), (2.0, 0.0), (2.0, 1.0)]),
+            ("F.Cu", True, True, True, False, False, True, "hw_route g",
+             [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]),
             ("In2.Cu", True, False, False, False, False, True, "hw_route g",
              [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]),
         ])
