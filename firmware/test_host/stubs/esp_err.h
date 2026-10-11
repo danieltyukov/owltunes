@@ -1,4 +1,5 @@
-/* Host stand-in for ESP-IDF's esp_err.h: only what firmware/main/callback_server.c uses. */
+/* Host stand-in for ESP-IDF's esp_err.h: only what firmware/main/callback_server.c
+ * and firmware/main/spotify_http.c use. */
 #pragma once
 
 typedef int esp_err_t;

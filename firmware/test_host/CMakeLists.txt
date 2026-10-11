@@ -55,3 +55,9 @@ target_include_directories(test_callback_server PRIVATE ${CMAKE_CURRENT_LIST_DIR
                            ${CMAKE_CURRENT_LIST_DIR}/../main)
 owl_add_test(test_spotify_gate spotify owl_core)
 owl_add_test(test_spotify_liked spotify owl_core)
+
+# The Web API transport from firmware/main, built against stand-ins for ESP-IDF's HTTP client.
+owl_add_test(test_spotify_http spotify owl_core)
+target_sources(test_spotify_http PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/spotify_http.c)
+target_include_directories(test_spotify_http PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
+                           ${CMAKE_CURRENT_LIST_DIR}/../main)
