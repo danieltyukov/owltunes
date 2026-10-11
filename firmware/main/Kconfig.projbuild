@@ -14,7 +14,7 @@ menu "OwlTunes"
             select OWL_NET_ETH_QEMU
 
         config OWL_BOARD_NANO_ESP32
-            bool "Arduino Nano ESP32 (no display, RGB status LED)"
+            bool "Arduino Nano ESP32 (no display; status LED planned)"
     endchoice
 
     config OWL_BOARD_NAME

@@ -2,9 +2,9 @@
 
 The Arduino Nano ESP32 carries the same chip and memory as the owl's own board: an ESP32-S3 (in a
 u-blox NORA-W106 module) with 16 MB of flash and 8 MB of octal PSRAM. It has no display, so the
-firmware draws the owl's screens into memory where nothing shows them, and the board's RGB LED
-shows the owl's status instead. Everything else runs as it will on the owl: the setup protocol
-over USB, Wi-Fi, the Spotify login and Spotify control.
+firmware draws the owl's screens into memory where nothing shows them. The setup protocol over USB
+works now. The board stays offline until later P3a tasks add Wi-Fi, the Spotify login and Spotify
+control, and the RGB LED showing the owl's status is planned for a later task too.
 
 ## Build and flash
 
@@ -34,7 +34,7 @@ the bootloader by itself. Put it into ROM download mode by hand:
 2. Press and release RST. The LED turns purple: the board waits in download mode.
 3. Remove the wire and flash from `build/firmware-nano_esp32` with
    `python -m esptool --chip esp32s3 --before no-reset --after watchdog-reset write-flash @flash_args`
-   (or `tools/hil_nano.py --rom`). Only a watchdog reset starts the new firmware from this state.
+   (or `tools/hil_nano.py --rom`, added in a later task). Only a watchdog reset starts the new firmware from this state.
 
 Once the OwlTunes firmware runs, `tools/firmware.sh flash` works without the wire.
 
@@ -46,3 +46,7 @@ To go back to Arduino's firmware, write the full-flash backup you made before th
 The USB port carries the firmware's log and the setup protocol (`@owl` lines, see
 [the protocol](provisioning-protocol.md)). The setup page connects to the same port over Web
 Serial, so close the monitor before you connect the page: only one program can hold the port.
+
+Console output is dropped when nobody is reading the port, so the firmware never stalls waiting
+for a host. After the transmit buffer fills, a line may be cut short. If the setup page reports the
+port as busy, close the monitor (or any other program holding it) and connect again.
