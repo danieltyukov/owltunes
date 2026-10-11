@@ -144,7 +144,8 @@ works, commands that need Spotify are refused with that error:
 `{"event":"cmd","state":"refused","cmd":"next","error":"not_linked"}`.
 
 While nothing may be sent to Spotify, the api line says why and for how long, and says `ready`
-again once the wait is over:
+again once the wait is over and the owl holds an access token (so an outage does not flip it to
+`ready` between failed refreshes; the LED stays on the same status):
 
 | State | Meaning |
 |---|---|
