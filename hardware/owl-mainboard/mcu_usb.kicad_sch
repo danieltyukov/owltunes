@@ -3557,6 +3557,17 @@
 		)
 		(uuid "8d4311d6-b5c2-4eef-8b67-1a08162ee4f8")
 	)
+	(text "U202 pin 5 (VBUS) open: the D+ pull-up cannot back-feed VBUS_USB"
+		(exclude_from_sim no)
+		(at 63.5 87.63 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "c9778630-dfaa-4877-9dce-6e8a98c5bc3f")
+	)
 	(text "Expansion / encoder (J202, Qwiic order)"
 		(exclude_from_sim no)
 		(at 281.94 125.73 0)
@@ -3581,10 +3592,10 @@
 		)
 		(uuid "e7c7eadc-dda6-4a4b-b703-49703ee9b180")
 	)
-	(text_box "Values and why (ESP32-S3-WROOM-1 datasheet v1.8 section 9; Espressif ESP32-S3 hardware design guidelines)\n- Module supply: 22 uF + 100 nF at the 3V3 pin, as in Espressif's peripheral schematic.\n- EN: 10k to +3V3 and 1 uF (time constant 10 ms), Espressif's RC delay. TPS63802 PG (open drain, TPS_PG,\n  specified to sink 1 mA) holds EN low through R212 1k until 3.3 V is above 95 % and pulls it low below 90 %.\n  With PG low, EN sits at 0.3 V (VIL max 0.25 x VDD); the 1k limits the C203 discharge to about 3 mA (1 ms).\n  TP201 shorted to GND resets the module.\n- Straps at reset: GPIO0 (BOOT) 10k pull-up = SPI boot; short TP202 to TP203 during reset for download mode.\n  GPIO45 (CHG_SUSPEND) and GPIO46 (DISP_EN) have 100k pull-downs on the power sheet (VDD_SPI 3.3 V, SPI boot).\n  GPIO3 (BTN_EAR_R) is a strap only once the JTAG eFuse is burned; its 100k pull-up keeps it high anyway.\n- Crystal Q13FC13500004: CL 12.5 pF, ESR 70k max (Espressif asks for 70k or less), +-20 ppm.\n  C = 2 x (CL - Cstray) = 2 x (12.5 - 3.5) = 18 pF. Measure the RTC drift at bring-up; adjust C204/C205 above 20 ppm.\n- USB: native USB Serial/JTAG on GPIO19/20, full speed. USBLC6-2SC6 at the connector, 22 ohm series resistors next\n  to the module (Espressif: reserve 22 to 33 ohm). CC1 and CC2 each have their own 5.1k Rd (sink, 5 V only).\n  Both D+ pins (A6, B6) and both D- pins (A7, B7) are joined; SBU open; shell to GND.\n- VBUS_USB has only the SMF5.0A TVS and the USBLC6 VBUS pin here, no capacitor: a USB host sees C101 4.7 uF\n  behind D101 (power sheet), within USB's 10 uF.\n- Buttons: switch to GND, 100k to +3V3, 10 nF (1 ms). External pull-ups let ext1 ANY_LOW wake work with the RTC\n  peripherals off; every wake pin is an RTC GPIO (0 to 21).\n- J202 follows the Qwiic order (GND, 3V3, SDA, SCL): an EC11 encoder (A and B switch to GND) or an I2C test device.\n- UART0 (GPIO43 TX, GPIO44 RX) reaches only pads TP204 and TP205, for a 3.3 V serial adapter."
+	(text_box "Values and why (ESP32-S3-WROOM-1 datasheet v1.8 section 9; Espressif ESP32-S3 hardware design guidelines)\n- Module supply: 22 uF + 100 nF at the 3V3 pin, as in Espressif's peripheral schematic.\n- EN: R205 47k to +3V3 and C203 220 nF release EN with 47k x 220 nF = 10.3 ms (Espressif: 10k x 1 uF = 10 ms).\n  TPS63802 PG (open drain, TPS_PG, specified to sink up to 1 mA) holds EN low through R212 4.7k until 3.3 V is above\n  95 % and pulls it low below 90 %. PG then sinks at most 3.3 V / 4.7k = 0.70 mA (0.63 mA at the 90 % trip), and the\n  47k / 4.7k divider holds EN at 0.30 V or less (VIL_nRST max 0.25 x VDD = 0.74 V at 2.97 V). EN falls with\n  (47k || 4.7k) x 220 nF = 0.94 ms, which filters PG glitches shorter than about 1 ms. TP201 to GND resets the module.\n- Straps at reset: GPIO0 (BOOT) 10k pull-up = SPI boot; short TP202 to TP203 during reset for download mode.\n  GPIO45 (CHG_SUSPEND) and GPIO46 (DISP_EN) have 100k pull-downs on the power sheet (VDD_SPI 3.3 V, SPI boot).\n  GPIO3 (BTN_EAR_R) is a strap only once the JTAG eFuse is burned; its 100k pull-up keeps it high anyway.\n- Crystal Q13FC13500004: CL 12.5 pF, ESR 70k max (Espressif asks for 70k or less), +-20 ppm.\n  C = 2 x (CL - Cstray) = 2 x (12.5 - 3.5) = 18 pF. Measure the RTC drift at bring-up; adjust C204/C205 above 20 ppm.\n- USB: native USB Serial/JTAG on GPIO19/20, full speed. USBLC6-2SC6 at the connector, 22 ohm series resistors next\n  to the module (Espressif: reserve 22 to 33 ohm). CC1 and CC2 each have their own 5.1k Rd (sink, 5 V only).\n  Both D+ pins (A6, B6) and both D- pins (A7, B7) are joined; SBU open; shell to GND.\n- VBUS_USB has only the SMF5.0A TVS here, no capacitor: a USB host sees C101 4.7 uF behind D101 (power sheet), within\n  USB's 10 uF. U202 pin 5 (VBUS) is left open, so the ESP32-S3's D+ pull-up cannot back-feed the receptacle's VBUS\n  through the upper steering diode while unplugged; the ESD clamp works without it.\n- Buttons: switch to GND, 100k to +3V3, 10 nF (1 ms). External pull-ups let ext1 ANY_LOW wake work with the RTC\n  peripherals off; every wake pin is an RTC GPIO (0 to 21).\n- J202 follows the Qwiic order (GND, 3V3, SDA, SCL): an EC11 encoder (A and B switch to GND) or an I2C test device.\n- UART0 (GPIO43 TX, GPIO44 RX) reaches only pads TP204 and TP205, for a 3.3 V serial adapter. Espressif's 499 ohm\n  U0TXD series resistor is inside the module (WROOM-1 datasheet figure 8-1, R3)."
 		(exclude_from_sim no)
 		(at 17.78 116.84 0)
-		(size 129.54 43.74)
+		(size 129.54 49.92)
 		(margins 1.27 1.27 1.27 1.27)
 		(stroke
 			(width 0)
@@ -3708,6 +3719,10 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "e323cb2d-8a24-4e0a-9523-84ec0209a9b5")
+	)
+	(no_connect
+		(at 88.9 91.44)
+		(uuid "412600c0-d7f1-45a9-8c43-6da8da5b2039")
 	)
 	(no_connect
 		(at 50.8 86.36)
@@ -4112,7 +4127,7 @@
 			2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54
 			2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54 2.54
 		)
-		(uuid "473efef1-53ab-4615-a656-9ce1d0762466")
+		(uuid "fdef4d16-3ab4-46da-92a4-2792b374d4ea")
 		(cells
 			(table_cell "GPIO"
 				(exclude_from_sim no)
@@ -7776,28 +7791,6 @@
 			)
 		)
 	)
-	(global_label "VBUS_USB"
-		(shape bidirectional)
-		(at 88.9 91.44 90)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "f5883090-9627-4e80-b371-79d2344d3d14")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 88.9 91.44 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-	)
 	(global_label "CHG_STAT"
 		(shape bidirectional)
 		(at 213.36 134.62 180)
@@ -8464,7 +8457,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10k"
+		(property "Value" "47k"
 			(at 190.5 91.44 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8508,7 +8501,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C25744"
+		(property "LCSC Part #" "C25792"
 			(at 187.96 90.17 0)
 			(hide yes)
 			(show_name no)
@@ -8519,7 +8512,7 @@
 				)
 			)
 		)
-		(property "MPN" "0402WGF1002TCE"
+		(property "MPN" "0402WGF4702TCE"
 			(at 187.96 90.17 0)
 			(hide yes)
 			(show_name no)
@@ -9539,7 +9532,7 @@
 		(dnp no)
 		(uuid "543b998c-1af8-425a-ae9e-03e673660fa0")
 		(property "Reference" "R212"
-			(at 163.83 91.44 90)
+			(at 162.9 91.44 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9548,8 +9541,8 @@
 				)
 			)
 		)
-		(property "Value" "1k"
-			(at 168.91 91.44 90)
+		(property "Value" "4.7k"
+			(at 169.84 91.44 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9591,7 +9584,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C11702"
+		(property "LCSC Part #" "C25900"
 			(at 166.37 93.98 0)
 			(hide yes)
 			(show_name no)
@@ -9602,7 +9595,7 @@
 				)
 			)
 		)
-		(property "MPN" "0402WGF1001TCE"
+		(property "MPN" "0402WGF4701TCE"
 			(at 166.37 93.98 0)
 			(hide yes)
 			(show_name no)
@@ -9728,7 +9721,7 @@
 		(dnp no)
 		(uuid "59bb7bbe-4269-4919-95e2-d5d50363e0c0")
 		(property "Reference" "R204"
-			(at 133.35 99.06 90)
+			(at 132.42 99.06 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -9738,7 +9731,7 @@
 			)
 		)
 		(property "Value" "22"
-			(at 138.43 99.06 90)
+			(at 138.26 99.06 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10800,7 +10793,7 @@
 		(dnp no)
 		(uuid "7f70bd0a-03c3-4174-9607-5548d015b7f0")
 		(property "Reference" "R203"
-			(at 133.35 93.98 90)
+			(at 132.42 93.98 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -10810,7 +10803,7 @@
 			)
 		)
 		(property "Value" "22"
-			(at 138.43 93.98 90)
+			(at 138.26 93.98 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -12878,7 +12871,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "1uF"
+		(property "Value" "220nF"
 			(at 201.93 99.06 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -12922,7 +12915,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C52923"
+		(property "LCSC Part #" "C16772"
 			(at 198.12 97.79 0)
 			(hide yes)
 			(show_name no)
@@ -12933,7 +12926,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL05A105KA5NQNC"
+		(property "MPN" "CL05B224KO5NNNC"
 			(at 198.12 97.79 0)
 			(hide yes)
 			(show_name no)

@@ -602,9 +602,9 @@ ref = "R205"
 sheet = "mcu_usb"
 symbol = "Device:R"
 footprint = "Resistor_SMD:R_0402_1005Metric"
-value = "10k"
-lcsc = "C25744"
-mpn = "0402WGF1002TCE"
+value = "47k"
+lcsc = "C25792"
+mpn = "0402WGF4702TCE"
 manufacturer = "UNI-ROYAL"
 side = "back"
 height = 0.4
@@ -615,24 +615,25 @@ ref = "C203"
 sheet = "mcu_usb"
 symbol = "Device:C"
 footprint = "Capacitor_SMD:C_0402_1005Metric"
-value = "1uF"
-lcsc = "C52923"
-mpn = "CL05A105KA5NQNC"
+value = "220nF"
+lcsc = "C16772"
+mpn = "CL05B224KO5NNNC"
 manufacturer = "Samsung Electro-Mechanics"
 side = "back"
 height = 0.6
 pins = { 1 = "ESP_EN", 2 = "GND" }
 
-# R212 (ruling R36): TPS63802 PG is open drain and specified to sink up to 1 mA (SLVSEU9D 9.3.10).
-# 1k between PG and ESP_EN limits the discharge of C203; with PG low, the R205 10k / R212 1k divider holds ESP_EN at 0.3 V.
+# R212 (ruling R36, amended): TPS63802 PG is open drain and specified to sink up to 1 mA (SLVSEU9D 9.3.10).
+# With R205 47k, R212 4.7k and C203 220 nF, PG sinks at most 3.3 V / 4.7k = 0.70 mA, the R205 / R212 divider holds
+# ESP_EN at 0.30 V while PG is low, and EN releases with 47k x 220 nF = 10.3 ms (Espressif's 10k x 1 uF is 10 ms).
 [[part]]
 ref = "R212"
 sheet = "mcu_usb"
 symbol = "Device:R"
 footprint = "Resistor_SMD:R_0402_1005Metric"
-value = "1k"
-lcsc = "C11702"
-mpn = "0402WGF1001TCE"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
 manufacturer = "UNI-ROYAL"
 side = "back"
 height = 0.4
@@ -732,6 +733,8 @@ side = "back"
 height = 0.4
 pins = { 1 = "USB_CC2", 2 = "GND" }
 
+# U202 pin 5 (VBUS) is left open (ruling R39): tied to VBUS_USB, the ESP32-S3's D+ pull-up could back-feed the
+# receptacle's VBUS through the upper steering diode while unplugged. The ESD clamp works without it.
 [[part]]
 ref = "U202"
 sheet = "mcu_usb"
@@ -744,7 +747,8 @@ manufacturer = "STMicroelectronics"
 alt = "C2687116 UMW USBLC6-2SC6, same pins"
 side = "back"
 height = 1.45
-pins = { 1 = "USB_DP_CONN", 6 = "USB_DP_CONN", 3 = "USB_DM_CONN", 4 = "USB_DM_CONN", 2 = "GND", 5 = "VBUS_USB" }
+pins = { 1 = "USB_DP_CONN", 6 = "USB_DP_CONN", 3 = "USB_DM_CONN", 4 = "USB_DM_CONN", 2 = "GND" }
+nc = ["5"]
 
 [[part]]
 ref = "D201"
