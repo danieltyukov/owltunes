@@ -44,6 +44,25 @@ GROUPS = {
         ("TPS_FB", 0.15, [(13.1, -2.5), (11.9, -2.5), (11.4, -3.01), (11.0, -3.01), (9.8, -3.01)]),
         ("GND", 0.25, [(13.1, -3.5), (13.1, -3.0), (14.0, -3.0)]),
     ],
+    # TPS63802 GND island (review I1): the VSYS and +3V3 runs fence the cap GND pads off from the
+    # IC's GND pins on B.Cu, so the input and output loops close through vias into In2 GND (0.21 mm
+    # under B.Cu; no VSYS pour under the part) and In1. One via beside each GND pad of C105 to C109,
+    # two in the channel between the pad rows (0.2 mm to pins 9 and 7, the FB pin and pad 8's
+    # neighbours), two west of pins 2 and 3, and one at R108's GND end of the feedback divider.
+    "tps63802_gnd": [
+        ("GND", 0.25, [(13.1, -3.5), (13.85, -3.45)]),
+        ("GND", 0.25, [(14.0, -3.0), (13.85, -2.55)]),
+        ("GND", 0.25, [(13.1, -3.0), (12.3, -3.05)]),
+        ("GND", 0.25, [(13.1, -3.5), (12.55, -3.5), (12.3, -3.65)]),
+        ("GND", 0.3, [(15.375, -6.7), (16.3, -6.7)]),
+        ("GND", 0.3, [(15.78, -5.32), (16.35, -4.75)]),
+        ("GND", 0.3, [(16.275, -0.2), (17.2, -0.2)]),
+        ("GND", 0.3, [(16.275, 1.4), (17.2, 1.4)]),
+        ("GND", 0.25, [(13.28, 0.0), (13.28, -0.7)]),
+        ("GND", 0.25, [(9.8, -1.99), (9.8, -1.2)]),
+        ("GND", "via", [(13.85, -3.45), (13.85, -2.55), (12.3, -3.05), (12.3, -3.65), (16.3, -6.7), (16.35, -4.75),
+                        (17.2, -0.2), (17.2, 1.4), (13.28, -0.7), (9.8, -1.2)]),
+    ],
     # Charger (BQ24073): VIN_CHG from pin 13 to C101, on to the D101 and D102 cathodes; VSYS from
     # pins 10 and 11 to C102 and TP102 (the run to the TPS63802 is the In2 VSYS pour); VBAT from
     # pins 2 and 3 to C103, then up between C103 and R103, clear of the H1 boss ring, to J101 pin 1,
