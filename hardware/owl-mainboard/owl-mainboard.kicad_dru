@@ -17,3 +17,9 @@
 (rule "JLC silkscreen text back"
 	(layer "B.Silkscreen")
 	(constraint text_height (min 0.8mm)))
+# RT101 (board NTC, under the cell): no pour connects to its pads, so pad 2 reaches GND only
+# through its narrow neck and via, not straight through the B.Cu pour that spreads the charger's
+# heat (tools/hw/hw_route.py bat_ntc).
+(rule "RT101 pads stay off the pours"
+	(condition "A.memberOfFootprint('RT101')")
+	(constraint zone_connection none))

@@ -11,7 +11,9 @@ placement change.
 GND vias that the planes will tie in are placed here and show as via_dangling in DRC until the
 pours exist; the pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
 
-Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb usb_fanout crystal dock qspi]
+Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
+Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
+qspi bat_ntc.
 Needs KiCad's pcbnew Python module.
 """
 
@@ -64,11 +66,12 @@ GROUPS = {
                         (17.2, -0.2), (17.2, 1.4), (13.28, -0.7), (9.8, -1.2)]),
     ],
     # Charger (BQ24073): VIN_CHG from pin 13 to C101, on to the D101 and D102 cathodes; VSYS from
-    # pins 10 and 11 to C102 and TP102 (the run to the TPS63802 is the In2 VSYS pour); VBAT from
-    # pins 2 and 3 to C103, then up between C103 and R103, clear of the H1 boss ring, to J101 pin 1,
-    # with TP103 on the way. 0.5 mm except the necks at the 0.5 mm pitch pins; between C103 and
-    # R103 the run steps from x 21.75 to 21.65 so the full 0.5 mm keeps 0.2 mm from both (review
-    # M1). Branches start at a vertex of the run they leave (review M2).
+    # pins 10 and 11 to C102 and TP102 (on to the TPS63802 in part C, with a layer change at each
+    # end: In2 stays GND under U101, U103 and their caps, so a VSYS pour only runs between them);
+    # VBAT from pins 2 and 3 to C103, then up between C103 and R103, clear of the H1 boss ring, to
+    # J101 pin 1, with TP103 on the way. 0.5 mm except the necks at the 0.5 mm pitch pins; between
+    # C103 and R103 the run steps from x 21.75 to 21.65 so the full 0.5 mm keeps 0.2 mm from both
+    # (review M1). Branches start at a vertex of the run they leave (review M2).
     "charger": [
         ("VIN_CHG", 0.25, [(25.25, -1.438), (25.25, -2.25)]),
         ("VIN_CHG", 0.5, [(25.25, -2.25), (24.725, -3.2), (24.1, -4.0), (24.1, -5.3), (24.1, -7.9)]),
@@ -113,7 +116,8 @@ GROUPS = {
     # pad, which gets a via on its west side, outside the paste. One via beside each GND pad of
     # C101 to C104 and of the crystal load caps C204/C205 (0.225 mm from the TPS_PG run on F.Cu).
     # The ESD parts: U202 pin 2, boxed in by the USB lines, through a via under the body; the
-    # D301 TVS through two vias and the D302 ESD diode through one.
+    # D301 TVS through two vias and the D302 ESD diode through one. J101 pin 2, the battery return
+    # (up to 0.8 A), through two vias beside its pad, just outside the housing (x 25.2).
     "gnd_vias": [
         ("GND", 0.2, [(23.062, 0.68), (23.9, 0.68)]),
         ("GND", 0.2, [(25.18, 1.438), (25.18, 0.7)]),
@@ -131,14 +135,17 @@ GROUPS = {
         ("GND", 0.3, [(19.2, -26.4), (20.15, -26.0)]),
         ("GND", 0.3, [(19.2, -26.4), (20.15, -26.8)]),
         ("GND", 0.25, [(12.7, -26.6), (13.5, -26.6)]),
+        ("GND", 0.4, [(25.6, 19.0), (25.6, 20.15)]),
+        ("GND", 0.4, [(26.4, 19.0), (26.4, 20.15)]),
         ("GND", "via", [(24.6, 10.0), (27.1, -3.45), (28.2, 1.75), (20.8, 1.75), (29.0, 11.28), (15.65, 27.35),
-                        (15.65, 24.85), (-4.5, -30.0), (20.15, -26.0), (20.15, -26.8), (13.5, -26.6)]),
+                        (15.65, 24.85), (-4.5, -30.0), (20.15, -26.0), (20.15, -26.8), (13.5, -26.6), (25.6, 20.15),
+                        (26.4, 20.15)]),
     ],
     # USB pair, 0.2 mm wide with 0.15 mm gap (USB net class; full speed, no impedance target):
     # through U202 under its body (pins 6 to 1, 4 to 3), then east, up the corridor at x 5.65/6.0
     # between the IMU and the FB divider, east under the module and up into R203/R204 from below,
     # D+ always on the left of travel so nothing crosses; then the short stubs to U201 pins 14
-    # and 13. Keep In2 GND unbroken under x 5 to 6.5. The J201-to-U202 fan-out is not routed yet.
+    # and 13. Keep In2 GND unbroken under x 5 to 6.5. The J201-to-U202 fan-out is usb_fanout.
     "usb": [
         ("USB_DP_CONN", 0.2, [(-5.64, -29.05), (-3.36, -29.05)]),
         ("USB_DM_CONN", 0.2, [(-5.64, -30.95), (-3.36, -30.95)]),
@@ -218,6 +225,26 @@ GROUPS = {
         ("LCD_TE", "via", [(-10.25, 24.18)]),
         ("GND", "via", [(-1.35, 16.6), (-1.05, 14.45), (2.1, 14.35), (-1.1, 9.65), (1.8, 9.6), (0.6, 7.65),
                         (-11.0, 24.18)]),
+    ],
+    # BAT_NTC from U101 pin 1 (TS) to RT101, the board NTC under the middle of the cell (the pack
+    # is 2-wire). B.Cu down at x 22.75 and west at y -2.0 between C103 and R101 (CHG_ISET can pass
+    # below at y -2.5) to a via south-west of C103, then F.Cu over In1 GND and across the B.Cu USB
+    # pair: diagonally between the C105/C106 GND vias and the H4 hole (under the H4 bezel lug,
+    # which only presses on the mask), and west at y -9.5 to a via in RT101's patch. RT101 reads
+    # the board under the cell, 30 mm from U101 and 19 mm from U103. Pad 1 joins a 4.5 x 3 mm
+    # patch (a 3 mm wide track) through a 0.6 mm long, 0.3 mm neck; the patch faces the cell
+    # across the 1.2 mm gap and is the landing for a gap-filler pad if bring-up finds the reading
+    # too far from the cell's. Pad 2 reaches its GND via through a 1.5 mm long, 0.2 mm neck, and a
+    # DRU rule keeps the pours off both pads: the NTC is not tied straight into the B.Cu GND pour
+    # that spreads U101's and U103's heat, and each pad of the 0402 sees a narrow neck at reflow.
+    "bat_ntc": [
+        ("BAT_NTC", 0.2, [(23.062, -0.75), (22.75, -0.75), (22.75, -2.0), (20.0, -2.0)]),
+        ("BAT_NTC", 0.2, [(20.0, -2.0), (12.5, -9.5), (0.38, -9.5)], "F"),
+        ("BAT_NTC", 3.0, [(-1.12, -9.5), (0.38, -9.5)]),
+        ("BAT_NTC", 0.3, [(-3.49, -9.5), (-1.12, -9.5)]),
+        ("GND", 0.2, [(-4.51, -9.5), (-4.51, -11.6)]),
+        ("BAT_NTC", "via", [(20.0, -2.0), (0.38, -9.5)]),
+        ("GND", "via", [(-4.51, -11.6)]),
     ],
 }
 
