@@ -106,6 +106,33 @@ GROUPS = {
         ("VBAT", 0.2, [(25.75, 10.99), (26.25, 10.99)]),
         ("VBAT", 0.25, [(26.25, 12.0), (27.4, 12.0), (27.4, 10.32), (28.2, 10.32)]),
     ],
+    # GND for the parts routed above whose GND pads a pour cannot reach directly or that need a
+    # short path to the planes. U101's GND pins 4 (boxed in by VBAT), 8 and 15 run 0.2 mm into the
+    # exposed pad and its four vias, and U102's pins 4 (between the two VBAT runs) and 6 into its
+    # pad, which gets a via on its west side, outside the paste. One via beside each GND pad of
+    # C101 to C104 and of the crystal load caps C204/C205 (0.225 mm from the TPS_PG run on F.Cu).
+    # The ESD parts: U202 pin 2, boxed in by the USB lines, through a via under the body; the
+    # D301 TVS through two vias and the D302 ESD diode through one.
+    "gnd_vias": [
+        ("GND", 0.2, [(23.062, 0.68), (23.9, 0.68)]),
+        ("GND", 0.2, [(25.18, 1.438), (25.18, 0.7)]),
+        ("GND", 0.2, [(24.25, -1.438), (24.25, -0.7)]),
+        ("GND", 0.2, [(26.72, 10.99), (26.72, 10.45), (26.6, 10.3)]),
+        ("GND", 0.2, [(26.25, 9.01), (26.25, 9.7)]),
+        ("GND", 0.25, [(25.4, 10.0), (24.6, 10.0)]),
+        ("GND", 0.3, [(26.275, -3.2), (27.1, -3.45)]),
+        ("GND", 0.3, [(28.2, 0.775), (28.2, 1.75)]),
+        ("GND", 0.3, [(20.8, 0.775), (20.8, 1.75)]),
+        ("GND", 0.25, [(28.2, 11.28), (29.0, 11.28)]),
+        ("GND", 0.25, [(14.88, 27.35), (15.65, 27.35)]),
+        ("GND", 0.25, [(14.88, 24.85), (15.65, 24.85)]),
+        ("GND", 0.25, [(-3.362, -30.0), (-4.5, -30.0)]),
+        ("GND", 0.3, [(19.2, -26.4), (20.15, -26.0)]),
+        ("GND", 0.3, [(19.2, -26.4), (20.15, -26.8)]),
+        ("GND", 0.25, [(12.7, -26.6), (13.5, -26.6)]),
+        ("GND", "via", [(24.6, 10.0), (27.1, -3.45), (28.2, 1.75), (20.8, 1.75), (29.0, 11.28), (15.65, 27.35),
+                        (15.65, 24.85), (-4.5, -30.0), (20.15, -26.0), (20.15, -26.8), (13.5, -26.6)]),
+    ],
     # USB pair, 0.2 mm wide with 0.15 mm gap (USB net class; full speed, no impedance target):
     # through U202 under its body (pins 6 to 1, 4 to 3), then east, up the corridor at x 5.65/6.0
     # between the IMU and the FB divider, east under the module and up into R203/R204 from below,
