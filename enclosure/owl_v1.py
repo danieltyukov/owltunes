@@ -4,7 +4,8 @@ buttons.
 v1 is a fit and feel print (MJF PA12): no feather texture yet. The main board, battery and display
 glass are represented by envelopes so the tests can check clearances. The glass goes into the bezel
 from the front on an adhesive ring, then a retainer ring is glued into the lip opening over the
-glass border, so the glass cannot come out even if its adhesive lets go. Run
+glass border, so the glass cannot come out even if its adhesive lets go. The back cover carries
+the owner mark, debossed into its outer face (MARK_* in owl_params.py). Run
 `uv run --project enclosure python enclosure/owl_v1.py` to export STEP and STL files to
 build/enclosure/v1/. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
 """
@@ -16,16 +17,23 @@ import sys
 from pathlib import Path
 
 from build123d import (
+    Align,
     Box,
     Cylinder,
+    Face,
+    Kind,
     Part,
+    Plane,
     Polyline,
     Pos,
     RectangleRounded,
+    Sketch,
+    Text,
     export_step,
     export_stl,
     extrude,
     make_face,
+    offset,
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -108,6 +116,11 @@ LRA_CUP_H = 1.5
 ALIGN_RECESSES = ((-20.0, -34.0), (20.0, -34.0))  # outside the dock-pad board recess
 ALIGN_D = 4.0
 ALIGN_DEPTH = 0.5  # leaves a 1.0 cover floor
+# Owner mark (owl_params MARK_*) on the cover's outer face, reading from behind (along -X), centred
+# on x = 0 at the display centre's height: between the board-mount bosses at y +-9 and far from the
+# screw heads, dock magnets, pad windows and alignment recesses. The plate under it stays 1.0 thick.
+MARK_Y = 0.0
+MARK_PLANE = Plane((0, MARK_Y, BACK_Z), x_dir=(-1, 0, 0), z_dir=(0, 0, -1))
 
 
 def silhouette(inset: float = 0.0):
@@ -178,7 +191,29 @@ def body() -> Part:
     return shell
 
 
-def back_cover() -> Part:
+def mark_faces() -> list[Face]:
+    """The owner mark on the XY plane, reading along +X with its bounding box centred on the origin.
+    Each glyph is closed by MARK_ROUND and the glyphs are spread MARK_TRACK apart (owl_params)."""
+    if not Path(P.MARK_FONT).is_file():
+        raise FileNotFoundError(f"{P.MARK_FONT} not found: install the fonts-inter package")
+    text = Text(P.MARK_TEXT, P.MARK_CAP_H / P.MARK_FONT_CAP, font_path=P.MARK_FONT, align=(Align.CENTER, Align.CENTER))
+    glyphs = sorted(text.faces(), key=lambda f: f.center().X)
+    mid = (len(glyphs) - 1) / 2
+    r = P.MARK_ROUND
+    return [
+        Pos((i - mid) * P.MARK_TRACK, 0) * offset(offset(g, r, kind=Kind.ARC), -r, kind=Kind.ARC).face()
+        for i, g in enumerate(glyphs)
+    ]
+
+
+def mark_cut(plane: Plane) -> Part:
+    """Cutting tool that debosses the mark MARK_DEPTH into a face on `plane`, whose normal points out
+    of the part; the text reads along the plane's x with the letter tops towards its y."""
+    start = plane.offset(EPS).location
+    return extrude(Sketch([start * f for f in mark_faces()]), amount=P.MARK_DEPTH + EPS, dir=-plane.z_dir)
+
+
+def back_cover(mark: bool = True) -> Part:
     plate = prism(silhouette(C.WALL_T + 0.1), BACK_Z, BATTERY_BACK_Z)
     for x, y in C.MOUNT_HOLES:
         plate += by_depth(x, y, BOSS_R, BATTERY_BACK_Z - EPS, PCB_BACK_Z)
@@ -204,6 +239,8 @@ def back_cover() -> Part:
     plate -= by_depth(*LRA_XY, LRA_POCKET_D / 2, BATTERY_BACK_Z, BATTERY_BACK_Z + LRA_CUP_H + EPS)
     for x, y in ALIGN_RECESSES:
         plate -= by_depth(x, y, ALIGN_D / 2, BACK_Z - EPS, BACK_Z + ALIGN_DEPTH)
+    if mark:
+        plate -= mark_cut(MARK_PLANE)
     return plate
 
 

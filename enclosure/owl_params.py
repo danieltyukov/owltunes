@@ -183,3 +183,18 @@ MODULE_SIDE = "back"  # the WROOM-1 sits on the PCB back side; its antenna overh
 DOCK_PAD_PITCH = 4.5
 DOCK_PAD_Y = -31.0
 DOCK_PAD_ORDER = ("PAD_DET", "PAD_GND", "PAD_VBUS")
+
+# Owner mark, debossed into the owl back cover's outer face and the perch's underside. MJF PA12 detail
+# limits (JLC3DP): 0.5 mm deep, strokes and the gaps between them at least 0.6 mm, cap height at least
+# 4 mm. Font: Inter Bold 4.0 from the fonts-inter package (SIL Open Font Licence); its capitals are 1490
+# of its 2048 units per em high. At a 5 mm cap height Inter Bold has 0.33 mm notches where the arches of
+# n and u meet their stems, which MARK_ROUND fills (the arches are then 0.64 mm at their thinnest), and
+# T, y and u stand 0.53 mm apart as set, so MARK_TRACK spreads the letters.
+MARK_TEXT = "Tyukov Inc"
+MARK_FONT = "/usr/share/fonts/opentype/inter/Inter-Bold.otf"
+MARK_FONT_CAP = 1490 / 2048
+MARK_CAP_H = 5.0
+MARK_DEPTH = 0.5
+MARK_MIN_DETAIL = 0.6
+MARK_ROUND = MARK_MIN_DETAIL / 2  # every glyph is closed by this radius: inside corners rounded, notches under 0.6 filled
+MARK_TRACK = 0.15  # extra space between neighbouring letters
