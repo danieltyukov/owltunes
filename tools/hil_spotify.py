@@ -3,7 +3,9 @@
 
 This changes what your Spotify account is doing: it pauses and resumes playback, skips a track and
 back, and moves the volume and puts it back. It likes a track that is not in Liked Songs and unlikes
-it again; a track that is already liked is only liked again, so its place in Liked Songs stays. It
+it again; a track that is already liked is only liked again, so its place in Liked Songs should
+stay. When a check fails or you press Ctrl-C, it puts back what it changed where it can (device,
+volume, the like, playing or paused) and prints a "left changed:" line for anything it could not. It
 refuses to run without --real-account. Link the board first (tools/owl_login.py) and start playing
 something on a Spotify device.
 
@@ -162,28 +164,59 @@ def list_devices(board: Board) -> list[Message]:
     return [m for line in board.lines[since:end] if (m := parse_line(line)) is not None and m.get("event") == "device"]
 
 
-def like_checks(board: Board, since: int, skipped_uri: object) -> None:
-    """Like (and unlike) the track that prev went back to, as like_order says. The like state must be
-    the one Spotify gave for that track, not a late line about the track next skipped to, and the
-    track has just started, so it cannot end during the check."""
+class Account:
+    """What the test changed on the account and has not put back yet, for restore()."""
+
+    def __init__(self) -> None:
+        self.start: Message | None = None  # the playback state before the first change
+        self.first_uri: str | None = None  # set when next is sent, cleared when prev brought it back
+        self.liked_uri: str | None = None  # a track the test liked that was not in Liked Songs
+        self.volume: int | None = None  # the volume to put back
+        self.moved = False  # playback may be on another device
+
+
+def like_checks(board: Board, account: Account, since: int, uri: str) -> None:
+    """Like (and unlike) the first track, back after next and prev, as like_order says. The like state
+    is the one Spotify gave for that track, and the track has just started, so it cannot end during
+    the check."""
     try:
         player = board.wait_event("player", timeout=20, since=since,
-                                  where=lambda m: m.get("uri") != skipped_uri and
+                                  where=lambda m: m.get("uri") == uri and
                                   (isinstance(m.get("liked"), bool) or m.get("kind") != "track"))
     except BoardError:
-        print("note - like not checked: the owl did not read the like state of the track it went back to", flush=True)
+        print("note - like not checked: the owl did not read the like state of the track", flush=True)
         return
     if player.get("kind") != "track" or not isinstance(player.get("liked"), bool):
         print(f"note - like not checked: a {player.get('kind')} whose like state is {player.get('liked')}", flush=True)
         return
-    uri = player.get("uri")
     for command in like_order(player["liked"]):
         want = command == "like"
+        if command == "like" and not player["liked"]:
+            account.liked_uri = uri  # before sending: a like that timed out may still have happened
         since = run_ok(board, command, f"{command} goes through")
         after = player_after(board, since, f"the owl shows the track {'in' if want else 'out of'} Liked Songs",
                              lambda m, want=want: m.get("liked") is want or m.get("uri") != uri)
         if after.get("uri") != uri:
             raise Failure(f"the track changed during the like check: look at {uri} in Liked Songs")
+        if command == "unlike":
+            account.liked_uri = None
+
+
+def back_to_first(board: Board, account: Account, first: str, skipped: str) -> int:
+    """Send prev until the first track plays again. prev restarts the current track instead when it
+    has played for a few seconds, so a second prev may be needed. Returns the mark of the last one."""
+    for attempt in ("previous goes through", "previous goes through again (the first one restarted the track)"):
+        since = run_ok(board, "prev", attempt)
+        try:
+            back = board.wait_event("player", timeout=12, since=since, where=lambda m: m.get("uri") != skipped)
+        except BoardError:
+            continue  # still on the skipped track
+        if back.get("uri") != first:
+            raise Failure(f"prev went to {back.get('uri')}, not back to {first}")
+        account.first_uri = None
+        print("ok - the first track plays again", flush=True)
+        return since
+    raise Failure(f"prev did not go back from {skipped} to {first}")
 
 
 def idle_check(board: Board) -> None:
@@ -207,7 +240,7 @@ def idle_check(board: Board) -> None:
     player_after(board, since, "Spotify reports it playing", lambda m: m.get("status") == "playing")
 
 
-def playback_checks(board: Board, args: argparse.Namespace) -> None:
+def playback_checks(board: Board, args: argparse.Namespace, account: Account) -> None:
     hello = board.hello()
     check(hello.get("linked") is True and hello.get("ip", "") != "", "the owl is linked and online")
     auth = wait_active(board)
@@ -225,6 +258,7 @@ def playback_checks(board: Board, args: argparse.Namespace) -> None:
     devices = list_devices(board)
     check(any(d.get("id") == start.get("device_id") for d in devices),
           f"{len(devices)} device(s), the active one among them")
+    account.start = start  # from here on restore() puts back what the checks change
 
     if start.get("status") == "paused":  # Spotify refuses to pause a paused player
         since = run_ok(board, "play", "play goes through")
@@ -233,39 +267,100 @@ def playback_checks(board: Board, args: argparse.Namespace) -> None:
     player_after(board, since, "Spotify reports it paused", lambda m: m.get("status") == "paused")
     since = run_ok(board, "play", "play goes through")
     playing = player_after(board, since, "Spotify reports it playing", lambda m: m.get("status") == "playing")
+    account.first_uri = str(playing.get("uri"))
     since = run_ok(board, "next", "next goes through")
     skipped = player_after(board, since, "the track changes", lambda m: m.get("uri") != playing.get("uri"))
-    since = run_ok(board, "prev", "previous goes through")
-    like_checks(board, since, skipped.get("uri"))
+    since = back_to_first(board, account, str(playing.get("uri")), str(skipped.get("uri")))
+    like_checks(board, account, since, str(playing.get("uri")))
 
     volume = start.get("volume")
-    if start.get("supports_volume") and volume is None:
+    if start.get("supports_volume") is False:
+        refused = run(board, "vol 50")
+        check(refused.get("error") == "volume_unsupported", "a device that refuses volume changes is not asked")
+    elif volume is None or not start.get("supports_volume"):
         print("note - volume not checked: Spotify does not say what it is now, so it could not be put back", flush=True)
-    elif start.get("supports_volume"):
+    else:
         target = volume_target(int(volume))
+        account.volume = int(volume)
         since = run_ok(board, f"vol {target}", "volume goes through")
         player_after(board, since, "Spotify reports the new volume", lambda m: m.get("volume") == target)
         run_ok(board, f"vol {volume}", "the volume is put back")
-    else:
-        refused = run(board, "vol 50")
-        check(refused.get("error") == "volume_unsupported", "a device that refuses volume changes is not asked")
+        account.volume = None
 
     if args.transfer:
         target = other_device(devices, str(start.get("device_id")))
         if target is None:
             print("note - transfer not checked: no other device to move to", flush=True)
         else:
+            account.moved = True
             since = run_ok(board, f"transfer {target['n']}", f"transfer to {target.get('name')} goes through")
             player_after(board, since, "playback moves", lambda m: m.get("device_id") == target.get("id"))
             since = run_ok(board, f"transfer {start.get('device_id')}", "transfer back goes through")
             player_after(board, since, "playback moves back", lambda m: m.get("device_id") == start.get("device_id"))
+            account.moved = False
 
     if args.idle:
         idle_check(board)
 
-    final = current_player(board)
-    if start.get("status") == "paused" and final.get("status") == "playing":
-        run_ok(board, "pause", "playback is left paused as it was")
+
+def attempt(board: Board, text: str) -> bool:
+    """Send a command while putting things back: True when Spotify accepted it. Never raises."""
+    try:
+        return run(board, text).get("state") == "done"
+    except (Failure, BoardError):
+        return False
+
+
+def restore(board: Board, account: Account) -> list[str]:
+    """Put back what the checks changed and have not put back themselves, after a failure, Ctrl-C or
+    a run that ended in another state than it started. Never unlikes a track that started liked (P17).
+    Prints and returns one line for each thing left changed."""
+    start = account.start
+    if start is None:
+        return []
+    left = []
+    try:
+        now: Message = current_player(board, timeout=10)
+    except (Failure, BoardError):
+        now = {}
+    if account.moved and now.get("device_id") != start.get("device_id"):
+        if attempt(board, f"transfer {start.get('device_id')}"):
+            print(f"put back: playback on {start.get('device')}", flush=True)
+        else:
+            left.append(f"playback on {now.get('device', 'another device')} (was {start.get('device')})")
+    if account.volume is not None:
+        if attempt(board, f"vol {account.volume}"):
+            print(f"put back: volume {account.volume}", flush=True)
+        else:
+            left.append(f"volume {now.get('volume', 'unknown')} (was {account.volume})")
+    if account.liked_uri is not None:
+        if now.get("uri") == account.liked_uri and attempt(board, "unlike"):
+            print(f"put back: {account.liked_uri} out of Liked Songs", flush=True)
+        else:
+            left.append(f"{account.liked_uri} is in Liked Songs (it was not)")
+    if account.first_uri is not None and now.get("uri") != account.first_uri:
+        left.append(f"track {now.get('uri', 'unknown')} (was {account.first_uri})")
+    was = start.get("status")
+    if now.get("status") != was:
+        command = "play" if was == "playing" else "pause"
+        if not (was in ("playing", "paused") and now and attempt(board, command)):
+            left.append(f"playback {now.get('status', 'unknown')} (was {was})")
+        else:
+            print(f"put back: playback {was}", flush=True)
+    for line in left:
+        print(f"left changed: {line}", flush=True)
+    return left
+
+
+def checks_and_restore(board: Board, args: argparse.Namespace) -> None:
+    """playback_checks, then restore() whatever happened; anything left changed fails the run."""
+    account = Account()
+    try:
+        playback_checks(board, args, account)
+    finally:
+        left = restore(board, account)
+    if left:
+        raise Failure(f"{len(left)} thing(s) left changed on the account (see above)")
 
 
 def log_checks(board: Board, log: pathlib.Path) -> None:
@@ -302,13 +397,13 @@ def main() -> int:
     board = None
     try:
         board = Board(find_port(args.port), log)  # opening the port restarts the Nano ESP32
-        playback_checks(board, args)
+        checks_and_restore(board, args)
         log_checks(board, log)
-    except (Failure, BoardError) as err:
-        print(f"FAIL - {err} (console log in {log})", file=sys.stderr)
+    except (Failure, BoardError, KeyboardInterrupt) as err:
+        print(f"FAIL - {str(err) or 'interrupted'} (console log in {log})", file=sys.stderr)
         if token_leaks(log.read_text(encoding="utf-8")):
             print(f"FAIL - something in {log} looks like a token: delete the log", file=sys.stderr)
-        return 1
+        return 130 if isinstance(err, KeyboardInterrupt) else 1
     finally:
         if board is not None:
             board.close()

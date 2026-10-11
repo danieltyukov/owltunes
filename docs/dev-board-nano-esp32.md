@@ -155,14 +155,19 @@ With the board linked, the console takes playback commands: run
 
 `tools/hil_spotify.py --real-account` tests the board against your own Spotify account. Start
 playing something first. It pauses and resumes, skips forward and back, and changes the volume and
-puts it back. On the track it went back to, it checks the like command: a track that is not in
-Liked Songs is liked and unliked again, and a track that is already there is only liked again, so
-it keeps its place in the list. `--transfer` also moves playback to another device and back.
-`--idle` pauses and then leaves the owl alone for 16 minutes: it polls for the first five, then
-sends nothing for eleven, longer than the ten minutes after which `api.spotify.com` closed an idle
-connection when this was written. The check passes when the next command goes through and the
-console log shows `spotify_http: the kept-alive connection was closed; reconnecting`, the line the
-owl prints when it sends a request again on a new connection. Without `--real-account` the script
-does nothing. A run sends under a hundred requests to the Web API. At the end the script counts
-the `player` and `cmd` lines, checks that no `api` line said `rate_limited` or `quota`, and checks
-that nothing in `build/hil-spotify/console.log` looks like a token.
+puts it back. It checks that `prev` brings back the first track (sending it a second time when the
+first one only restarted the skipped track), then checks the like command on that track: a track
+that is not in Liked Songs is liked and unliked again, and a track that is already there is only
+liked again, so it should keep its place in the list. `--transfer` also moves playback to another
+device and back. `--idle` pauses and then leaves the owl alone for 16 minutes: it polls for the
+first five, then sends nothing for eleven, longer than the ten minutes after which
+`api.spotify.com` closed an idle connection when this was written. The check passes when the next
+command goes through and the console log shows `spotify_http: the kept-alive connection was closed;
+reconnecting`, the line the owl prints when it sends a request again on a new connection. Without
+`--real-account` the script does nothing. A run should send under a hundred requests to the Web
+API. When a check fails or you press Ctrl-C, the script moves playback back to the first device,
+puts the volume back, unlikes a track it liked (never one that was liked before), and resumes or
+pauses playback as it was; it prints `put back:` for each of these and `left changed:` for anything
+it could not undo. At the end the script counts the `player` and `cmd` lines, checks that no `api`
+line said `rate_limited` or `quota`, and checks that nothing in `build/hil-spotify/console.log`
+looks like a token.
