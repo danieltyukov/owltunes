@@ -3,7 +3,8 @@
 The Arduino Nano ESP32 carries the same chip and memory as the owl's own board: an ESP32-S3 (in a
 u-blox NORA-W106 module) with 16 MB of flash and 8 MB of octal PSRAM. It has no display, so the
 firmware draws the owl's screens into memory where nothing shows them. The setup protocol over USB,
-the RGB status LED and Wi-Fi work now; later P3a tasks add the Spotify login and Spotify control.
+the RGB status LED and Wi-Fi work now, and the board runs the Spotify login itself
+([Linking Spotify](#linking-spotify)); later P3a tasks add Spotify control.
 
 ## Build and flash
 
@@ -110,3 +111,36 @@ after a reset. The password goes to the board only; the script never prints it.
 in range, checks that the owl reports `wifi_not_found`, waits 5 s before the next round and 10 s
 before the one after, and stops once the network is removed again. Other saved networks would
 change what it sees, so it refuses to run while any are saved.
+
+## Linking Spotify
+
+Create your own Spotify app as the [setup guide](setup-guide.md) describes, and add these
+redirect URIs to it:
+
+- `http://127.0.0.1:8765/callback` for `tools/owl_login.py`,
+- `http://127.0.0.1:4173/owltunes/callback/` for the setup page served from this computer,
+- `https://danieltyukov.github.io/owltunes/callback/` for the published setup page.
+
+Put the app's client ID in `private/hil.env` as `OWL_SPOTIFY_CLIENT_ID=...`, then, with a Wi-Fi
+network saved on the board, run in your own terminal:
+
+```bash
+tools/owl_login.py --open
+```
+
+Opening the port restarts the board, so the script waits until the owl has started and joined its
+network, and keeps the port open until it is done. It then saves the client ID on the owl, opens
+Spotify's login page, receives Spotify's answer on `http://127.0.0.1:8765/callback` and hands the
+code to the owl over USB. The owl exchanges it for tokens itself; they never leave the board. The
+script then resets the owl and waits until the saved login passes its check with Spotify. The
+login address it prints carries your client ID, so keep it to yourself. The console log in
+`build/owl-login/console.log` shows the client ID as `<redacted>`, and the script fails if
+anything in that log looks like a token. While the owl exchanges the code its LED blinks cyan
+quickly; once linked it blinks green quickly (`starting`) until playback support arrives.
+
+The owl starts a login only while it is online; otherwise `spotify_begin` answers `offline`.
+
+To try the setup page against the board without publishing it, run
+`cd web && npm run build && npx vite preview --port 4173 --host 127.0.0.1 --base /owltunes/` and
+open `http://127.0.0.1:4173/owltunes/setup/`. Use `127.0.0.1`, not `localhost`: Spotify accepts
+plain HTTP only for the loopback address.

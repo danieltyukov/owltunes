@@ -66,7 +66,10 @@ def load_env_file(path: pathlib.Path) -> dict[str, str]:
 class Board:
     """One open console. A reader thread collects lines; waits look at everything since a mark."""
 
-    def __init__(self, port: str, log: pathlib.Path | None = None, open_timeout: float = 20.0):
+    def __init__(self, port: str, log: pathlib.Path | None = None, open_timeout: float = 20.0,
+                 redact: tuple[str, ...] = ()):
+        """redact: text such as a client ID that the log file shows as <redacted>. The lines kept in
+        memory are unchanged, so waits still see them."""
         import serial  # only the hardware scripts need pyserial
 
         self._serial = serial
@@ -74,6 +77,7 @@ class Board:
         self.lines: list[str] = []
         self.next_id = 1
         self._fresh: queue.Queue[str] = queue.Queue()
+        self._redact = tuple(text for text in redact if text)
         self._log = log.open("a", encoding="utf-8") if log is not None else None
         self._ser: Any = None
         self.open(open_timeout)  # on the Nano ESP32 this resets the board: see wait_boot()
@@ -110,9 +114,14 @@ class Board:
                 raw, pending = pending.split(b"\n", 1)
                 line = raw.decode("utf-8", "replace").rstrip("\r")
                 if self._log is not None:
-                    self._log.write(line + "\n")
+                    self._log.write(self._redacted(line) + "\n")
                     self._log.flush()
                 self._fresh.put(line)
+
+    def _redacted(self, line: str) -> str:
+        for text in self._redact:
+            line = line.replace(text, "<redacted>")
+        return line
 
     def close(self) -> None:
         if self._ser is not None:

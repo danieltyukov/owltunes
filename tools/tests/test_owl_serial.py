@@ -147,5 +147,26 @@ class BoardTest(unittest.TestCase):
             self.board.wait_event("never", timeout=0.3)
 
 
+@unittest.skipUnless(HAVE_SERIAL, "pyserial is not installed")
+class RedactTest(unittest.TestCase):
+    def test_the_log_file_hides_redacted_text_but_the_lines_keep_it(self):
+        client = "0123456789abcdef0123456789abcdef"
+        owl = FakeOwl()
+        with tempfile.TemporaryDirectory() as d:
+            log = pathlib.Path(d, "console.log")
+            board = Board(owl.port, log, redact=(client, ""))
+            self.addCleanup(board._log.close)  # Board keeps its log open across reopen() and close()
+            try:
+                owl.send('I (1) boot\r\n@owl {"event":"x","client_id":"' + client + '"}\r\n')
+                self.assertEqual(board.wait_event("x", timeout=5)["client_id"], client)
+                text = log.read_text()
+                self.assertNotIn(client, text)
+                self.assertIn('"client_id":"<redacted>"', text)
+                self.assertIn("I (1) boot\n", text)
+            finally:
+                board.close()
+                owl.close()
+
+
 if __name__ == "__main__":
     unittest.main()
