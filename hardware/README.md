@@ -4,6 +4,8 @@ KiCad 10 projects for the owl main board (`owl-mainboard/`, 4 layers) and the pe
 snap-off owl dock-pad section (`perch-dock/`, 2 layers). Shared symbols and footprints are in
 `lib/`. Licence: CERN-OHL-P-2.0 (`LICENSE-HARDWARE`).
 
+Documentation: docs/hardware/README.md.
+
 Each board has a `design.toml` that lists every part, its LCSC number and its pin-to-net map. The
 schematic must match it exactly:
 

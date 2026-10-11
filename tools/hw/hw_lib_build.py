@@ -608,12 +608,44 @@ def footprint(name: str, fp: Footprint) -> str:
     return sexpr(head) + "\n"
 
 
+# Antenna keep-out of the module copy (ruling R43), in the footprint frame (u right, v down; the
+# antenna end is v -12.75). The owl board places U201 on the back at rot 180 with its centre at
+# owl y 30.35, so v = 30.35 - y and u = -x: the board notch (|x| below 14, y above 36.6) and the
+# 3 mm strips either side of its edges above y 33 (enclosure/pcb_contract.py keepouts()) become
+# |u| up to 17 from v -2.65 out to 0.7 mm past the antenna end, minus |u| below 11 for v above -6.25.
+ANT_KEEPOUT = [(-17.0, -2.65), (-11.0, -2.65), (-11.0, -6.25), (11.0, -6.25), (11.0, -2.65), (17.0, -2.65),
+               (17.0, -13.45), (-17.0, -13.45)]
+# Courtyard: the stock module outline (0.75 and 0.7 mm round the 18 x 25.5 body) joined to the keep-out.
+ANT_COURTYARD = [(-9.75, 13.45), (9.75, 13.45), (9.75, -6.25), (11.0, -6.25), (11.0, -2.65), (17.0, -2.65),
+                 (17.0, -13.45), (-17.0, -13.45), (-17.0, -2.65), (-11.0, -2.65), (-11.0, -6.25), (-9.75, -6.25)]
+ANT_NOTE = ("Antenna keep-out and courtyard cut to the owl board's notch plus 3 mm strips (R43): Espressif's "
+            "15 mm keep-out cannot fit in the 66 x 84 mm owl; RSSI is measured at bring-up and the ring test "
+            "decides WROOM-1 or WROOM-1U. ")
+
+
 def stock_copy(name: str, rel: str, stock_dir: Path) -> str:
     text = (stock_dir / rel).read_text()
     if text.count("(drill 0.2)") != 12:
         raise SystemExit(f"{rel}: expected 12 thermal vias drilled 0.2 mm")
     text = re.sub(r'\(footprint "[^"]+"', f'(footprint "{name}"', text, count=1)
-    text = text.replace('(descr "', '(descr "Thermal vias opened from 0.2 to 0.3 mm (JLCPCB no-fee drill). ', 1)
+    text = text.replace('(descr "', '(descr "Thermal vias opened from 0.2 to 0.3 mm (JLCPCB no-fee drill). '
+                        + ANT_NOTE, 1)
+    crtyd = re.compile(r'\t\(fp_line\n(?:\t\t[^\n]*\n|\t\t\t[^\n]*\n)*?\t\t\(layer "F\.CrtYd"\)\n\t\t\(uuid "[^"]+"\)\n\t\)\n')
+    if len(crtyd.findall(text)) != 8:
+        raise SystemExit(f"{rel}: expected the 8 stock courtyard lines")
+    lines = []
+    for i, (a, b) in enumerate(zip(ANT_COURTYARD, ANT_COURTYARD[1:] + ANT_COURTYARD[:1])):
+        uid = uuid.uuid5(uuid.NAMESPACE_URL, f"owltunes/{name}/courtyard/{i}")
+        lines.append(f'\t(fp_line\n\t\t(start {num(a[0])} {num(a[1])})\n\t\t(end {num(b[0])} {num(b[1])})\n'
+                     f'\t\t(stroke\n\t\t\t(width {num(CRTYD_W)})\n\t\t\t(type solid)\n\t\t)\n'
+                     f'\t\t(layer "F.CrtYd")\n\t\t(uuid "{uid}")\n\t)\n')
+    first = crtyd.search(text).start()
+    text = crtyd.sub("", text)
+    text = text[:first] + "".join(lines) + text[first:]
+    stock_pts = "(xy -24 -6.75) (xy 24 -6.75) (xy 24 -27.75) (xy -24 -27.75)"
+    if text.count(stock_pts) != 1:
+        raise SystemExit(f"{rel}: expected the stock antenna keep-out")
+    text = text.replace(stock_pts, " ".join(f"(xy {num(u)} {num(v)})" for u, v in ANT_KEEPOUT))
     return text.replace("(drill 0.2)", "(drill 0.3)")
 
 

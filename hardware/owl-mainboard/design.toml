@@ -41,9 +41,9 @@ ref = "R102"
 sheet = "power"
 symbol = "Device:R"
 footprint = "Resistor_SMD:R_0402_1005Metric"
-value = "3.3k"
-lcsc = "C25890"
-mpn = "0402WGF3301TCE"
+value = "3.6k"
+lcsc = "C25891"
+mpn = "0402WGF3601TCE"
 manufacturer = "UNI-ROYAL"
 side = "back"
 height = 0.4
@@ -478,7 +478,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 bezel"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
@@ -488,7 +488,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 bezel"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
@@ -498,7 +498,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 bezel"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
@@ -508,7 +508,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 bezel"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
@@ -518,7 +518,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 body"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
@@ -528,7 +528,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 body"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
@@ -538,7 +538,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 body"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
@@ -548,7 +548,7 @@ sheet = "power"
 symbol = "Mechanical:MountingHole"
 footprint = "MountingHole:MountingHole_2.2mm_M2"
 value = "M2 body"
-side = "back"
+side = "front"
 height = 0.0
 assembled = false
 
