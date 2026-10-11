@@ -221,7 +221,7 @@ manufacturer = "Texas Instruments"
 alt = "C1849531 TPS63802DLAT (small reel, same part)"
 side = "back"
 height = 1.0
-pins = { 1 = "VSYS", 2 = "GND", 3 = "GND", 4 = "TPS_FB", 5 = "ESP_EN", 6 = "+3V3", 7 = "TPS_L2", 8 = "GND", 9 = "TPS_L1", 10 = "VSYS" }
+pins = { 1 = "VSYS", 2 = "GND", 3 = "GND", 4 = "TPS_FB", 5 = "TPS_PG", 6 = "+3V3", 7 = "TPS_L2", 8 = "GND", 9 = "TPS_L1", 10 = "VSYS" }
 
 [[part]]
 ref = "L101"
@@ -551,3 +551,452 @@ value = "M2 body"
 side = "back"
 height = 0.0
 assembled = false
+
+# ---------------------------------------------------------------------------------------------
+# Sheet mcu_usb: ESP32-S3 module, USB-C, ESD, 32.768 kHz crystal, reset and boot, buttons
+# ---------------------------------------------------------------------------------------------
+
+[[part]]
+ref = "U201"
+sheet = "mcu_usb"
+symbol = "RF_Module:ESP32-S3-WROOM-1"
+footprint = "owltunes:ESP32-S3-WROOM-1_Drill0.3"
+value = "ESP32-S3-WROOM-1-N16R8"
+lcsc = "C2913202"
+mpn = "ESP32-S3-WROOM-1-N16R8"
+manufacturer = "Espressif Systems"
+alt = "C3013946 ESP32-S3-WROOM-1U-N16R8: same pads, CPL Y offset 3.15 mm towards the pins, needs a U.FL antenna"
+side = "back"
+height = 3.1
+pins = { 1 = "GND", 2 = "+3V3", 3 = "ESP_EN", 4 = "BTN_BEAK", 5 = "HALL_INT", 6 = "IMU_INT1", 7 = "CHG_PGOOD", 8 = "XTAL32_P", 9 = "XTAL32_N", 10 = "EXP_A", 11 = "EXP_B", 12 = "CHG_STAT", 13 = "USB_DM", 14 = "USB_DP", 15 = "BTN_EAR_R", 16 = "DISP_EN", 17 = "LCD_D3", 18 = "LCD_CS", 19 = "LCD_D0", 20 = "LCD_CLK", 21 = "LCD_D1", 22 = "LCD_D2", 23 = "TP_INT", 24 = "TP_SDA", 25 = "TP_SCL", 26 = "CHG_SUSPEND", 27 = "BOOT", 31 = "LCD_TE", 32 = "LCD_RST", 33 = "TP_RST", 34 = "I2C_SCL", 35 = "I2C_SDA", 36 = "U0RXD", 37 = "U0TXD", 38 = "BTN_EAR_L", 39 = "DOCK_DET", 40 = "GND", 41 = "GND" }
+nc = ["28", "29", "30"]
+
+[[part]]
+ref = "C201"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "22uF"
+lcsc = "C59461"
+mpn = "CL10A226MQ8NRNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "C202"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "R205"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "ESP_EN" }
+
+[[part]]
+ref = "C203"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1uF"
+lcsc = "C52923"
+mpn = "CL05A105KA5NQNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "ESP_EN", 2 = "GND" }
+
+# R212 (ruling R36): TPS63802 PG is open drain and specified to sink up to 1 mA (SLVSEU9D 9.3.10).
+# 1k between PG and ESP_EN limits the discharge of C203; with PG low, the R205 10k / R212 1k divider holds ESP_EN at 0.3 V.
+[[part]]
+ref = "R212"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "1k"
+lcsc = "C11702"
+mpn = "0402WGF1001TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "TPS_PG", 2 = "ESP_EN" }
+
+[[part]]
+ref = "R206"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "BOOT" }
+
+[[part]]
+ref = "Y201"
+sheet = "mcu_usb"
+symbol = "Device:Crystal"
+footprint = "Crystal:Crystal_SMD_3215-2Pin_3.2x1.5mm"
+value = "32.768kHz 12.5pF"
+lcsc = "C32346"
+mpn = "Q13FC13500004"
+manufacturer = "Seiko Epson"
+alt = "C97606 Seiko SC-32S 32.768kHz 12.5pF, same footprint"
+side = "back"
+height = 0.9
+pins = { 1 = "XTAL32_P", 2 = "XTAL32_N" }
+
+[[part]]
+ref = "C204"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "18pF"
+lcsc = "C1549"
+mpn = "0402CG180J500NT"
+manufacturer = "FH"
+side = "back"
+height = 0.6
+pins = { 1 = "XTAL32_P", 2 = "GND" }
+
+[[part]]
+ref = "C205"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "18pF"
+lcsc = "C1549"
+mpn = "0402CG180J500NT"
+manufacturer = "FH"
+side = "back"
+height = 0.6
+pins = { 1 = "XTAL32_N", 2 = "GND" }
+
+[[part]]
+ref = "J201"
+sheet = "mcu_usb"
+symbol = "Connector:USB_C_Receptacle_USB2.0_16P"
+footprint = "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12"
+value = "USB-C"
+lcsc = "C165948"
+mpn = "TYPE-C-31-M-12"
+manufacturer = "Korean Hroparts Elec"
+alt = "C5337088 TYPE-C-31-M-12A, same footprint"
+side = "back"
+height = 3.26
+pins = { A1 = "GND", A12 = "GND", B1 = "GND", B12 = "GND", A4 = "VBUS_USB", A9 = "VBUS_USB", B4 = "VBUS_USB", B9 = "VBUS_USB", A5 = "USB_CC1", B5 = "USB_CC2", A6 = "USB_DP_CONN", B6 = "USB_DP_CONN", A7 = "USB_DM_CONN", B7 = "USB_DM_CONN", SH = "GND" }
+nc = ["A8", "B8"]
+
+[[part]]
+ref = "R201"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "5.1k"
+lcsc = "C25905"
+mpn = "0402WGF5101TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "USB_CC1", 2 = "GND" }
+
+[[part]]
+ref = "R202"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "5.1k"
+lcsc = "C25905"
+mpn = "0402WGF5101TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "USB_CC2", 2 = "GND" }
+
+[[part]]
+ref = "U202"
+sheet = "mcu_usb"
+symbol = "Power_Protection:USBLC6-2SC6"
+footprint = "Package_TO_SOT_SMD:SOT-23-6"
+value = "USBLC6-2SC6"
+lcsc = "C7519"
+mpn = "USBLC6-2SC6"
+manufacturer = "STMicroelectronics"
+alt = "C2687116 UMW USBLC6-2SC6, same pins"
+side = "back"
+height = 1.45
+pins = { 1 = "USB_DP_CONN", 6 = "USB_DP_CONN", 3 = "USB_DM_CONN", 4 = "USB_DM_CONN", 2 = "GND", 5 = "VBUS_USB" }
+
+[[part]]
+ref = "D201"
+sheet = "mcu_usb"
+symbol = "Device:D_Zener"
+footprint = "Diode_SMD:D_SOD-123F"
+value = "SMF5.0A"
+lcsc = "C193402"
+mpn = "SMF5.0A"
+manufacturer = "MDD"
+alt = "C151296 Littelfuse SMF5.0A"
+side = "back"
+height = 1.1
+pins = { 1 = "VBUS_USB", 2 = "GND" }
+
+[[part]]
+ref = "R203"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "22"
+lcsc = "C25092"
+mpn = "0402WGF220JTCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "USB_DP_CONN", 2 = "USB_DP" }
+
+[[part]]
+ref = "R204"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "22"
+lcsc = "C25092"
+mpn = "0402WGF220JTCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "USB_DM_CONN", 2 = "USB_DM" }
+
+[[part]]
+ref = "SW201"
+sheet = "mcu_usb"
+symbol = "Switch:SW_Push"
+footprint = "Button_Switch_SMD:SW_SPST_EVQP7A"
+value = "Ear left"
+lcsc = "C79167"
+mpn = "EVQP7A01P"
+manufacturer = "Panasonic"
+alt = "C136662 K2-1114SA-A4SW-06 (needs its own footprint)"
+side = "back"
+height = 1.35
+pins = { 1 = "BTN_EAR_L", 2 = "GND" }
+
+[[part]]
+ref = "SW202"
+sheet = "mcu_usb"
+symbol = "Switch:SW_Push"
+footprint = "Button_Switch_SMD:SW_SPST_EVQP7A"
+value = "Ear right"
+lcsc = "C79167"
+mpn = "EVQP7A01P"
+manufacturer = "Panasonic"
+alt = "C136662 K2-1114SA-A4SW-06 (needs its own footprint)"
+side = "back"
+height = 1.35
+pins = { 1 = "BTN_EAR_R", 2 = "GND" }
+
+[[part]]
+ref = "SW203"
+sheet = "mcu_usb"
+symbol = "Switch:SW_Push"
+footprint = "Button_Switch_SMD:SW_SPST_TS-1088-xR020"
+value = "Beak"
+lcsc = "C720477"
+mpn = "TS-1088-AR02016"
+manufacturer = "XUNPU"
+alt = "C455280 TS-1088R-02026, same footprint"
+side = "front"
+height = 2.0
+pins = { 1 = "BTN_BEAK", 2 = "GND" }
+
+[[part]]
+ref = "R207"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "BTN_EAR_L" }
+
+[[part]]
+ref = "R208"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "BTN_EAR_R" }
+
+[[part]]
+ref = "R209"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "BTN_BEAK" }
+
+[[part]]
+ref = "C206"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "10nF"
+lcsc = "C15195"
+mpn = "CL05B103KB5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "BTN_EAR_L", 2 = "GND" }
+
+[[part]]
+ref = "C207"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "10nF"
+lcsc = "C15195"
+mpn = "CL05B103KB5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "BTN_EAR_R", 2 = "GND" }
+
+[[part]]
+ref = "C208"
+sheet = "mcu_usb"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "10nF"
+lcsc = "C15195"
+mpn = "CL05B103KB5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "BTN_BEAK", 2 = "GND" }
+
+[[part]]
+ref = "J202"
+sheet = "mcu_usb"
+symbol = "Connector_Generic_MountingPin:Conn_01x04_MountingPin"
+footprint = "Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal"
+value = "EXP: GND, 3V3, A, B"
+lcsc = "C160404"
+mpn = "SM04B-SRSS-TB(LF)(SN)"
+manufacturer = "JST"
+alt = "C51940130 XY-SM04B-SRSS-TB, same footprint"
+side = "back"
+height = 2.95
+pins = { 1 = "GND", 2 = "+3V3", 3 = "EXP_A", 4 = "EXP_B", MP = "GND" }
+
+[[part]]
+ref = "R210"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "EXP_A" }
+
+[[part]]
+ref = "R211"
+sheet = "mcu_usb"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "EXP_B" }
+
+[[part]]
+ref = "TP201"
+sheet = "mcu_usb"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.5mm"
+value = "RESET"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "ESP_EN" }
+
+[[part]]
+ref = "TP202"
+sheet = "mcu_usb"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.5mm"
+value = "BOOT"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "BOOT" }
+
+[[part]]
+ref = "TP203"
+sheet = "mcu_usb"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.5mm"
+value = "GND"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "GND" }
+
+[[part]]
+ref = "TP204"
+sheet = "mcu_usb"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "TX"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "U0TXD" }
+
+[[part]]
+ref = "TP205"
+sheet = "mcu_usb"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "RX"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "U0RXD" }
