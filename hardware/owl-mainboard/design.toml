@@ -1,0 +1,553 @@
+# OwlTunes main board rev A: every part, its source and its pin-to-net map.
+# tools/hw/hw_netlist.py checks the KiCad schematic against this file; tools/hw/hw_bom.py checks
+# the LCSC and MPN fields; tools/tests/test_hw_design.py checks the design rules below.
+# Heights are millimetres above the board surface. Prices live in private/, never here.
+board = "owl-mainboard"
+
+# ---------------------------------------------------------------------------------------------
+# Sheet power: inputs, charger, fuel gauge, 3.3 V buck-boost, display power switch, holes
+# ---------------------------------------------------------------------------------------------
+
+[[part]]
+ref = "U101"
+sheet = "power"
+symbol = "Battery_Management:BQ24073RGT"
+footprint = "Package_DFN_QFN:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm"
+value = "BQ24073RGTR"
+lcsc = "C15220"
+mpn = "BQ24073RGTR"
+manufacturer = "Texas Instruments"
+alt = "C15464 BQ24075RGTR: same pins, pin 15 is SYSOFF (tied low here as TD is), OUT follows the input up to 5.5 V"
+side = "back"
+height = 1.0
+pins = { 1 = "BAT_NTC", 2 = "VBAT", 3 = "VBAT", 4 = "GND", 5 = "CHG_EN2", 6 = "CHG_SUSPEND", 7 = "CHG_PGOOD", 8 = "GND", 9 = "CHG_STAT", 10 = "VSYS", 11 = "VSYS", 12 = "CHG_ILIM", 13 = "VIN_CHG", 15 = "GND", 16 = "CHG_ISET", 17 = "GND" }
+nc = ["14"]
+
+[[part]]
+ref = "R101"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "2k"
+lcsc = "C4109"
+mpn = "0402WGF2001TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "CHG_ISET", 2 = "GND" }
+
+[[part]]
+ref = "R102"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "2k"
+lcsc = "C4109"
+mpn = "0402WGF2001TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "CHG_ILIM", 2 = "GND" }
+
+[[part]]
+ref = "R103"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "VIN_CHG", 2 = "CHG_EN2" }
+
+[[part]]
+ref = "R104"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "CHG_SUSPEND", 2 = "GND" }
+
+[[part]]
+ref = "R105"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "CHG_PGOOD" }
+
+[[part]]
+ref = "R106"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "CHG_STAT" }
+
+[[part]]
+ref = "C101"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "10uF"
+lcsc = "C19702"
+mpn = "CL10A106KP8NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "VIN_CHG", 2 = "GND" }
+
+[[part]]
+ref = "C102"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "22uF"
+lcsc = "C59461"
+mpn = "CL10A226MQ8NRNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "VSYS", 2 = "GND" }
+
+[[part]]
+ref = "C103"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "10uF"
+lcsc = "C19702"
+mpn = "CL10A106KP8NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "VBAT", 2 = "GND" }
+
+[[part]]
+ref = "D101"
+sheet = "power"
+symbol = "Device:D_Schottky"
+footprint = "Diode_SMD:D_SOD-123F"
+value = "PMEG2020EH"
+lcsc = "C456104"
+mpn = "PMEG2020EH,115"
+manufacturer = "Nexperia"
+alt = "C223608 MBR120VLSFT1G, same SOD-123F footprint"
+side = "back"
+height = 1.1
+pins = { 1 = "VIN_CHG", 2 = "VBUS_USB" }
+
+[[part]]
+ref = "D102"
+sheet = "power"
+symbol = "Device:D_Schottky"
+footprint = "Diode_SMD:D_SOD-123F"
+value = "PMEG2020EH"
+lcsc = "C456104"
+mpn = "PMEG2020EH,115"
+manufacturer = "Nexperia"
+alt = "C223608 MBR120VLSFT1G, same SOD-123F footprint"
+side = "back"
+height = 1.1
+pins = { 1 = "VIN_CHG", 2 = "VBUS_DOCK" }
+
+[[part]]
+ref = "J101"
+sheet = "power"
+symbol = "Connector_Generic_MountingPin:Conn_01x03_MountingPin"
+footprint = "Connector_JST:JST_PH_S3B-PH-SM4-TB_1x03-1MP_P2.00mm_Horizontal"
+value = "Battery +, NTC, -"
+lcsc = "C265101"
+mpn = "S3B-PH-SM4-TB(LF)(SN)"
+manufacturer = "JST"
+alt = "C3029441 XUNPU WAFER-PH2.0-3PWB, check the footprint"
+side = "back"
+height = 4.8
+pins = { 1 = "VBAT", 2 = "BAT_NTC", 3 = "GND", MP = "GND" }
+
+[[part]]
+ref = "U102"
+sheet = "power"
+symbol = "owltunes:MAX17048G+T10"
+footprint = "owltunes:Maxim_TDFN-8-1EP_2x2mm_P0.5mm"
+value = "MAX17048G+T10"
+lcsc = "C2682616"
+mpn = "MAX17048G+T10"
+manufacturer = "Analog Devices"
+alt = "none with the same pins at JLC; stock 25618 on 2026-10-10"
+side = "back"
+height = 0.8
+pins = { 1 = "GND", 2 = "VBAT", 3 = "VBAT", 4 = "GND", 5 = "GAUGE_ALRT", 6 = "GND", 7 = "I2C_SCL", 8 = "I2C_SDA", 9 = "GND" }
+
+[[part]]
+ref = "C104"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1uF"
+lcsc = "C52923"
+mpn = "CL05A105KA5NQNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "VBAT", 2 = "GND" }
+
+[[part]]
+ref = "U103"
+sheet = "power"
+symbol = "owltunes:TPS63802DLAR"
+footprint = "owltunes:TI_DLA_VSON-10_2x3mm_P0.5mm"
+value = "TPS63802DLAR"
+lcsc = "C2845237"
+mpn = "TPS63802DLAR"
+manufacturer = "Texas Instruments"
+alt = "C1849531 TPS63802DLAT (small reel, same part)"
+side = "back"
+height = 1.0
+pins = { 1 = "VSYS", 2 = "GND", 3 = "GND", 4 = "TPS_FB", 5 = "ESP_EN", 6 = "+3V3", 7 = "TPS_L2", 8 = "GND", 9 = "TPS_L1", 10 = "VSYS" }
+
+[[part]]
+ref = "L101"
+sheet = "power"
+symbol = "Device:L"
+footprint = "owltunes:L_Murata_DFE201612E"
+value = "0.47uH"
+lcsc = "C668312"
+mpn = "DFE201612E-R47M=P2"
+manufacturer = "Murata"
+alt = "C18221164 Coilcraft XFL4015-471MEC needs a 4 x 4 mm footprint"
+side = "back"
+height = 1.2
+magnetic = true
+pins = { 1 = "TPS_L1", 2 = "TPS_L2" }
+
+[[part]]
+ref = "R107"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "560k"
+lcsc = "C132339"
+mpn = "0402WGF5603TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "+3V3", 2 = "TPS_FB" }
+
+[[part]]
+ref = "R108"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "TPS_FB", 2 = "GND" }
+
+[[part]]
+ref = "C105"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "10uF"
+lcsc = "C19702"
+mpn = "CL10A106KP8NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "VSYS", 2 = "GND" }
+
+[[part]]
+ref = "C106"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "VSYS", 2 = "GND" }
+
+[[part]]
+ref = "C107"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "22uF"
+lcsc = "C59461"
+mpn = "CL10A226MQ8NRNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "C108"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "22uF"
+lcsc = "C59461"
+mpn = "CL10A226MQ8NRNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "C109"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "GND" }
+
+[[part]]
+ref = "U104"
+sheet = "power"
+symbol = "Power_Management:TPS22917DBV"
+footprint = "Package_TO_SOT_SMD:SOT-23-6"
+value = "TPS22917DBVR"
+lcsc = "C2681320"
+mpn = "TPS22917DBVR"
+manufacturer = "Texas Instruments"
+alt = "C131941 TPS22918DBVR, same pins"
+side = "back"
+height = 1.45
+pins = { 1 = "+3V3", 2 = "GND", 3 = "DISP_EN", 4 = "LS_CT", 5 = "DISP_3V3", 6 = "DISP_3V3" }
+
+[[part]]
+ref = "C110"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1nF"
+lcsc = "C1523"
+mpn = "0402B102K500NT"
+manufacturer = "FH"
+side = "back"
+height = 0.6
+pins = { 1 = "+3V3", 2 = "LS_CT" }
+
+[[part]]
+ref = "R109"
+sheet = "power"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "back"
+height = 0.4
+pins = { 1 = "DISP_EN", 2 = "GND" }
+
+[[part]]
+ref = "C111"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "10uF"
+lcsc = "C19702"
+mpn = "CL10A106KP8NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.9
+pins = { 1 = "DISP_3V3", 2 = "GND" }
+
+[[part]]
+ref = "C112"
+sheet = "power"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "back"
+height = 0.6
+pins = { 1 = "DISP_3V3", 2 = "GND" }
+
+[[part]]
+ref = "TP101"
+sheet = "power"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "VIN_CHG"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "VIN_CHG" }
+
+[[part]]
+ref = "TP102"
+sheet = "power"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "VSYS"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "VSYS" }
+
+[[part]]
+ref = "TP103"
+sheet = "power"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "VBAT"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "VBAT" }
+
+[[part]]
+ref = "TP104"
+sheet = "power"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "+3V3"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "+3V3" }
+
+[[part]]
+ref = "TP105"
+sheet = "power"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "DISP_3V3"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "DISP_3V3" }
+
+[[part]]
+ref = "TP106"
+sheet = "power"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "GND"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "GND" }
+
+[[part]]
+ref = "TP107"
+sheet = "power"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D1.0mm"
+value = "GAUGE_ALRT"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "GAUGE_ALRT" }
+
+[[part]]
+ref = "H1"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 bezel"
+side = "back"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H2"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 bezel"
+side = "back"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H3"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 bezel"
+side = "back"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H4"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 bezel"
+side = "back"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H5"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 body"
+side = "back"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H6"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 body"
+side = "back"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H7"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 body"
+side = "back"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H8"
+sheet = "power"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2 body"
+side = "back"
+height = 0.0
+assembled = false

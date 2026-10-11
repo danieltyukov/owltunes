@@ -259,6 +259,17 @@
   "cvpcb": {
     "equivalence_files": []
   },
+  "erc": {
+    "erc_exclusions": [
+      [
+        "pin_to_pin|1828800|1803400|2a2fac0e-d41b-44a1-94e1-b221faf593f5|b5a65633-a175-4571-ba61-6dbe33235f9c|/fb846a48-d7cd-4e1f-898e-fc44b04beae7/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa|/fb846a48-d7cd-4e1f-898e-fc44b04beae7/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa|/fb846a48-d7cd-4e1f-898e-fc44b04beae7/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa",
+        "QOD tied to VOUT by design"
+      ]
+    ],
+    "meta": {
+      "version": 0
+    }
+  },
   "libraries": {
     "pinned_footprint_libs": [],
     "pinned_symbol_libs": []
