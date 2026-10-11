@@ -203,14 +203,21 @@ J101_MARKS = (("+", 28.4, 16.0), ("NTC", 28.7, 18.0), ("-", 28.4, 20.0))
 J101_PIN1_DOT = (27.35, 16.0, 0.2)
 
 
-def mark_j101(board) -> None:
+def clear_j101_marks(board) -> None:
+    """Delete the marks a previous run drew. Delete, not Remove: Remove hands the C++ item to its
+    Python wrapper, and once that wrapper is freed pcbnew's bindings return untyped SwigPyObjects
+    for every board (KiCad 10.0.6)."""
     centre = pcbnew.VECTOR2I(pcbnew.FromMM(100 + J101_PIN1_DOT[0]), pcbnew.FromMM(100 - J101_PIN1_DOT[1]))
     old = [d for d in board.GetDrawings() if d.GetLayer() == pcbnew.B_SilkS
            and ((isinstance(d, pcbnew.PCB_TEXT) and d.GetText() in {m[0] for m in J101_MARKS})
                 or (isinstance(d, pcbnew.PCB_SHAPE) and d.GetShape() == pcbnew.SHAPE_T_CIRCLE
                     and d.GetCenter() == centre))]
     for d in old:
-        board.Remove(d)
+        board.Delete(d)
+
+
+def mark_j101(board) -> None:
+    clear_j101_marks(board)
     for text, x, y in J101_MARKS:
         t = pcbnew.PCB_TEXT(board)
         t.SetText(text)
@@ -249,7 +256,7 @@ def place(board_name: str) -> int:
         moved += 1
     hidden = place_references(board)
     unplaced = [fp.GetReference() for fp in board.GetFootprints() if not fp.IsLocked() and fp.GetReference() not in PLACE]
-    mark_j101(board)  # last: pcbnew 10.0.6 loses footprint types after a drawing is removed
+    mark_j101(board)
     pcbnew.SaveBoard(str(path), board)
     print(f"{board_name}: placed {moved} parts, {len(hidden)} references hidden (no room on the silkscreen): {' '.join(hidden)}")
     if unplaced:

@@ -107,9 +107,11 @@ def sync(board_name: str) -> int:
     board = pcbnew.LoadBoard(str(path))
     have = {fp.GetReference(): fp for fp in board.GetFootprints()}
     added = removed = 0
+    # Delete, not Remove: Remove hands the C++ footprint to its Python wrapper, and once that
+    # wrapper is freed pcbnew's bindings return untyped SwigPyObjects for every board (KiCad 10.0.6).
     for ref, fp in have.items():
         if ref not in comps:
-            board.Remove(fp)
+            board.Delete(fp)
             removed += 1
     nets: dict[str, pcbnew.NETINFO_ITEM] = {}
     for name in sorted(set(pins.values())):
@@ -130,7 +132,7 @@ def sync(board_name: str) -> int:
         refreshed += stale
         if fp is not None and (fp.GetFPIDAsString() != c["footprint"] or stale):
             pos, rot, back, locked = fp.GetPosition(), fp.GetOrientationDegrees(), fp.IsFlipped(), fp.IsLocked()
-            board.Remove(fp)
+            board.Delete(fp)
             fp = None
         else:
             pos = rot = back = locked = None
