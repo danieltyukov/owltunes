@@ -441,7 +441,8 @@ class LibraryTest(unittest.TestCase):
 
     def test_charger_copy_keeps_its_paste_off_the_open_thermal_vias(self):
         # U101, BQ24073 RGT (review I2): open vias under paste wick the solder off the exposed pad.
-        # No opening may touch a via pad, and the openings print 50 to 80 % of the 1.6 x 1.6 pad
+        # No opening overlaps a via pad: the bar and the arms are tangent to the 0.5 mm pads, so each
+        # opening keeps 0.1 mm from every drill. The openings print 50 to 80 % of the 1.6 x 1.6 pad
         # (TI's land pattern guidance for RGT). The copper is KiCad's ThermalVias footprint's.
         name = "VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3"
         text = (LIB / "owltunes.pretty" / f"{name}.kicad_mod").read_text()
@@ -456,7 +457,8 @@ class LibraryTest(unittest.TestCase):
             for v in vias:
                 gap_x = max(abs(v["x"] - x) - w / 2, 0.0)
                 gap_y = max(abs(v["y"] - y) - h / 2, 0.0)
-                self.assertGreaterEqual((gap_x ** 2 + gap_y ** 2) ** 0.5, v["w"] / 2 - 1e-6)
+                # 0.1 mm from the drill is the 0.5 mm pad's edge: tangent passes, any overlap fails.
+                self.assertGreaterEqual((gap_x ** 2 + gap_y ** 2) ** 0.5, v["drill"] / 2 + 0.1 - 1e-6)
         coverage = sum(w * h for _, _, w, h in openings) / (1.6 * 1.6)
         self.assertTrue(0.5 <= coverage <= 0.8, coverage)
         stock = STOCK / "Package_DFN_QFN.pretty" / "VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias.kicad_mod"

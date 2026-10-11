@@ -278,8 +278,9 @@ STOCK_COPIES = {"ESP32-S3-WROOM-1_Drill0.3": "RF_Module.pretty/ESP32-S3-WROOM-1.
 # the 1.6 mm exposed pad opened to 0.3 mm. The vias stay open (plugging is a paid option on JLC's
 # 4-layer boards), and open vias under paste wick the solder off the pad, so the stock paste
 # windows, which sit over the vias, are redrawn round them: a bar across the middle and an arm
-# above and below it, 0.1 mm webs, 0.05 mm in from the pad edge. No window touches a 0.5 mm via
-# pad (0.1 mm from each drill) and they print 51.6 % of the pad (TI: roughly 50 to 80 %).
+# above and below it, 0.1 mm webs, 0.05 mm in from the pad edge. No window overlaps a 0.5 mm via
+# pad (they are tangent, 0.1 mm from each drill) and they print 51.6 % of the pad (TI: roughly 50
+# to 80 %).
 QFN_COPIES = {"VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3":
               "Package_DFN_QFN.pretty/VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias.kicad_mod"}
 QFN_PASTE = ((0.0, 0.0, 1.5, 0.6), (0.0, -0.575, 0.6, 0.35), (0.0, 0.575, 0.6, 0.35))  # x, y, w, h
