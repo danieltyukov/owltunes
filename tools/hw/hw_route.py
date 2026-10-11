@@ -63,6 +63,21 @@ GROUPS = {
         ("VBAT", 0.2, [(25.75, 10.99), (26.25, 10.99)]),
         ("VBAT", 0.25, [(26.25, 12.0), (27.4, 12.0), (27.4, 10.32), (28.2, 10.32)]),
     ],
+    # USB pair, 0.2 mm wide with 0.15 mm gap (USB net class; full speed, no impedance target):
+    # through U202 under its body (pins 6 to 1, 4 to 3), then east, up the corridor at x 5.65/6.0
+    # between the IMU and the FB divider, east under the module and up into R203/R204 from below,
+    # D+ always on the left of travel so nothing crosses; then the short stubs to U201 pins 14
+    # and 13. Keep In2 GND unbroken under x 5 to 6.5. The J201-to-U202 fan-out is not routed yet.
+    "usb": [
+        ("USB_DP_CONN", 0.2, [(-5.64, -29.05), (-3.36, -29.05)]),
+        ("USB_DM_CONN", 0.2, [(-5.64, -30.95), (-3.36, -30.95)]),
+        ("USB_DP_CONN", 0.2, [(-3.36, -29.05), (-2.6, -29.05), (-2.05, -29.6), (5.65, -29.6), (5.65, 15.2),
+                              (10.35, 15.2), (10.35, 16.79)]),
+        ("USB_DM_CONN", 0.2, [(-3.36, -30.95), (-2.6, -30.95), (-1.6, -29.95), (6.0, -29.95), (6.0, 14.85),
+                              (11.45, 14.85), (11.45, 16.79)]),
+        ("USB_DP", 0.2, [(8.75, 19.1), (9.7, 19.1), (10.35, 18.45), (10.35, 17.81)]),
+        ("USB_DM", 0.2, [(8.75, 20.37), (10.9, 20.37), (11.45, 19.82), (11.45, 17.81)]),
+    ],
 }
 
 
