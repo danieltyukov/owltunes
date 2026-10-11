@@ -9,7 +9,9 @@ check: fails if the outline, a fixed part, a hole or the battery-zone height rul
        covers a keep-out on its side (screw bosses, bezel lugs, the ring annulus, the strips
        beside the antenna notch; the part a keep-out names is exempt from it), or a fixed
        part's library body (F.Fab) is larger than the box the enclosure reserves for it
-       (w, h, cu, cv and the knob, all in the footprint frame).
+       (w, h, cu, cv and the knob, all in the footprint frame). Where the part a keep-out names
+       carries rule areas (U201's antenna keep-out), they must cover that keep-out on the board,
+       so DRC keeps tracks, vias and pour out of it.
 
 Usage: python3 tools/hw/hw_contract.py apply|check owl-mainboard
 Needs KiCad's pcbnew Python module (system python3 with KiCad 10.0.6).
@@ -94,6 +96,18 @@ def overlap_mm2(a: pcbnew.SHAPE_POLY_SET, b: pcbnew.SHAPE_POLY_SET) -> float:
     common = pcbnew.SHAPE_POLY_SET(a)
     common.BooleanIntersection(b)
     return common.Area() / 1e12
+
+
+def rule_area_gap(board, fp, k: dict) -> float:
+    """Area (mm2) of keep-out k, inside the board, that fp's rule areas leave uncovered."""
+    gap = keepout_poly(k)
+    outline = pcbnew.SHAPE_POLY_SET()
+    board.GetBoardPolygonOutlines(outline, False)
+    gap.BooleanIntersection(outline)
+    for z in fp.Zones():
+        if z.GetIsRuleArea():
+            gap.BooleanSubtract(z.Outline())
+    return gap.Area() / 1e12
 
 
 def body_box(fp) -> tuple[float, float, float, float] | None:
@@ -238,6 +252,12 @@ def check(board_name: str) -> int:
                 continue
             if overlap_mm2(courtyard(fp), area) > 0:
                 errors.append(f"{ref} covers the {k['name']} keep-out ({k['side']})")
+    for k in c.get("keepouts", []):
+        owner = board.FindFootprintByReference(k["ref"]) if "ref" in k and k["ref"] not in holes else None
+        if owner is not None and any(z.GetIsRuleArea() for z in owner.Zones()):
+            gap = rule_area_gap(board, owner, k)
+            if gap > 0.01:
+                errors.append(f"{k['ref']} rule area leaves {gap:.2f} mm2 of the {k['name']} keep-out open to copper")
     hall = board.FindFootprintByReference("U302")
     if hall is not None:
         hx, hy = pcbnew.ToMM(hall.GetPosition().x), pcbnew.ToMM(hall.GetPosition().y)

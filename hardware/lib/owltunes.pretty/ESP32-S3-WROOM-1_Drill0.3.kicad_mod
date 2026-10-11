@@ -3,7 +3,7 @@
 	(generator "pcbnew")
 	(generator_version "10.0")
 	(layer "F.Cu")
-	(descr "Thermal vias opened from 0.2 to 0.3 mm (JLCPCB no-fee drill). 2.4 GHz Wi-Fi and Bluetooth module  https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf")
+	(descr "Thermal vias opened from 0.2 to 0.3 mm (JLCPCB no-fee drill). Antenna keep-out and courtyard cut to the owl board's notch plus 3 mm strips (R43): Espressif's 15 mm keep-out cannot fit in the 66 x 84 mm owl; RSSI is measured at bring-up and the ring test decides WROOM-1 or WROOM-1U. 2.4 GHz Wi-Fi and Bluetooth module  https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf")
 	(tags "2.4 GHz Wi-Fi and Bluetooth module")
 	(property "Reference" "REF**"
 		(at -10.5 11.4 90)
@@ -140,36 +140,6 @@
 		(uuid "745b72d1-b121-4969-8423-f9add86aea48")
 	)
 	(fp_line
-		(start -24 -27.75)
-		(end -24 -6.75)
-		(stroke
-			(width 0.05)
-			(type solid)
-		)
-		(layer "F.CrtYd")
-		(uuid "d570edbf-8cbc-42a7-9adf-70f6e03988ba")
-	)
-	(fp_line
-		(start -24 -6.75)
-		(end -9.75 -6.75)
-		(stroke
-			(width 0.05)
-			(type solid)
-		)
-		(layer "F.CrtYd")
-		(uuid "e69e89e9-1911-4ed7-8bd1-a983fc8931e3")
-	)
-	(fp_line
-		(start -9.75 13.45)
-		(end -9.75 -6.75)
-		(stroke
-			(width 0.05)
-			(type solid)
-		)
-		(layer "F.CrtYd")
-		(uuid "ba37c38d-b63c-4f2a-a2c0-bb73e17654d0")
-	)
-	(fp_line
 		(start -9.75 13.45)
 		(end 9.75 13.45)
 		(stroke
@@ -177,47 +147,117 @@
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "43fefb1c-9186-4b5a-8687-c89c43de2fbc")
+		(uuid "1cb87ba7-66f6-508c-92a1-a0d21bc5aeee")
 	)
 	(fp_line
-		(start 9.75 -6.75)
-		(end 9.75 13.45)
+		(start 9.75 13.45)
+		(end 9.75 -6.25)
 		(stroke
 			(width 0.05)
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "1ab914a6-00c7-4e05-8d18-94c746539b37")
+		(uuid "01424c73-5c8f-5b93-97a6-d04bdca86ed8")
 	)
 	(fp_line
-		(start 9.75 -6.75)
-		(end 24 -6.75)
+		(start 9.75 -6.25)
+		(end 11 -6.25)
 		(stroke
 			(width 0.05)
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "8e3a0470-4633-430d-aa42-dc6494854241")
+		(uuid "12dc9690-b490-591d-b97d-1f8e6b45569b")
 	)
 	(fp_line
-		(start 24 -27.75)
-		(end -24 -27.75)
+		(start 11 -6.25)
+		(end 11 -2.65)
 		(stroke
 			(width 0.05)
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "ff91138f-a85b-41fc-8e2c-79656b0bd1f1")
+		(uuid "7fab3a29-8afe-5dc9-a695-53fb91850ae8")
 	)
 	(fp_line
-		(start 24 -6.75)
-		(end 24 -27.75)
+		(start 11 -2.65)
+		(end 17 -2.65)
 		(stroke
 			(width 0.05)
 			(type solid)
 		)
 		(layer "F.CrtYd")
-		(uuid "a82a8884-6540-4dff-b9a5-205508340581")
+		(uuid "569d7738-5ad6-5151-b32a-eff125905b70")
+	)
+	(fp_line
+		(start 17 -2.65)
+		(end 17 -13.45)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "f2c19881-d392-54dc-9e08-f79660ccc9bb")
+	)
+	(fp_line
+		(start 17 -13.45)
+		(end -17 -13.45)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "cddbc060-15ed-57f3-9098-f7a86b96fc1b")
+	)
+	(fp_line
+		(start -17 -13.45)
+		(end -17 -2.65)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "23352cc3-4906-5f0c-9bdb-72670d078adb")
+	)
+	(fp_line
+		(start -17 -2.65)
+		(end -11 -2.65)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "875f0b17-64be-594d-985e-01ea34011a3c")
+	)
+	(fp_line
+		(start -11 -2.65)
+		(end -11 -6.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "1c2378e4-f0e6-5b8d-a52f-d1a80436dfed")
+	)
+	(fp_line
+		(start -11 -6.25)
+		(end -9.75 -6.25)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "2ed511d6-a370-5f16-a7c5-c9baab444781")
+	)
+	(fp_line
+		(start -9.75 -6.25)
+		(end -9.75 13.45)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "42558eb8-6290-5d67-9183-e3e9d9140dde")
 	)
 	(fp_line
 		(start -9 -12.75)
@@ -756,7 +796,7 @@
 		)
 		(polygon
 			(pts
-				(xy -24 -6.75) (xy 24 -6.75) (xy 24 -27.75) (xy -24 -27.75)
+				(xy -17 -2.65) (xy -11 -2.65) (xy -11 -6.25) (xy 11 -6.25) (xy 11 -2.65) (xy 17 -2.65) (xy 17 -13.45) (xy -17 -13.45)
 			)
 		)
 	)

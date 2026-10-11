@@ -137,5 +137,22 @@ class ContractTest(unittest.TestCase):
         self.assertEqual(hw_contract.check("b"), 1)
 
 
+@unittest.skipIf(pcbnew is None, "needs KiCad's pcbnew module")
+class MainBoardTest(unittest.TestCase):
+    def test_u201_rule_area_covers_the_antenna_strips_and_nothing_overlaps_its_courtyard(self):
+        root = pathlib.Path(__file__).resolve().parents[2]
+        board = pcbnew.LoadBoard(str(root / "hardware" / "owl-mainboard" / "owl-mainboard.kicad_pcb"))
+        contract = json.loads((root / "hardware" / "owl-mainboard" / "mech" / "contract.json").read_text())
+        u201 = board.FindFootprintByReference("U201")
+        strips = [k for k in contract["keepouts"] if k.get("ref") == "U201"]
+        self.assertEqual(len(strips), 4)
+        for k in strips:
+            self.assertLess(hw_contract.rule_area_gap(board, u201, k), 0.01, k["name"])
+        crt = hw_contract.courtyard(u201)
+        for fp in board.GetFootprints():
+            if fp.GetReference() != "U201" and fp.IsFlipped():
+                self.assertEqual(hw_contract.overlap_mm2(crt, hw_contract.courtyard(fp)), 0, fp.GetReference())
+
+
 if __name__ == "__main__":
     unittest.main()

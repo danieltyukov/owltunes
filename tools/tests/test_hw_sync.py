@@ -37,5 +37,14 @@ class SyncTest(unittest.TestCase):
                     self.assertEqual(pad.GetNetname(), want, f"{ref}.{pad.GetNumber()}")
 
 
+    def test_main_board_footprints_match_their_library_copies(self):
+        # A library edit (such as the trimmed WROOM-1 antenna keep-out) reaches the board via hw_sync.py.
+        board = pcbnew.LoadBoard(str(ROOT / "hardware" / "owl-mainboard" / "owl-mainboard.kicad_pcb"))
+        for fp in board.GetFootprints():
+            nick, name = fp.GetFPIDAsString().split(":", 1)
+            lib_fp = pcbnew.FootprintLoad(str(hw_sync.library(nick)), name)
+            self.assertEqual(hw_sync.signature(fp), hw_sync.signature(lib_fp), fp.GetReference())
+
+
 if __name__ == "__main__":
     unittest.main()

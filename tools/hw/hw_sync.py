@@ -2,7 +2,8 @@
 """Bring a board's schematic into its PCB (the scripted form of KiCad's Update PCB from Schematic).
 
 Exports the schematic netlist with kicad-cli, then adds every missing footprint from its
-library, removes footprints the schematic no longer has, and sets each footprint's value,
+library, replaces footprints whose library copy changed (pads, courtyard, rule areas or
+drawings), removes footprints the schematic no longer has, and sets each footprint's value,
 fields, symbol path, BOM and position-file attributes and pad nets. Footprints that already
 exist keep their position, side, rotation and lock, so the tool can run again after a
 schematic change without undoing placement or the contract.
@@ -90,6 +91,15 @@ def library(nick: str) -> Path:
     return STOCK / f"{nick}.pretty"
 
 
+def signature(fp) -> tuple:
+    """What a library edit changes, in a form that moving, turning or flipping does not: pads,
+    courtyard area, rule-area outlines and the number of drawings."""
+    fp.BuildCourtyardCaches()
+    crt = fp.GetCourtyard(pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd)
+    zones = sorted(round(z.Outline().Area() / 1e12, 2) for z in fp.Zones())
+    return (sorted(p.GetNumber() for p in fp.Pads()), round(crt.Area() / 1e12, 2), zones, len(fp.GraphicalItems()))
+
+
 def sync(board_name: str) -> int:
     folder = ROOT / "hardware" / board_name
     path = folder / f"{board_name}.kicad_pcb"
@@ -108,23 +118,27 @@ def sync(board_name: str) -> int:
             net = pcbnew.NETINFO_ITEM(board, name)
             board.Add(net)
         nets[name] = net
+    refreshed = 0
     for ref, c in sorted(comps.items()):
         fp = have.get(ref)
-        if fp is not None and fp.GetFPIDAsString() != c["footprint"]:
+        nick, name = c["footprint"].split(":", 1)
+        lib_fp = pcbnew.FootprintLoad(str(library(nick)), name)
+        if lib_fp is None:
+            print(f"{ref}: footprint {c['footprint']} not found")
+            return 1
+        stale = fp is not None and fp.GetFPIDAsString() == c["footprint"] and signature(fp) != signature(lib_fp)
+        refreshed += stale
+        if fp is not None and (fp.GetFPIDAsString() != c["footprint"] or stale):
             pos, rot, back, locked = fp.GetPosition(), fp.GetOrientationDegrees(), fp.IsFlipped(), fp.IsLocked()
             board.Remove(fp)
             fp = None
         else:
             pos = rot = back = locked = None
         if fp is None:
-            nick, name = c["footprint"].split(":", 1)
-            fp = pcbnew.FootprintLoad(str(library(nick)), name)
-            if fp is None:
-                print(f"{ref}: footprint {c['footprint']} not found")
-                return 1
+            fp = lib_fp
             fp.SetFPIDAsString(c["footprint"])
             board.Add(fp)
-            added += 1
+            added += pos is None
             if pos is not None:
                 if back:
                     fp.Flip(fp.GetPosition(), pcbnew.FLIP_DIRECTION_LEFT_RIGHT)
@@ -157,7 +171,7 @@ def sync(board_name: str) -> int:
             pad.SetNet(nets[net] if net else board.GetNetInfo().OrphanedItem())
     board.BuildConnectivity()
     pcbnew.SaveBoard(str(path), board)
-    print(f"{board_name}: {len(comps)} footprints ({added} added, {removed} removed), {len(nets)} nets")
+    print(f"{board_name}: {len(comps)} footprints ({added} added, {removed} removed, {refreshed} updated from the library), {len(nets)} nets")
     return 0
 
 
