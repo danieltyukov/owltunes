@@ -1,6 +1,7 @@
 /* Host stand-in for ESP-IDF's esp_http_client.h: the calls firmware/main/spotify_http.c makes, with
  * the same signatures and error codes. The test scripts what each esp_http_client_perform sends to
- * the event handler and returns. */
+ * the event handler and returns; like ESP-IDF 6.1 it fails every 401 with ESP_ERR_NOT_SUPPORTED
+ * after the headers (no Basic or Digest auth is built in) and leaves the status code readable. */
 #pragma once
 
 #include <stdbool.h>

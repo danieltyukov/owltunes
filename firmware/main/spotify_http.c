@@ -17,6 +17,8 @@ static const char *TAG = "spotify_http";
 static esp_http_client_handle_t s_client;
 static bool s_used;     /* the connection carried a request before, so Spotify may have closed it */
 static bool s_answered; /* the current request got at least a status line back */
+static bool s_opened;   /* the current request opened a new connection: it reused none */
+static bool s_dropped;  /* esp_http_client closed the connection during the current request */
 static char *s_body;
 static size_t s_len;
 static bool s_truncated;
@@ -26,6 +28,12 @@ static char s_auth[sizeof "Bearer " + SPOTIFY_ACCESS_TOKEN_LEN];
 static esp_err_t on_event(esp_http_client_event_t *evt)
 {
     switch (evt->event_id) {
+    case HTTP_EVENT_ON_CONNECTED:
+        s_opened = true;
+        break;
+    case HTTP_EVENT_DISCONNECTED:
+        s_dropped = true; /* for example after an answer with "Connection: close" */
+        break;
     case HTTP_EVENT_ON_STATUS_CODE:
     case HTTP_EVENT_ON_HEADERS_COMPLETE:
         s_answered = true;
@@ -100,6 +108,8 @@ static esp_err_t perform(const spotify_request_t *req, const char *access_token)
     s_len = 0;
     s_truncated = false;
     s_answered = false;
+    s_opened = false;
+    s_dropped = false;
     s_retry_after_s = -1;
     esp_http_client_set_url(s_client, url);
     esp_http_client_set_method(s_client, method_of(req->method));
@@ -117,16 +127,29 @@ static esp_err_t perform(const spotify_request_t *req, const char *access_token)
     if (err == ESP_OK) {
         err = esp_http_client_perform(s_client);
     }
-    esp_http_client_delete_header(s_client, "Authorization"); /* the client's copy of the token */
+    /* The handle's header copy. Its request buffer keeps the header line until the next request
+     * overwrites it; CONFIG_LOG_MAXIMUM_LEVEL must stay below DEBUG, where esp_http_client prints
+     * every header it writes. */
+    esp_http_client_delete_header(s_client, "Authorization");
     return err;
 }
 
-/* P8: only a request that cannot have reached Spotify is sent again. A write error means the request
- * never left whole; a connection closed before any answer is the kept-alive connection Spotify shut
- * while it sat idle. A timeout or a partial answer may mean Spotify carried it out. */
+/* The status Spotify sent for the current request, or 0 when no status line arrived. */
+static int answered_status(void)
+{
+    int status = s_answered ? esp_http_client_get_status_code(s_client) : 0;
+    return status > 0 ? status : 0;
+}
+
+/* P8 as amended: only a request that cannot have reached Spotify is sent again. A write error means
+ * the request never left whole; a connection closed before any answer (CONNECTION_CLOSED after a
+ * FIN, FETCH_HEADER when TLS reports the close) is the kept-alive connection Spotify shut while it
+ * sat idle. A timeout or a partial answer may mean Spotify carried it out. */
 static bool send_again(esp_err_t err, bool reused)
 {
-    return reused && !s_answered && (err == ESP_ERR_HTTP_CONNECTION_CLOSED || err == ESP_ERR_HTTP_WRITE_DATA);
+    return reused && !s_answered &&
+           (err == ESP_ERR_HTTP_CONNECTION_CLOSED || err == ESP_ERR_HTTP_WRITE_DATA ||
+            err == ESP_ERR_HTTP_FETCH_HEADER);
 }
 
 esp_err_t spotify_http_call(const spotify_request_t *req, const char *access_token,
@@ -137,19 +160,38 @@ esp_err_t spotify_http_call(const spotify_request_t *req, const char *access_tok
     if (!ensure_client()) {
         return ESP_ERR_NO_MEM;
     }
-    bool reused = s_used;
     esp_err_t err = perform(req, access_token);
+    /* Reused only when the connection had carried a request and is still the one this request
+     * went out on: esp_http_client reconnects by itself after it closed a connection. */
+    bool reused = s_used && !s_opened;
     if (err != ESP_OK && send_again(err, reused)) {
         ESP_LOGI(TAG, "the kept-alive connection was closed; reconnecting");
         spotify_http_close();
         err = ensure_client() ? perform(req, access_token) : ESP_ERR_NO_MEM;
+    }
+    int status = err != ESP_OK && s_client != NULL ? answered_status() : 0;
+    if (status > 0) {
+        /* P32: Spotify answered, but esp_http_client gave up on the rest. ESP-IDF 6.1 does so for
+         * every 401 (it tries Basic or Digest auth, which are not built in, and returns
+         * ESP_ERR_NOT_SUPPORTED before reading the body), and for an answer cut short. Hand the
+         * status on, mark the body incomplete and drop the connection, whose answer was not read. */
+        ESP_LOGI(TAG, "%s %s: %d (%s)", spotify_method_name(req->method), req->path, status,
+                 esp_err_to_name(err));
+        s_body[s_len] = '\0';
+        out->status = status;
+        out->retry_after_s = s_retry_after_s;
+        out->body = s_body;
+        out->len = s_len;
+        out->truncated = true;
+        spotify_http_close();
+        return ESP_OK;
     }
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "%s %s failed: %s", spotify_method_name(req->method), req->path, esp_err_to_name(err));
         spotify_http_close();
         return err;
     }
-    s_used = true;
+    s_used = !s_dropped; /* a closed connection is fresh again for the next request */
     s_body[s_len] = '\0';
     out->status = esp_http_client_get_status_code(s_client);
     out->retry_after_s = s_retry_after_s;
