@@ -203,6 +203,11 @@ def shell_checks(owl: Owl) -> None:
           "an unknown command is refused without echoing it")
     refused = owl.wait_event("cmd", "refused", since=owl.type("info please"))
     check(refused.get("cmd") == "info" and refused.get("error") == "bad_arg", "an unexpected argument is refused")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("next"))
+    check(refused.get("cmd") == "next" and refused.get("error") == "not_linked",
+          "playback commands wait for a Spotify login")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("auth"))
+    check(refused.get("error") == "not_linked", "auth says when there is no login")
     check(owl.send("hello").get("ok") is True, "the setup protocol still answers next to the console")
 
 

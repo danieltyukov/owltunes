@@ -53,7 +53,9 @@ refresh token to both.
 An event looks like `@owl {"event":"spotify","state":"failed","error":"invalid_grant"}`.
 
 The owl writes a new login to flash before it reports `linked`. If the write fails, it reports
-`failed` with `error` `storage` instead and tries the write again later.
+`failed` with `error` `storage` instead and tries the write again later. The same goes for a new
+refresh token from a refresh: the owl uses neither it nor the access token that came with it
+before the write works.
 
 ## Error codes
 
@@ -122,11 +124,15 @@ The `error` of a `network` event:
    itself, saves the refresh token to flash, and then reports `spotify` `linked`, or `failed`
    when the exchange or the save did not work. The verifier, access token and refresh token never
    leave the owl.
-5. At every start with a saved login, once the owl is online, it refreshes the login once. A new
-   refresh token from Spotify replaces the saved one. `invalid_grant`, `invalid_client` and
-   `unauthorized_client` forget the saved login and the owl asks to log in again. If Spotify
-   cannot be reached or answers with a server error, the owl keeps the login and checks again
-   after 5 minutes.
+5. At every start with a saved login, once the owl is online, it refreshes the login, and it
+   refreshes it again a minute before each access token expires (they last an hour). A new
+   refresh token from Spotify replaces the saved one and is written to flash before the new
+   access token is used. `invalid_grant`, `invalid_client` and `unauthorized_client` forget the
+   saved login and the owl asks to log in again. If Spotify cannot be reached, answers with a
+   server error or asks the owl to slow down, the owl keeps the login and tries again when the
+   wait is over: from 2 s growing to 60 s, or Spotify's `Retry-After` (these waits also hold back
+   the Web API, see [console.md](console.md)). Any other answer is tried again after 5 minutes.
+   The first refresh after a start reports `spotify` `linked` when it passes.
 
 ## Versions
 

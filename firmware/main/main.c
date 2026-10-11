@@ -19,6 +19,7 @@
 #include "provisioning_task.h"
 #include "settings_store.h"
 #include "shell.h"
+#include "spotify_task.h"
 #include "status.h"
 #include "timesync.h"
 
@@ -53,6 +54,7 @@ void app_main(void)
     static owl_player_t player;
     static char name[24];
     static char setup_url[192];
+    static spotify_task_view_t spotify; /* about 1.1 KB */
 
     ESP_ERROR_CHECK(settings_store_init());
     ESP_ERROR_CHECK(esp_netif_init());
@@ -62,6 +64,7 @@ void app_main(void)
     timesync_start();
     provisioning_start(name, esp_app_get_description()->version);
     net_start(on_network, provisioning_network_failed);
+    spotify_task_start();
     /* The console starts last: a login (spotify_begin) cannot arrive before the network code has
      * enabled Wi-Fi, the condition ESP-IDF documents for esp_fill_random to give true random
      * numbers (PKCE). The protocol also refuses spotify_begin while the owl is offline. */
@@ -88,7 +91,8 @@ void app_main(void)
             (owl_ui_setup_t){view.mode, setup_url, name, view.error[0] != '\0' ? view.error : NULL};
         int64_t now = esp_timer_get_time() / 1000;
         owl_ui_render(ui, &app, &player, &inputs, now);
-        owl_rgb_t led = owl_status_led(status_now(&view), now);
+        spotify_task_view(&spotify);
+        owl_rgb_t led = owl_status_led(status_now(&view, &spotify), now);
         bsp_status_led(led.r, led.g, led.b);
         uint32_t wait = lv_timer_handler();
         if (!announced) {

@@ -331,6 +331,92 @@ static void test_refresh_retry_keeps_login(void)
     TEST_ASSERT_EQUAL_UINT32(0, owl_prov_take_actions(&prov));
 }
 
+/* ---- when the provisioning task refreshes the access token (spec 9.4, 9.6) ---- */
+
+#define HOUR_MS (3600 * 1000)
+
+static spotify_token_t access;
+static owl_prov_refresh_t refresh;
+
+/* Linked and online, with an access token that is good for another hour at now 0, an open gate,
+ * nothing waiting to be saved and no forced refresh. */
+static void linked_with_token(void)
+{
+    linkable();
+    strcpy(prov.settings.refresh_token, "AQOld");
+    memset(&access, 0, sizeof access);
+    strcpy(access.access_token, "BQAccess");
+    access.expires_at_ms = HOUR_MS;
+    refresh = (owl_prov_refresh_t){.gate_open = true};
+}
+
+static void test_refresh_waits_for_a_login_and_a_network(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    owl_prov_set_network(&prov, false, NULL);
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    owl_prov_set_network(&prov, true, "192.168.1.23");
+    prov.settings.refresh_token[0] = '\0';
+    refresh.force = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+static void test_refresh_is_due_without_a_token_or_a_minute_before_expiry(void)
+{
+    linked_with_token();
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    TEST_ASSERT_FALSE(
+        owl_prov_refresh_due(&prov, &access, &refresh, HOUR_MS - SPOTIFY_REFRESH_MARGIN_MS - 1));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, HOUR_MS - SPOTIFY_REFRESH_MARGIN_MS));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, HOUR_MS + 1));
+    access.access_token[0] = '\0';
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+static void test_a_forced_refresh_replaces_a_token_that_looks_valid(void)
+{
+    linked_with_token();
+    refresh.force = true;
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+/* Retry-After, a quota lockout or a backoff holds back every refresh, forced or not. */
+static void test_refresh_never_goes_out_while_the_gate_is_closed(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    refresh.gate_open = false;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    refresh.force = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+/* A rotated refresh token is used only once it is on flash. */
+static void test_refresh_waits_for_a_pending_save(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    refresh.save_pending = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    refresh.force = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+/* An answer the gate does not hold back (an unexpected reply) is not repeated before not_before_ms,
+ * unless Spotify refused the token the runtime has. */
+static void test_an_unexpected_answer_delays_the_next_refresh(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    refresh.not_before_ms = 300000;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 299999));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 300000));
+    refresh.force = true;
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
 static void test_settings_from_another_version_fall_back_to_defaults(void)
 {
     owl_settings_t saved;
@@ -430,6 +516,12 @@ int main(void)
     RUN_TEST(test_refresh_rotation_saves_new_token);
     RUN_TEST(test_refresh_rejection_forgets_login);
     RUN_TEST(test_refresh_retry_keeps_login);
+    RUN_TEST(test_refresh_waits_for_a_login_and_a_network);
+    RUN_TEST(test_refresh_is_due_without_a_token_or_a_minute_before_expiry);
+    RUN_TEST(test_a_forced_refresh_replaces_a_token_that_looks_valid);
+    RUN_TEST(test_refresh_never_goes_out_while_the_gate_is_closed);
+    RUN_TEST(test_refresh_waits_for_a_pending_save);
+    RUN_TEST(test_an_unexpected_answer_delays_the_next_refresh);
     RUN_TEST(test_settings_from_another_version_fall_back_to_defaults);
     RUN_TEST(test_event_lines);
     RUN_TEST(test_network_failure_event_names_the_network);

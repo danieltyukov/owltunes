@@ -19,10 +19,12 @@ GOOD_HELLO = {"fw": "v1.2.3", "protocol": 1, "name": "OwlTunes-7DF8"}
 
 
 class FakeBoard:
-    def __init__(self, info, begin_error="offline"):
+    def __init__(self, info, begin_error="offline", spotify_error="not_linked"):
         self.info = info
         self.begin_error = begin_error
+        self.spotify_error = spotify_error  # how the Spotify runtime refuses next and auth
         self.requests = []
+        self.typed = []
 
     def request(self, cmd, timeout=10.0, **params):
         self.requests.append(cmd)
@@ -33,10 +35,13 @@ class FakeBoard:
         raise BoardError(cmd)
 
     def command(self, text, event, state=None, timeout=10, where=None):
+        self.typed.append(text)
         if text == "info":
             return self.info
         if text == "frobnicate":
             return {"event": "cmd", "state": "refused", "error": "unknown_cmd"}
+        if text in ("next", "auth"):
+            return {"event": "cmd", "state": "refused", "cmd": text, "error": self.spotify_error}
         raise BoardError(text)
 
 
@@ -113,6 +118,19 @@ class BootChecksTest(unittest.TestCase):
         board = FakeBoard(GOOD_INFO, begin_error=None)
         self.run_checks(hello={**GOOD_HELLO, "networks": ["Home"]}, owl=board)
         self.assertEqual(board.requests, [])
+
+    def test_an_owl_without_a_login_refuses_spotify_commands(self):
+        board = FakeBoard(GOOD_INFO)
+        self.run_checks(owl=board)
+        self.assertEqual(board.typed[-2:], ["next", "auth"])
+        for error in ("not_ready", "offline"):
+            with self.subTest(error=error), self.assertRaises(hil_nano.Failure):
+                self.run_checks(owl=FakeBoard(GOOD_INFO, spotify_error=error))
+
+    def test_a_linked_owl_is_not_asked_to_refuse_spotify_commands(self):
+        board = FakeBoard(GOOD_INFO, spotify_error=None)
+        self.run_checks(hello={**GOOD_HELLO, "linked": True}, owl=board)
+        self.assertNotIn("next", board.typed)
 
     def test_a_good_board_passes(self):
         self.assertEqual(self.run_checks()["board"], "nano_esp32")

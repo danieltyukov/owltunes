@@ -57,7 +57,8 @@ The RGB LED shows the one thing the owl most needs you to know. The console's `i
 reports the same status by name ([console](console.md)). The Wi-Fi, login and
 playback statuses appear as those features arrive: until then only `needs_wifi`, `joining`,
 `needs_login`, `linking`, `log_in_again` and `starting` can show (`starting` is what a linked,
-online owl shows until playback support arrives).
+online owl shows until playback support arrives), and `backoff`, `rate_limited` or `quota` while a
+refresh of the Spotify login waits to be tried again.
 
 | LED | Status | Meaning |
 |---|---|---|
@@ -79,7 +80,8 @@ online owl shows until playback support arrives).
 `tools/hil_nano.py` flashes the build, resets the board and checks that it runs the firmware just
 built, finds its 8 MB of PSRAM, runs from the first OTA slot, keeps at least 32 KB of internal RAM
 free and answers on the console. With no network saved it also checks that the owl refuses to
-start a Spotify login while it is offline. `--fresh` erases the saved settings first, `--no-flash` only
+start a Spotify login while it is offline, and without a login that it refuses `next` and `auth`
+with `not_linked`. `--fresh` erases the saved settings first, `--no-flash` only
 resets the board, and `--rom` flashes a board that waits in ROM download mode. `--wifi` and
 `--missing-network` add the Wi-Fi checks described below. The console log of the run is in
 `build/hil-nano/console.log`.

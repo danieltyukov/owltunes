@@ -275,6 +275,19 @@ static void test_refresh_is_asked_once_per_401_streak(void)
     TEST_ASSERT_EQUAL(SPOTIFY_OUTCOME_REFRESH, answer(401, body, -1, 0));
 }
 
+/* The token refresh after a REFRESH failed: the 401 streak goes on, so a second 401 is not sent
+ * through another refresh (spotify_task.c relies on this). */
+static void test_a_failed_refresh_keeps_the_401_streak(void)
+{
+    setUpGate();
+    const char *body = "{\"error\":{\"status\":401}}";
+    TEST_ASSERT_EQUAL(SPOTIFY_OUTCOME_REFRESH, answer(401, body, -1, 0));
+    TEST_ASSERT_EQUAL(SPOTIFY_OUTCOME_WAIT, token_answer(503, -1, 0));
+    TEST_ASSERT_EQUAL(SPOTIFY_OUTCOME_FAILED, answer(401, body, -1, 2000));
+    spotify_gate_record_token(&gate, NULL, 2000);
+    TEST_ASSERT_EQUAL(SPOTIFY_OUTCOME_FAILED, answer(401, body, -1, 6000));
+}
+
 static void test_a_token_endpoint_401_is_an_invalid_client(void)
 {
     setUpGate();
@@ -314,6 +327,15 @@ static void test_error_names_for_the_console(void)
     TEST_ASSERT_EQUAL_STRING("", spotify_error_name(SPOTIFY_ERROR_NONE));
 }
 
+static void test_block_names_for_the_console(void)
+{
+    TEST_ASSERT_EQUAL_STRING("quota", spotify_block_name(SPOTIFY_BLOCK_QUOTA));
+    TEST_ASSERT_EQUAL_STRING("rate_limited", spotify_block_name(SPOTIFY_BLOCK_RATE_LIMITED));
+    TEST_ASSERT_EQUAL_STRING("backoff", spotify_block_name(SPOTIFY_BLOCK_BACKOFF));
+    TEST_ASSERT_EQUAL_STRING("", spotify_block_name(SPOTIFY_BLOCK_NONE));
+    TEST_ASSERT_EQUAL_STRING("", spotify_block_name((spotify_block_t)99));
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -341,8 +363,10 @@ int main(void)
     RUN_TEST(test_a_429_without_a_wait_doubles_up_to_a_minute);
     RUN_TEST(test_refresh_is_asked_once_per_401_streak);
     RUN_TEST(test_a_token_endpoint_401_is_an_invalid_client);
+    RUN_TEST(test_a_failed_refresh_keeps_the_401_streak);
     RUN_TEST(test_block_kinds);
     RUN_TEST(test_retry_after_header_parsing);
     RUN_TEST(test_error_names_for_the_console);
+    RUN_TEST(test_block_names_for_the_console);
     return UNITY_END();
 }

@@ -131,6 +131,11 @@ def boot_checks(board: Board, hello: dict, fresh: bool) -> dict:
     if not hello.get("networks"):  # with no network saved the owl cannot be online
         begin = board.request("spotify_begin")
         check(begin.get("error") == "offline", "an owl that is offline refuses to start a Spotify login")
+    if not hello.get("linked"):  # the Spotify runtime waits for a login
+        for command in ("next", "auth"):
+            refused = board.command(command, "cmd", "refused")
+            check(refused.get("cmd") == command and refused.get("error") == "not_linked",
+                  f"without a Spotify login the owl refuses {command} (not_linked)")
     return info
 
 

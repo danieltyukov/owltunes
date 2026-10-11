@@ -21,8 +21,14 @@ Commands are lowercase words.
 |---|---|---|
 | `help` | Lists the commands | `help` |
 | `info` | Describes the board and what it is doing | `info` |
-| `status`, `auth [refresh]`, `devices` | The Spotify runtime's own commands | Refused with `unavailable` until the runtime exists |
-| `play`, `pause`, `toggle`, `next`, `prev`, `vol <0-100\|+n\|-n>`, `like`, `unlike`, `transfer <n\|device id>` | Playback commands, sent one at a time (a device id is 1 to 64 letters, digits, `_` or `-`) | Refused with `unavailable` until the runtime exists |
+| `status` | Reports the playback state the Spotify runtime knows | `player` |
+| `auth` | Reports the Spotify access token the owl holds | `auth` |
+| `auth refresh` | Gets a new access token from Spotify first | `auth` |
+| `devices` | Lists the Spotify devices | Refused with `not_ready` in this version |
+| `play`, `pause`, `toggle`, `next`, `prev`, `vol <0-100\|+n\|-n>`, `like`, `unlike`, `transfer <n\|device id>` | Playback commands, sent one at a time (a device id is 1 to 64 letters, digits, `_` or `-`) | Refused with `not_ready` in this version, which holds the Spotify login but sends no playback requests yet |
+
+Commands for the Spotify runtime wait in a queue of eight; when it is full they are refused with
+`busy`.
 
 ## Lines
 
@@ -61,3 +67,44 @@ means a known command had a missing, extra or malformed argument.
 `{"event":"time","state":"synced","utc":"2026-10-11T09:30:00Z"}` each time the clock is set from
 NTP: soon after the network comes up, then about once an hour. TLS does not depend on the clock,
 so the owl works on a network that blocks NTP; only the times in its lines stay empty.
+
+### player
+
+`status` answers with the playback state the runtime knows, and how it reaches Spotify:
+`{"event":"player","status":"unknown","shuffle":false,"repeat":"off","link":"api","wait_s":0}`.
+This version does not read the playback state yet, so `status` stays `unknown`. `link` is `api`,
+or `ble` while a quota lockout lasts; `wait_s` is the number of seconds until Spotify may be called
+again (0 when it may).
+
+### api and auth
+
+The Spotify runtime works while the owl is linked and online. It says so with
+`{"event":"api","state":"ready"}`, and `{"event":"api","state":"stopped","error":"not_linked"}`
+(or `"offline"`) when it stops. Until then commands that need Spotify are refused with the same
+error: `{"event":"cmd","state":"refused","cmd":"next","error":"not_linked"}`.
+
+While nothing may be sent to Spotify, the api line says why and for how long, and says `ready`
+again once the wait is over:
+
+| State | Meaning |
+|---|---|
+| `backoff` | The network or Spotify's servers failed; the wait grows from 2 s to 60 s |
+| `rate_limited` | Spotify asked the owl to slow down; the wait is its `Retry-After` |
+| `quota` | The app's quota is used up; Spotify's own wait, at least a minute |
+
+For example `{"event":"api","state":"backoff","retry_s":4}`. The waits cover the token requests to
+`accounts.spotify.com` as well as the Web API, and `info` and the LED show the same three statuses.
+
+`auth` reports the access token the runtime holds: `{"event":"auth","state":"ok","expires_in_s":3412}`.
+`auth refresh` asks Spotify for a new one first. The token itself never appears on the console. The
+owl refreshes the token by itself a minute before it expires (Spotify's tokens last an hour), and
+writes a new refresh token from Spotify to flash before it uses the new access token.
+`{"event":"auth","state":"failed","error":"network"}` says why there is no token:
+
+| Error | Meaning |
+|---|---|
+| `backoff`, `rate_limited`, `quota` | No token request may go out yet; `retry_s` says when one may |
+| `network` | Spotify could not be reached, or answered something unexpected; the owl tries again later |
+| `storage` | Spotify sent a new login that could not be written to flash yet; the owl keeps trying the write and uses nothing before it works |
+| `logged_out` | Spotify refused the saved login: log in again on the setup page |
+| `not_linked` | No Spotify login is saved |

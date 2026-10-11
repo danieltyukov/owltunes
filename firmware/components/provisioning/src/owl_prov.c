@@ -117,6 +117,16 @@ bool owl_prov_apply_refresh(owl_prov_t *p, spotify_token_result_t result, const 
     return false;
 }
 
+bool owl_prov_refresh_due(const owl_prov_t *p, const spotify_token_t *access, const owl_prov_refresh_t *r,
+                          int64_t now_ms)
+{
+    if (owl_prov_setup_state(p) != OWL_SETUP_STATE_READY || !p->network_up || !r->gate_open ||
+        r->save_pending) {
+        return false;
+    }
+    return r->force || (spotify_token_needs_refresh(access, now_ms) && now_ms >= r->not_before_ms);
+}
+
 /* ---- output -------------------------------------------------------------------------------- */
 
 bool owl_prov_emit(struct cJSON *obj, char *out, size_t cap)

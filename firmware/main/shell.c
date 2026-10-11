@@ -14,6 +14,7 @@
 #include "owl_shell.h"
 #include "provisioning_task.h"
 #include "sdkconfig.h"
+#include "spotify_task.h"
 #include "status.h"
 #include "timesync.h"
 #if CONFIG_SPIRAM
@@ -51,16 +52,18 @@ static const char *reset_name(esp_reset_reason_t reason)
 
 static void reply_info(void)
 {
+    static spotify_task_view_t spotify; /* about 1.1 KB, kept off the console task's stack */
     net_info_t net;
     provisioning_view_t view;
     char utc[24] = "";
     uint32_t flash_size = 0;
     net_info(&net);
     provisioning_view(&view);
+    spotify_task_view(&spotify);
     timesync_utc(utc, sizeof utc);
     esp_flash_get_size(NULL, &flash_size);
     const esp_partition_t *running = esp_ota_get_running_partition();
-    owl_status_t status = status_now(&view);
+    owl_status_t status = status_now(&view, &spotify);
     owl_shell_info_t info = {
         .board = CONFIG_OWL_BOARD_NAME,
         .name = s_name,
@@ -89,8 +92,8 @@ static void reply_info(void)
     }
 }
 
-/* Runs on the console task. Nothing here may block for long: @owl lines are handed to the
- * provisioning task. */
+/* Runs on the console task. Nothing here may block for long: @owl lines and Spotify commands are
+ * handed to their own tasks. */
 static void on_line(const char *line)
 {
     if (strncmp(line, OWL_PROV_PREFIX, strlen(OWL_PROV_PREFIX)) == 0) {
@@ -111,8 +114,8 @@ static void on_line(const char *line)
         built = owl_shell_help_line(s_out, sizeof s_out);
     } else if (cmd.verb == OWL_SHELL_INFO) {
         reply_info();
-    } else {
-        built = owl_shell_cmd_line(s_out, sizeof s_out, "refused", name, "unavailable", 0);
+    } else if (!spotify_task_post(&cmd)) {
+        built = owl_shell_cmd_line(s_out, sizeof s_out, "refused", name, "busy", 0);
     }
     if (built) {
         owl_console_write(s_out);

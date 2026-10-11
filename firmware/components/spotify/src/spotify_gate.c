@@ -30,6 +30,21 @@ spotify_block_t spotify_gate_block(const spotify_gate_t *g, int64_t now_ms)
     return spotify_gate_open(g, now_ms) ? SPOTIFY_BLOCK_NONE : g->block;
 }
 
+const char *spotify_block_name(spotify_block_t block)
+{
+    switch (block) {
+    case SPOTIFY_BLOCK_QUOTA:
+        return "quota";
+    case SPOTIFY_BLOCK_RATE_LIMITED:
+        return "rate_limited";
+    case SPOTIFY_BLOCK_BACKOFF:
+        return "backoff";
+    case SPOTIFY_BLOCK_NONE:
+        break;
+    }
+    return "";
+}
+
 /* Block until until_ms of the given kind. A block never shortens a longer one, and the kind stays
  * that of the block that is actually in force. */
 static void block_until(spotify_gate_t *g, int64_t until_ms, spotify_block_t kind)

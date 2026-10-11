@@ -69,6 +69,10 @@ int32_t spotify_gate_wait_s(const spotify_gate_t *g, int64_t now_ms);
 /* Why the gate is closed at now_ms; SPOTIFY_BLOCK_NONE when it is open. */
 spotify_block_t spotify_gate_block(const spotify_gate_t *g, int64_t now_ms);
 
+/* "quota", "rate_limited" or "backoff", as the console's api and auth lines name a block; "" for
+ * SPOTIFY_BLOCK_NONE. */
+const char *spotify_block_name(spotify_block_t block);
+
 /* Record one Web API answer. err is spotify_classify_error's verdict, or NULL when no answer arrived
  * (no connection, TLS failure, timeout). REFRESH is returned once per 401 streak: a 401 after the
  * refreshed request is FAILED, until a success or a successful token refresh. */
