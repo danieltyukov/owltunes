@@ -450,6 +450,12 @@ class LibraryTest(unittest.TestCase):
         vias = [p for p in have if p["drill"]]
         self.assertEqual(sorted((p["x"], p["y"], p["w"], p["drill"]) for p in vias),
                          [(sx * 0.55, sy * 0.55, 0.5, 0.3) for sx in (-1, 1) for sy in (-1, 1)])
+        # The planes are U101's heat path (part B review M1): the via pads join them solid, not
+        # through thermal reliefs, like the exposed pad itself.
+        via_blocks = [b for b in pad_blocks(text) if "thru_hole" in b.split("\n", 2)[1]]
+        self.assertEqual(len(via_blocks), 4)
+        for block in via_blocks:
+            self.assertIn("(zone_connect 2)", block)
         openings = [o for o in paste_openings(text) if abs(o[0]) < 0.8 and abs(o[1]) < 0.8]  # not the pins'
         self.assertEqual(len(openings), 3)
         for x, y, w, h in openings:

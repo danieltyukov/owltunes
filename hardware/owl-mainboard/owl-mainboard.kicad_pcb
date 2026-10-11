@@ -8978,6 +8978,7 @@
 			(layers "*.Cu")
 			(remove_unused_layers no)
 			(net "GND")
+			(zone_connect 2)
 			(uuid "55f58c1a-9b28-4377-bcf8-4a956619bf9e")
 		)
 		(pad "17" thru_hole circle
@@ -8988,6 +8989,7 @@
 			(layers "*.Cu")
 			(remove_unused_layers no)
 			(net "GND")
+			(zone_connect 2)
 			(uuid "aa02b105-3a05-474e-a47e-38d9625f4fac")
 		)
 		(pad "17" smd rect
@@ -9016,6 +9018,7 @@
 			(layers "*.Cu")
 			(remove_unused_layers no)
 			(net "GND")
+			(zone_connect 2)
 			(uuid "bba5be3c-cd61-4a00-9ca4-2f4df030dd64")
 		)
 		(pad "17" thru_hole circle
@@ -9026,6 +9029,7 @@
 			(layers "*.Cu")
 			(remove_unused_layers no)
 			(net "GND")
+			(zone_connect 2)
 			(uuid "71611e32-bea6-46ba-aac0-8d9ed0c5aa64")
 		)
 		(embedded_fonts no)

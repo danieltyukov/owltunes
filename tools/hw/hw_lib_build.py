@@ -280,7 +280,8 @@ STOCK_COPIES = {"ESP32-S3-WROOM-1_Drill0.3": "RF_Module.pretty/ESP32-S3-WROOM-1.
 # windows, which sit over the vias, are redrawn round them: a bar across the middle and an arm
 # above and below it, 0.1 mm webs, 0.05 mm in from the pad edge. No window overlaps a 0.5 mm via
 # pad (they are tangent, 0.1 mm from each drill) and they print 51.6 % of the pad (TI: roughly 50
-# to 80 %).
+# to 80 %). The planes are the part's heat path, so the via pads join the pours solid, as the
+# exposed pad does (zone_connect 2), not through thermal reliefs.
 QFN_COPIES = {"VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias_Drill0.3":
               "Package_DFN_QFN.pretty/VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm_ThermalVias.kicad_mod"}
 QFN_PASTE = ((0.0, 0.0, 1.5, 0.6), (0.0, -0.575, 0.6, 0.35), (0.0, 0.575, 0.6, 0.35))  # x, y, w, h
@@ -679,6 +680,10 @@ def qfn_copy(name: str, rel: str, stock_dir: Path) -> str:
     text = text[:first] + windows + text[first:]
     text = re.sub(r'\(footprint "[^"]+"', f'(footprint "{name}"', text, count=1)
     text = text.replace('(descr "', '(descr "' + QFN_NOTE, 1)
+    via_end = '\t\t(drill 0.2)\n\t\t(property pad_prop_heatsink)\n\t\t(layers "*.Cu")\n\t\t(remove_unused_layers no)\n'
+    if text.count(via_end) != 4:
+        raise SystemExit(f"{rel}: expected the 4 stock thermal via pads")
+    text = text.replace(via_end, via_end + "\t\t(zone_connect 2)\n")
     return text.replace("(drill 0.2)", "(drill 0.3)")
 
 

@@ -445,6 +445,7 @@
 		(property pad_prop_heatsink)
 		(layers "*.Cu")
 		(remove_unused_layers no)
+		(zone_connect 2)
 	)
 	(pad "17" thru_hole circle
 		(at -0.55 0.55)
@@ -453,6 +454,7 @@
 		(property pad_prop_heatsink)
 		(layers "*.Cu")
 		(remove_unused_layers no)
+		(zone_connect 2)
 	)
 	(pad "17" smd rect
 		(at 0 0)
@@ -475,6 +477,7 @@
 		(property pad_prop_heatsink)
 		(layers "*.Cu")
 		(remove_unused_layers no)
+		(zone_connect 2)
 	)
 	(pad "17" thru_hole circle
 		(at 0.55 0.55)
@@ -483,6 +486,7 @@
 		(property pad_prop_heatsink)
 		(layers "*.Cu")
 		(remove_unused_layers no)
+		(zone_connect 2)
 	)
 	(embedded_fonts no)
 	(model "${KICAD10_3DMODEL_DIR}/Package_DFN_QFN.3dshapes/VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm.step"
