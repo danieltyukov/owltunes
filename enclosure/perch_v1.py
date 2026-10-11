@@ -10,8 +10,8 @@ owl) and local Z runs up the tilt, so a Box(width, depth into the rest, height a
 
 The perch board goes in from the back of the rest, components first, into a pocket whose front
 wall holds the pins' window, a cavity for the parts and two bosses at H1 and H2; two M2 x 5
-self-tapping screws from the back hold it against the bosses. The base ends at the back of the
-rest so nothing behind the rest is in the way. The USB-C plug enters from the right side of the
+self-tapping screws from the back hold it against the bosses. The base's back face continues the
+rest's back face so nothing behind the rest is in the way. The USB-C plug enters from the right side of the
 rest (see USB_SLOT). Run `uv run --project enclosure python enclosure/perch_v1.py` to export to
 build/enclosure/perch-v1/. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
 """
@@ -32,7 +32,7 @@ CENTRE = (Align.CENTER, Align.CENTER, Align.CENTER)
 TILT_DEG = 17.5  # owl leans back by this angle from vertical (spec 7.3: 15 to 20 degrees)
 Y_BOT = C.BODY_CY - C.BODY_H / 2  # the owl's bottom edge, owl y
 BASE = (96.0, 56.0, 12.0)  # width, depth, height
-BASE_BACK_Y = 8.4  # base ends at the back of the rest so the board can go in from behind
+BASE_BACK_Y = 9.5  # base back, then trimmed flush with the rest back so the board can go in from behind
 WEIGHT_POCKET = (72.0, 42.0, 9.2)  # 200 g steel insert 70 x 40 x 9 mm (7.85 g/cm3), from below
 LEDGE_Y = 0.0  # where the owl's back meets the base top
 REST = (80.0, 9.0, 70.0)  # back rest width, thickness, height along the tilt
@@ -58,12 +58,12 @@ PILOT_D = 1.6  # M2 self-tapping screw into the boss
 PILOT_DEPTH = 4.0  # from the board top towards the face; leaves 1.0 at the rest face
 PARTS_H = 1.4  # cavity for the small parts (tallest 1.1 mm, D1)
 PARTS_X = (-11.0, 9.8)  # LED1 and R4 courtyards start at x -10.5; J1 starts at 8.5
-J1_BOX = (8.3, 17.6, 5.6, 3.6)  # x from, x to, half height along the tilt, depth (3.26 mm part)
+J1_BOX = (7.9, 17.6, 5.6, 3.6)  # x from (joins the pin window), x to, half height along the tilt, depth (3.26 mm part)
 J1_PLUG_H = 1.63  # receptacle centre above the board top (HRO TYPE-C-31-M-12)
 USB_SLOT = (10.0, 0.8)  # plug opening along the tilt; front skin left at the rest face
 PERCH_MAGNET_D = 6.1  # D6 x 2 mm N52 discs, opposite pole to the owl's magnets
 PERCH_MAGNET_H = 2.1
-MAGNET_SKIN = 0.6
+MAGNET_SKIN = 0.8  # rest face over each magnet (R7: 0.8 mm non-critical wall)
 BUMP_D = 3.6  # alignment bumps that sit in the owl's 4.0 mm recesses
 BUMP_H = 0.5
 
@@ -118,6 +118,7 @@ def board_envelope() -> Part:
 
 def perch_body() -> Part:
     body = Pos(0, BASE_BACK_Y - BASE[1] / 2, BASE[2] / 2) * Box(*BASE)
+    body -= rest_box(0, -25.0, REST[1] + 30.0, (BASE[0] + 2, 60.0, 70.0))  # base back flush with the rest back
     body += rest_box(0, REST[2] / 2, REST[1] / 2, (REST[0], REST[1], REST[2]))
     # seat: square to the rest under the owl's flat bottom, so the owl bears on it along its depth
     depth = V.FRONT_Z - V.BACK_Z
