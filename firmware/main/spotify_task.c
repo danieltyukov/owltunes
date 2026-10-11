@@ -327,7 +327,7 @@ static void check_liked(void)
         return; /* episodes and local files cannot be liked here */
     }
     memcpy(uri, s_player.track.uri, sizeof uri);
-    if (call(req, &resp, &error) == SPOTIFY_OUTCOME_OK &&
+    if (call(req, &resp, &error) == SPOTIFY_OUTCOME_OK && !resp.truncated &&
         spotify_parse_liked(resp.body, resp.len, &liked) == SPOTIFY_PARSE_OK &&
         strcmp(uri, s_player.track.uri) == 0) {
         s_player.liked = liked;

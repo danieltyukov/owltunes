@@ -147,6 +147,7 @@ esp_err_t esp_http_client_perform(esp_http_client_handle_t client)
     TEST_ASSERT_TRUE(s_performs < s_scripted);
     const scripted_t *s = &s_script[s_performs++];
     snprintf(s_auth_at_perform, sizeof s_auth_at_perform, "%s", s_authorization);
+    client->status = -1; /* esp_http_client_fetch_headers starts each answer at -1 */
     if (s->status_line) {
         client->status = s->status;
         emit(client, HTTP_EVENT_ON_STATUS_CODE, NULL, NULL, NULL);
@@ -155,6 +156,12 @@ esp_err_t esp_http_client_perform(esp_http_client_handle_t client)
             emit(client, HTTP_EVENT_ON_HEADER, "retry-after", s->retry_after, NULL);
         }
         emit(client, HTTP_EVENT_ON_HEADERS_COMPLETE, NULL, NULL, NULL);
+        if (s->status == 401 && s->result == ESP_OK) {
+            /* esp_http_check_response calls esp_http_client_add_auth, which fails without Basic or
+             * Digest auth (esp_http_client.c, check_response and add_auth); perform returns that
+             * before it reads the body. */
+            return ESP_ERR_NOT_SUPPORTED;
+        }
     }
     for (int i = 0; i < MAX_CHUNKS && s->chunks[i] != NULL; i++) {
         for (int r = 0; r < (s->repeat > 0 && i == 0 ? s->repeat : 1); r++) {
@@ -329,8 +336,7 @@ static void test_a_write_error_on_a_kept_alive_connection_is_sent_again(void)
 static void test_a_timeout_is_never_sent_again(void)
 {
     static const esp_err_t timeouts[] = {ESP_ERR_HTTP_EAGAIN, ESP_ERR_HTTP_READ_TIMEOUT,
-                                         ESP_ERR_HTTP_FETCH_HEADER, ESP_ERR_HTTP_INCOMPLETE_DATA,
-                                         ESP_ERR_HTTP_CONNECT};
+                                         ESP_ERR_HTTP_INCOMPLETE_DATA, ESP_ERR_HTTP_CONNECT};
     static spotify_request_t req;
     spotify_http_response_t resp;
     post("/v1/me/player/next", &req);
@@ -353,8 +359,12 @@ static void test_a_connection_closed_after_part_of_the_answer_is_not_sent_again(
     first_request_ok(&req);
     script((scripted_t){.result = ESP_ERR_HTTP_CONNECTION_CLOSED, .status_line = true, .status = 200});
     script(OK_204);
-    TEST_ASSERT_EQUAL(ESP_ERR_HTTP_CONNECTION_CLOSED, spotify_http_call(&req, "tok", &resp));
+    /* The status line arrived: Spotify carried "next" out. It is the answer, cut short (P32). */
+    TEST_ASSERT_EQUAL(ESP_OK, spotify_http_call(&req, "tok", &resp));
+    TEST_ASSERT_EQUAL_INT(200, resp.status);
+    TEST_ASSERT_TRUE(resp.truncated);
     TEST_ASSERT_EQUAL_INT(2, s_performs);
+    TEST_ASSERT_EQUAL_INT(1, s_cleanups); /* its unread rest must not reach the next request */
 
     start();
     first_request_ok(&req);
@@ -399,6 +409,72 @@ static void test_a_failed_request_leaves_no_kept_alive_connection_behind(void)
     TEST_ASSERT_EQUAL_INT(2, s_inits);
 }
 
+static void test_a_401_is_an_answer_although_esp_http_client_fails_it(void)
+{
+    static spotify_request_t req;
+    spotify_http_response_t resp;
+    get("/v1/me/player", &req);
+    first_request_ok(&req);
+    script((scripted_t){.result = ESP_OK,
+                        .status_line = true,
+                        .status = 401,
+                        .retry_after = "3",
+                        .chunks = {"{\"error\":{\"status\":401}}"}});
+    script(OK_204);
+    TEST_ASSERT_EQUAL(ESP_OK, spotify_http_call(&req, "expired", &resp));
+    TEST_ASSERT_EQUAL_INT(401, resp.status); /* so the runtime refreshes the token (P32) */
+    TEST_ASSERT_EQUAL_INT32(3, resp.retry_after_s);
+    TEST_ASSERT_EQUAL_size_t(0, resp.len);
+    TEST_ASSERT_TRUE(resp.truncated);
+    TEST_ASSERT_EQUAL_INT(2, s_performs); /* an answer is never sent again */
+    TEST_ASSERT_EQUAL_INT(1, s_cleanups); /* the unread body stays on the dropped connection */
+    TEST_ASSERT_EQUAL_STRING("", s_authorization);
+    TEST_ASSERT_EQUAL(ESP_OK, spotify_http_call(&req, "fresh", &resp));
+    TEST_ASSERT_EQUAL_INT(204, resp.status);
+    TEST_ASSERT_FALSE(resp.truncated);
+    TEST_ASSERT_EQUAL_INT(2, s_inits);
+}
+
+static void test_a_fetch_header_error_on_a_kept_alive_connection_is_sent_again(void)
+{
+    static spotify_request_t req;
+    spotify_http_response_t resp;
+    post("/v1/me/player/next", &req);
+    first_request_ok(&req);
+    script((scripted_t){.result = ESP_ERR_HTTP_FETCH_HEADER}); /* how TLS reports Spotify's idle close */
+    script(OK_204);
+    TEST_ASSERT_EQUAL(ESP_OK, spotify_http_call(&req, "tok", &resp));
+    TEST_ASSERT_EQUAL_INT(204, resp.status);
+    TEST_ASSERT_EQUAL_INT(3, s_performs);
+    TEST_ASSERT_EQUAL_INT(2, s_inits);
+}
+
+static void test_a_fetch_header_error_is_not_sent_again_on_a_fresh_connection_or_after_an_answer(void)
+{
+    static spotify_request_t req;
+    spotify_http_response_t resp;
+    post("/v1/me/player/next", &req);
+    script((scripted_t){.result = ESP_ERR_HTTP_FETCH_HEADER});
+    script(OK_204);
+    TEST_ASSERT_EQUAL(ESP_ERR_HTTP_FETCH_HEADER, spotify_http_call(&req, "tok", &resp));
+    TEST_ASSERT_EQUAL_INT(1, s_performs);
+
+    start();
+    first_request_ok(&req);
+    script((scripted_t){.result = ESP_ERR_HTTP_FETCH_HEADER, .status_line = true, .status = 204});
+    script(OK_204);
+    TEST_ASSERT_EQUAL(ESP_OK, spotify_http_call(&req, "tok", &resp)); /* the partial answer */
+    TEST_ASSERT_EQUAL_INT(204, resp.status);
+    TEST_ASSERT_EQUAL_INT(2, s_performs);
+
+    start();
+    first_request_ok(&req);
+    script((scripted_t){.result = ESP_ERR_HTTP_EAGAIN});
+    script(OK_204);
+    TEST_ASSERT_EQUAL(ESP_ERR_HTTP_EAGAIN, spotify_http_call(&req, "tok", &resp));
+    TEST_ASSERT_EQUAL_INT(2, s_performs);
+}
+
 #define RUN(test)                                                                                            \
     do {                                                                                                     \
         start();                                                                                             \
@@ -419,5 +495,8 @@ int main(void)
     RUN(test_a_connection_closed_after_part_of_the_answer_is_not_sent_again);
     RUN(test_a_fresh_connection_is_not_tried_twice);
     RUN(test_a_failed_request_leaves_no_kept_alive_connection_behind);
+    RUN(test_a_401_is_an_answer_although_esp_http_client_fails_it);
+    RUN(test_a_fetch_header_error_on_a_kept_alive_connection_is_sent_again);
+    RUN(test_a_fetch_header_error_is_not_sent_again_on_a_fresh_connection_or_after_an_answer);
     return UNITY_END();
 }
