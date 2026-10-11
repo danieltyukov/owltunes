@@ -4,10 +4,11 @@
 apply: replaces Edge.Cuts with the contract outline, moves the fixed parts and mounting holes to
        their contract positions, side and rotation and locks them, and draws the battery zone
        and the keep-outs on Cmts.User.
-check: fails if the outline, a fixed part, a hole or the battery-zone height rule differs from
-       the contract, a magnetic part sits within the sensor keep-out of U302, a courtyard
-       covers a keep-out on its side (screw bosses, bezel lugs, the ring annulus, the strips
-       beside the antenna notch; the part a keep-out names is exempt from it), or a fixed
+check: fails if the outline, a fixed part or a hole differs from the contract, a back-side part
+       under the battery is taller than the zone limit once 0.1 mm of pad stand-off is added, a
+       magnetic part sits within the sensor keep-out of U302, a courtyard covers a keep-out on
+       its side (screw bosses, bezel lugs, the ring annulus, the strips beside the antenna
+       notch; the part a keep-out names is exempt from it), or a fixed
        part's library body (F.Fab) is larger than the box the enclosure reserves for it
        (w, h, cu, cv and the knob, all in the footprint frame). Where the part a keep-out names
        carries rule areas (U201's antenna keep-out), they must cover that keep-out on the board,
@@ -29,6 +30,7 @@ from hw_netlist import ROOT, load_design
 from hw_sync import library
 
 TOL = 0.01
+STANDOFF = 0.1  # solder and pad under a part, added to its design.toml height (R44)
 BOX_TOL = 0.05  # library body drawing against the contract box
 CIRCLE_SEGMENTS = 72
 
@@ -190,6 +192,14 @@ def apply(board_name: str) -> int:
 
 
 def check(board_name: str) -> int:
+    errors = contract_errors(board_name)
+    for e in errors:
+        print(e)
+    print(f"{board_name}: {len(errors)} contract error(s)")
+    return 1 if errors else 0
+
+
+def contract_errors(board_name: str) -> list[str]:
     _, board, c = load(board_name)
     design = {p["ref"]: p for p in load_design(board_name)["part"]}
     errors = []
@@ -241,8 +251,9 @@ def check(board_name: str) -> int:
         ref = fp.GetReference()
         if not fp.IsFlipped() or ref not in design:
             continue
-        if overlap_mm2(courtyard(fp), zone) > 0 and design[ref].get("height", 99.0) > limit:
-            errors.append(f"{ref} ({design[ref].get('height')} mm) is under the battery (limit {limit} mm)")
+        height = design[ref].get("height", 99.0)
+        if overlap_mm2(courtyard(fp), zone) > 0 and height > 0 and height + STANDOFF > limit + 1e-9:
+            errors.append(f"{ref} ({height} mm plus {STANDOFF} mm stand-off) is under the battery (limit {limit} mm)")
     holes = {h["ref"] for h in c["mount_holes"]}
     for k in c.get("keepouts", []):
         area = keepout_poly(k)
@@ -267,10 +278,7 @@ def check(board_name: str) -> int:
                 d = math.dist((hx, hy), (pcbnew.ToMM(fp.GetPosition().x), pcbnew.ToMM(fp.GetPosition().y)))
                 if d < c["sensor_keepout_mm"]:
                     errors.append(f"{ref} is {d:.1f} mm from U302 (keep-out {c['sensor_keepout_mm']} mm)")
-    for e in errors:
-        print(e)
-    print(f"{board_name}: {len(errors)} contract error(s)")
-    return 1 if errors else 0
+    return errors
 
 
 if __name__ == "__main__":

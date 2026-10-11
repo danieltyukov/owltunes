@@ -53,7 +53,7 @@ class ContractTest(unittest.TestCase):
         self.write_contract(CONTRACT)
         (self.folder / "design.toml").write_text(DESIGN)
         board = pcbnew.BOARD()
-        for ref in ("U1", "H1", "C1"):
+        for ref in ("U1", "H1", "C1", "U302"):
             fp = pcbnew.FootprintLoad("/usr/share/kicad/footprints/Package_TO_SOT_SMD.pretty", "SOT-23-6")
             fp.SetFPIDAsString("Package_TO_SOT_SMD:SOT-23-6")
             fp.SetReference(ref)
@@ -102,6 +102,36 @@ class ContractTest(unittest.TestCase):
         c1.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(100), pcbnew.FromMM(100)))
         pcbnew.SaveBoard(str(self.folder / "b.kicad_pcb"), board)
         self.assertEqual(hw_contract.check("b"), 1)
+        errors = hw_contract.contract_errors("b")
+        self.assertIn("U1 at (96.000, 100.000), contract (95.0, 100.0)", errors)
+        self.assertIn("C1 (3.0 mm plus 0.1 mm stand-off) is under the battery (limit 1.2 mm)", errors)
+
+    def write_design(self, c1_height, magnetic=False):
+        text = DESIGN.replace("height = 3.0", f"height = {c1_height}")
+        if magnetic:
+            text += "magnetic = true\n"
+        (self.folder / "design.toml").write_text(text)
+
+    def test_battery_rule_counts_the_pad_stand_off(self):
+        # R44: design height plus 0.1 mm against the 1.2 mm limit, so 1.1 mm passes and 1.15 mm fails.
+        hw_contract.apply("b")
+        self.move("C1", 100.0, 100.0, back=True)
+        self.write_design(1.1)
+        self.assertEqual(hw_contract.contract_errors("b"), [])
+        self.write_design(1.15)
+        self.assertEqual(hw_contract.contract_errors("b"),
+                         ["C1 (1.15 mm plus 0.1 mm stand-off) is under the battery (limit 1.2 mm)"])
+        self.move("C1", 100.0, 108.0, back=True)  # beside the zone
+        self.assertEqual(hw_contract.contract_errors("b"), [])
+
+    def test_magnetic_part_near_the_hall_sensor_fails(self):
+        hw_contract.apply("b")
+        self.write_design(3.0, magnetic=True)
+        self.move("U302", 100.0, 100.0, back=False)
+        self.move("C1", 116.0, 100.0, back=False)
+        self.assertEqual(hw_contract.contract_errors("b"), [])
+        self.move("C1", 110.0, 100.0, back=False)
+        self.assertEqual(hw_contract.contract_errors("b"), ["C1 is 10.0 mm from U302 (keep-out 15.0 mm)"])
 
     def test_part_on_a_cover_boss_fails_only_on_its_side(self):
         hw_contract.apply("b")
