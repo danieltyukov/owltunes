@@ -1,8 +1,6 @@
 (version 1)
 (rule "JLC 4-layer minimum track"
 	(constraint track_width (min 0.09mm)))
-(rule "JLC 4-layer minimum clearance"
-	(constraint clearance (min 0.09mm)))
 (rule "JLC via drill without extra fee"
 	(condition "A.Type == 'Via'")
 	(constraint hole_size (min 0.3mm)))
@@ -25,3 +23,11 @@
 (rule "RT101 pads stay off the pours"
 	(condition "A.memberOfFootprint('RT101')")
 	(constraint zone_connection none))
+# No board-wide clearance rule: an unconditioned clearance rule overrides every net class and zone
+# clearance. The net classes set the clearances; the .kicad_pro keeps 0.1 mm as the board minimum
+# (JLC 4-layer: 0.09 mm). U303 (LIS2DW12, LGA-12 2 x 2 mm, 0.5 mm pitch) has 0.375 x 0.35 mm pads
+# 0.15 mm apart, below the Power class's 0.2 mm next to its +3V3 and GND pads. The package sets
+# that gap, so it holds only between two of U303's own pads; tracks and pours keep the classes'.
+(rule "U303 pads keep the LGA's own 0.15 mm gaps"
+	(condition "A.memberOfFootprint('U303') && B.memberOfFootprint('U303')")
+	(constraint clearance (min 0.15mm)))
