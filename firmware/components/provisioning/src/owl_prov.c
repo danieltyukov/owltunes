@@ -157,15 +157,29 @@ static void respond_error(int id, const char *code, char *out, size_t cap)
     respond(obj, id, out, cap);
 }
 
-bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
-                    const char *value)
+static cJSON *event_object(const char *event, const char *state)
 {
     cJSON *obj = cJSON_CreateObject();
     cJSON_AddStringToObject(obj, "event", event);
     cJSON_AddStringToObject(obj, "state", state);
+    return obj;
+}
+
+bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
+                    const char *value)
+{
+    cJSON *obj = event_object(event, state);
     if (key != NULL && value != NULL) {
         cJSON_AddStringToObject(obj, key, value);
     }
+    return owl_prov_emit(obj, out, cap);
+}
+
+bool owl_prov_network_failed(char *out, size_t cap, const char *ssid, const char *error)
+{
+    cJSON *obj = event_object("network", "failed");
+    cJSON_AddStringToObject(obj, "ssid", ssid != NULL ? ssid : "");
+    cJSON_AddStringToObject(obj, "error", error != NULL ? error : "");
     return owl_prov_emit(obj, out, cap);
 }
 
@@ -205,16 +219,30 @@ static void cmd_hello(owl_prov_t *p, int id, char *out, size_t cap)
     respond(obj, id, out, cap);
 }
 
+/* Bytes below 0x20, and 0x7f. SSIDs and passwords may not contain them: a saved SSID comes back in
+ * hello and in network events, where each such byte takes six bytes once escaped, and no one types
+ * one into a Wi-Fi password. */
+static bool has_control_byte(const char *s)
+{
+    for (const unsigned char *c = (const unsigned char *)s; *c != '\0'; c++) {
+        if (*c < 0x20 || *c == 0x7f) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static const char *cmd_wifi_add(owl_prov_t *p, const cJSON *req)
 {
     const char *ssid = str_param(req, "ssid");
     const char *password = str_param(req, "password");
     size_t ssid_len = ssid ? strlen(ssid) : 0;
     size_t pass_len = password ? strlen(password) : 0;
-    if (ssid_len == 0 || ssid_len >= OWL_SSID_LEN) {
+    if (ssid_len == 0 || ssid_len >= OWL_SSID_LEN || has_control_byte(ssid)) {
         return "bad_ssid";
     }
-    if (password == NULL || (pass_len != 0 && (pass_len < 8 || pass_len >= OWL_WIFI_PASSWORD_LEN))) {
+    if (password == NULL || (pass_len != 0 && (pass_len < 8 || pass_len >= OWL_WIFI_PASSWORD_LEN)) ||
+        has_control_byte(password)) {
         return "bad_password";
     }
     int index = find_network(p, ssid);

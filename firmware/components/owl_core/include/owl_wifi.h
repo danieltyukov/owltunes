@@ -27,6 +27,7 @@ extern "C" {
 #define OWL_WIFI_REASON_AUTH_EXPIRE 2
 #define OWL_WIFI_REASON_ASSOC_LEAVE 8
 #define OWL_WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT 15
+#define OWL_WIFI_REASON_STA_LEAVING 36
 #define OWL_WIFI_REASON_NO_AP_FOUND 201
 #define OWL_WIFI_REASON_AUTH_FAIL 202
 #define OWL_WIFI_REASON_HANDSHAKE_TIMEOUT 204
@@ -82,8 +83,12 @@ owl_wifi_step_t owl_wifi_got_address(owl_wifi_t *w);
 
 /* reason is the ESP-IDF disconnect reason. When the owl itself leaves a connected or joining
  * network (a new list or an attempt that timed out), the next disconnect with
- * OWL_WIFI_REASON_ASSOC_LEAVE is its own doing and is ignored once. Any other
- * OWL_WIFI_REASON_ASSOC_LEAVE is the access point dropping the owl and counts as a drop. */
+ * OWL_WIFI_REASON_ASSOC_LEAVE is its own doing and is ignored once. The owl stops waiting for that
+ * event when an address arrives or a new round starts, since the driver may never send it. Any
+ * other OWL_WIFI_REASON_ASSOC_LEAVE is the access point dropping the owl and counts as a drop.
+ * When the owl leaves while the station scans, connects or has just failed, ESP-IDF reports
+ * OWL_WIFI_REASON_STA_LEAVING instead (or nothing when the station was idle). That reason is
+ * ignored unless the owl is online, where any disconnect is a drop. */
 owl_wifi_step_t owl_wifi_disconnected(owl_wifi_t *w, int reason, int64_t now_ms);
 
 /* Call when owl_wifi_deadline() has passed. */

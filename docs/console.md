@@ -46,7 +46,7 @@ means a known command had a missing, extra or malformed argument.
 | `flash_kb`, `psram_kb`, `psram_free_kb` | Flash size, PSRAM size (0 without PSRAM) and free PSRAM |
 | `heap_free_kb`, `heap_min_kb` | Free internal RAM now, and at its lowest since the start |
 | `status`, `led` | The owl's status (see the LED table in [the dev board guide](dev-board-nano-esp32.md)) and the LED colour while lit |
-| `wifi`, `ssid`, `rssi`, `ip` | The network: `idle`, `joining`, `online` or `waiting` on Wi-Fi, `ethernet` or `down` in QEMU, `off` on a board without network support; the network's name, its signal in dBm, and the address |
+| `wifi`, `ssid`, `rssi`, `ip` | The network: `idle` (no network saved), `joining`, `online` or `waiting` (every saved network failed; the next round starts soon) on Wi-Fi, `ethernet` or `down` in QEMU; the network being joined or used, its signal in dBm while online, and the address |
 | `linked` | A Spotify login is saved |
 | `utc` | The time once the clock is set, else empty |
 

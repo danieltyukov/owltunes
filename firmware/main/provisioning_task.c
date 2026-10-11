@@ -1,5 +1,6 @@
-/* Owns the protocol state. Console lines and network changes arrive as messages on one queue,
- * so owl_prov_t is only ever touched by this task. */
+/* Owns the protocol state. Console lines, login codes and Wi-Fi failures arrive as messages on one
+ * queue, and the newest network state is handed over beside it, so owl_prov_t is only ever touched
+ * by this task. */
 #include "provisioning_task.h"
 
 #include <stdlib.h>
@@ -24,7 +25,7 @@
 
 static const char *TAG = "provisioning";
 
-typedef enum { MSG_LINE, MSG_CODE, MSG_NETWORK } msg_kind_t;
+typedef enum { MSG_LINE, MSG_CODE, MSG_NETWORK, MSG_NETWORK_FAILED } msg_kind_t;
 
 /* Overwrite a string that held a secret before it is freed. */
 static void wipe(char *s)
@@ -36,10 +37,9 @@ static void wipe(char *s)
 
 typedef struct {
     msg_kind_t kind;
-    bool up;
-    char ip[16];
-    char *text;  /* MSG_LINE: the line; MSG_CODE: the code. On the heap; the protocol task frees both */
-    char *state; /* MSG_CODE: the state */
+    char *text;  /* MSG_LINE: the line; MSG_CODE: the code; MSG_NETWORK_FAILED: the SSID. On the heap;
+                  * the protocol task frees both */
+    char *state; /* MSG_CODE: the state; MSG_NETWORK_FAILED: the error code */
 } msg_t;
 
 static owl_prov_t s_prov;
@@ -54,14 +54,21 @@ static bool s_save_pending;         /* a save failed and must be retried */
 static int64_t s_verify_at_ms = -1; /* when to check the saved login with Spotify; -1: not due */
 static char s_out[OWL_PROV_LINE_MAX + 64];
 
+/* The newest network state. A burst of changes during a long HTTPS call must not be lost to a full
+ * queue, so the network code writes it here and the task applies whatever is newest. */
+static portMUX_TYPE s_net_lock = portMUX_INITIALIZER_UNLOCKED;
+static bool s_net_up;
+static char s_net_ip[16];
+static bool s_net_dirty;
+
 static int64_t now_ms(void)
 {
     return esp_timer_get_time() / 1000;
 }
 
-/* esp_fill_random is a true RNG only while Wi-Fi or Bluetooth runs, as it does on the dev kits
- * during setup (P3). QEMU builds are test-only and get weaker randomness from the host; real
- * logins on P3 hardware run with the radio on. */
+/* esp_fill_random is a true RNG only while Wi-Fi or Bluetooth runs. The real boards start Wi-Fi at
+ * boot (net_wifi.c), so the PKCE verifier is truly random; QEMU builds are test-only and get weaker
+ * randomness from the host. */
 static void hw_random(uint8_t *buf, size_t len)
 {
     esp_fill_random(buf, len);
@@ -211,6 +218,21 @@ static void do_work(void)
     }
 }
 
+static void apply_network(void)
+{
+    char ip[16];
+    portENTER_CRITICAL(&s_net_lock);
+    bool dirty = s_net_dirty;
+    bool up = s_net_up;
+    memcpy(ip, s_net_ip, sizeof ip);
+    s_net_dirty = false;
+    portEXIT_CRITICAL(&s_net_lock);
+    if (dirty && (up != s_prov.network_up || strcmp(ip, s_prov.ip) != 0)) {
+        owl_prov_set_network(&s_prov, up, ip);
+        emit("network", up ? "up" : "down", "ip", up ? ip : NULL);
+    }
+}
+
 static void handle(msg_t *msg)
 {
     switch (msg->kind) {
@@ -232,8 +254,11 @@ static void handle(msg_t *msg)
         break;
     }
     case MSG_NETWORK:
-        owl_prov_set_network(&s_prov, msg->up, msg->ip);
-        emit("network", msg->up ? "up" : "down", "ip", msg->up ? msg->ip : NULL);
+        break; /* only a wake-up: apply_network picks up the newest state */
+    case MSG_NETWORK_FAILED:
+        if (owl_prov_network_failed(s_out, sizeof s_out, msg->text, msg->state)) {
+            owl_console_write(s_out);
+        }
         break;
     }
     free(msg->text);
@@ -279,6 +304,7 @@ static void protocol_task(void *arg)
         if (xQueueReceive(s_queue, &msg, pdMS_TO_TICKS(1000)) == pdTRUE) {
             handle(&msg);
         }
+        apply_network();
         do_work();
         update_callback_server();
         publish_view();
@@ -297,10 +323,22 @@ void provisioning_line(const char *line)
 
 void provisioning_network(bool up, const char *ip)
 {
-    msg_t msg = {.kind = MSG_NETWORK, .up = up};
-    owl_utf8_copy(msg.ip, sizeof msg.ip, ip);
-    if (xQueueSend(s_queue, &msg, pdMS_TO_TICKS(100)) != pdTRUE) {
-        ESP_LOGW(TAG, "dropped a network change");
+    portENTER_CRITICAL(&s_net_lock);
+    s_net_up = up;
+    owl_utf8_copy(s_net_ip, sizeof s_net_ip, up ? ip : NULL);
+    s_net_dirty = true;
+    portEXIT_CRITICAL(&s_net_lock);
+    msg_t msg = {.kind = MSG_NETWORK};
+    xQueueSend(s_queue, &msg, 0); /* only a wake-up: with the queue full the task runs soon anyway */
+}
+
+void provisioning_network_failed(const char *ssid, const char *error)
+{
+    msg_t msg = {.kind = MSG_NETWORK_FAILED, .text = strdup(ssid), .state = strdup(error)};
+    if (msg.text == NULL || msg.state == NULL || xQueueSend(s_queue, &msg, pdMS_TO_TICKS(100)) != pdTRUE) {
+        free(msg.text);
+        free(msg.state);
+        ESP_LOGW(TAG, "dropped a Wi-Fi failure report");
     }
 }
 
@@ -323,8 +361,11 @@ void provisioning_start(const char *name, const char *fw)
     s_queue = xQueueCreate(8, sizeof(msg_t));
     s_code_reply = xQueueCreate(1, sizeof(const char *));
     s_view_lock = xSemaphoreCreateMutex();
+    configASSERT(s_queue != NULL && s_code_reply != NULL && s_view_lock != NULL);
+    net_networks_changed(&s_prov.settings); /* join the saved networks; safe before net_start */
     publish_view();
-    xTaskCreate(protocol_task, "provisioning", 10240, NULL, 4, NULL);
+    BaseType_t created = xTaskCreate(protocol_task, "provisioning", 10240, NULL, 4, NULL);
+    configASSERT(created == pdPASS);
     ESP_LOGI(TAG, "%s %s, setup state %s", name, fw,
              owl_prov_setup_state_name(owl_prov_setup_state(&s_prov)));
 }

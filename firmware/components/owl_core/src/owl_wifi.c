@@ -80,6 +80,9 @@ owl_wifi_step_t owl_wifi_got_address(owl_wifi_t *w)
     if (w->state == OWL_WIFI_JOINING) {
         w->state = OWL_WIFI_ONLINE;
         w->failed_rounds = 0;
+        /* The leave event of an earlier attempt comes before this address or not at all, so a
+         * stale flag must not swallow the access point dropping the owl later. */
+        w->expect_leave = false;
     }
     return nothing();
 }
@@ -90,6 +93,9 @@ owl_wifi_step_t owl_wifi_disconnected(owl_wifi_t *w, int reason, int64_t now_ms)
     w->expect_leave = false;
     if (expected && reason == OWL_WIFI_REASON_ASSOC_LEAVE) {
         return nothing();
+    }
+    if (reason == OWL_WIFI_REASON_STA_LEAVING && w->state != OWL_WIFI_ONLINE) {
+        return nothing(); /* the owl left a scan, an attempt or a failed attempt itself */
     }
     if (w->state == OWL_WIFI_JOINING) {
         return give_up(w, owl_wifi_classify(reason), now_ms);
@@ -107,6 +113,7 @@ owl_wifi_step_t owl_wifi_tick(owl_wifi_t *w, int64_t now_ms)
         return give_up(w, OWL_WIFI_FAIL_NO_ADDRESS, now_ms);
     }
     if (w->state == OWL_WIFI_WAITING && now_ms >= w->deadline_ms) {
+        w->expect_leave = false; /* a leave that has not come during the wait never will */
         return join(w, 0, now_ms);
     }
     return nothing();

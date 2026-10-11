@@ -326,6 +326,40 @@ static void test_event_lines(void)
     TEST_ASSERT_FALSE(owl_prov_event(out, 10, "spotify", "linked", NULL, NULL));
 }
 
+static void test_wifi_add_refuses_control_bytes(void)
+{
+    fresh();
+    send("{\"id\":1,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\nTwo\",\"password\":\"password1\"}");
+    expect_error("bad_ssid");
+    send("{\"id\":2,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\u001b[2J\",\"password\":\"password1\"}");
+    expect_error("bad_ssid");
+    send("{\"id\":3,\"cmd\":\"wifi_add\",\"ssid\":\"Home\x7f\",\"password\":\"password1\"}");
+    expect_error("bad_ssid");
+    send("{\"id\":4,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"pass\\tword1\"}");
+    expect_error("bad_password");
+    send("{\"id\":5,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"password\x7f\"}");
+    expect_error("bad_password");
+    send("{\"id\":6,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"password\\r\\n\"}");
+    expect_error("bad_password");
+    TEST_ASSERT_EQUAL_UINT8(0, prov.settings.n_networks);
+    TEST_ASSERT_EQUAL_UINT32(0, owl_prov_take_actions(&prov));
+    /* Multibyte characters, spaces and quotes are fine: only control bytes are refused. */
+    send("{\"id\":7,\"cmd\":\"wifi_add\",\"ssid\":\"Caf\xC3\xA9 \\\"5G\\\" ~\",\"password\":\"p\xC3\xA4ss "
+         "word~\"}");
+    TEST_ASSERT_TRUE(ok());
+    TEST_ASSERT_EQUAL_UINT8(1, prov.settings.n_networks);
+}
+
+static void test_network_failure_event_names_the_network(void)
+{
+    TEST_ASSERT_TRUE(owl_prov_network_failed(out, sizeof out, "Home \"5G\"", "wifi_wrong_password"));
+    TEST_ASSERT_EQUAL_STRING("@owl {\"event\":\"network\",\"state\":\"failed\",\"ssid\":\"Home \\\"5G\\\"\","
+                             "\"error\":\"wifi_wrong_password\"}\n",
+                             out);
+    TEST_ASSERT_FALSE(owl_prov_network_failed(out, 20, "Home", "wifi_not_found"));
+    TEST_ASSERT_EQUAL_STRING("", out);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -334,6 +368,7 @@ int main(void)
     RUN_TEST(test_hello_reports_setup_state);
     RUN_TEST(test_wifi_add_validates_saves_and_updates);
     RUN_TEST(test_wifi_remove);
+    RUN_TEST(test_wifi_add_refuses_control_bytes);
     RUN_TEST(test_spotify_client_validates_and_resets_link_on_change);
     RUN_TEST(test_begin_requires_client);
     RUN_TEST(test_begin_returns_authorize_url_with_ip_in_state);
@@ -350,6 +385,7 @@ int main(void)
     RUN_TEST(test_refresh_retry_keeps_login);
     RUN_TEST(test_settings_from_another_version_fall_back_to_defaults);
     RUN_TEST(test_event_lines);
+    RUN_TEST(test_network_failure_event_names_the_network);
     cJSON_Delete(reply);
     return UNITY_END();
 }

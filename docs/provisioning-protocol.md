@@ -30,7 +30,7 @@ Success is `{"id":N,"ok":true, ...}` with the fields below. Failure is
 | Command | Parameters | Reply fields | Errors |
 |---|---|---|---|
 | `hello` | none | `name`, `fw`, `protocol` (1), `setup` (`needs_wifi`, `needs_spotify` or `ready`), `linked`, `client_id`, `redirect_uri`, `ip` (empty when offline), `networks` (saved SSIDs) | |
-| `wifi_add` | `ssid` (1 to 32 bytes), `password` (empty for an open network, else 8 to 64 bytes) | none | `bad_ssid`, `bad_password`, `full` (four networks saved) |
+| `wifi_add` | `ssid` (1 to 32 bytes), `password` (empty for an open network, else 8 to 64 bytes); neither may contain control characters (bytes below 0x20, and 0x7f) | none | `bad_ssid`, `bad_password`, `full` (four networks saved) |
 | `wifi_remove` | `ssid` | none | `not_found` |
 | `spotify_client` | `client_id` (32 lowercase hex characters), `redirect_uri` (`https://...` or `http://127.0.0.1:<port>...`, under 160 characters) | none | `bad_client_id`, `bad_redirect_uri` |
 | `spotify_begin` | none | `authorize_url` | `no_client_id`, `too_long` |
@@ -47,7 +47,7 @@ refresh token to both.
 
 | Event | States | Fields |
 |---|---|---|
-| `network` | `up`, `down` | `ip` when up |
+| `network` | `up`, `down`, `failed` (joining a saved Wi-Fi network did not work; the owl goes on to the next saved network and keeps trying) | `ip` when up; `ssid` and `error` when failed |
 | `spotify` | `linking` (exchanging a code), `linked` (the login is saved in flash, after a code exchange or after the saved login passed its check at boot), `failed` (the login did not complete), `logged_out` (Spotify refused the saved login) | `error` for `failed` and `logged_out` |
 
 An event looks like `@owl {"event":"spotify","state":"failed","error":"invalid_grant"}`.
@@ -85,6 +85,15 @@ The `error` of a `spotify` event:
 | `bad_request` | `failed` | The owl could not build the token request. |
 | `no_refresh_token` | `failed` | Spotify accepted the code but sent no refresh token, so there is nothing to save. |
 | `storage` | `failed` | The login worked but could not be written to flash. |
+
+The `error` of a `network` event:
+
+| Code | Meaning |
+|---|---|
+| `wifi_not_found` | The network is not in range, uses 5 GHz only, or uses security the owl does not support. |
+| `wifi_wrong_password` | The network refused the password. |
+| `wifi_no_address` | The owl joined but got no address within 20 seconds. |
+| `wifi_failed` | Any other reason. |
 
 ## The Spotify login
 

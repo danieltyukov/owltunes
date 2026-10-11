@@ -111,6 +111,66 @@ static void test_timed_out_attempt_expects_one_leave(void)
     TEST_ASSERT_EQUAL_UINT8(1, w.index);
 }
 
+static void test_a_leave_that_never_came_does_not_hide_a_later_drop(void)
+{
+    two_networks();
+    step = owl_wifi_tick(&w, OWL_WIFI_ATTEMPT_MS); /* the owl leaves network 0, but no event follows */
+    assert_connect(1);
+    step = owl_wifi_got_address(&w);
+    TEST_ASSERT_EQUAL(OWL_WIFI_ONLINE, w.state);
+    step = owl_wifi_disconnected(&w, OWL_WIFI_REASON_ASSOC_LEAVE, OWL_WIFI_ATTEMPT_MS + 9000);
+    assert_connect(0);
+}
+
+static void test_a_new_round_forgets_a_leave_that_never_came(void)
+{
+    owl_wifi_init(&w);
+    step = owl_wifi_set_networks(&w, 1, -1, 0);
+    step = owl_wifi_tick(&w, OWL_WIFI_ATTEMPT_MS); /* the owl leaves, but no event follows */
+    TEST_ASSERT_EQUAL(OWL_WIFI_WAITING, w.state);
+    step = owl_wifi_tick(&w, owl_wifi_deadline(&w));
+    assert_connect(0);
+    step = owl_wifi_disconnected(&w, OWL_WIFI_REASON_ASSOC_LEAVE, owl_wifi_deadline(&w) - 1000);
+    TEST_ASSERT_EQUAL(OWL_WIFI_FAIL_OTHER, step.failed);
+    TEST_ASSERT_EQUAL(OWL_WIFI_WAITING, w.state);
+}
+
+/* ESP-IDF reports the owl's own leave as STA_LEAVING while the station scans, connects or has just
+ * failed (seen on the Nano ESP32 with ESP-IDF v6.1). */
+static void test_leaving_after_a_failure_does_not_fail_the_next_network(void)
+{
+    two_networks();
+    step = owl_wifi_disconnected(&w, OWL_WIFI_REASON_NO_AP_FOUND, 2400);
+    assert_connect(1);
+    step = owl_wifi_disconnected(&w, OWL_WIFI_REASON_STA_LEAVING, 2410);
+    TEST_ASSERT_EQUAL(OWL_WIFI_DO_NOTHING, step.action);
+    TEST_ASSERT_EQUAL(OWL_WIFI_FAIL_NONE, step.failed);
+    TEST_ASSERT_EQUAL(OWL_WIFI_JOINING, w.state);
+    TEST_ASSERT_EQUAL_UINT8(1, w.index);
+}
+
+static void test_leaving_a_scan_for_a_new_list_is_ignored(void)
+{
+    two_networks();
+    step = owl_wifi_set_networks(&w, 2, -1, 1000);
+    assert_connect(0);
+    step = owl_wifi_disconnected(&w, OWL_WIFI_REASON_STA_LEAVING, 1010);
+    TEST_ASSERT_EQUAL(OWL_WIFI_DO_NOTHING, step.action);
+    TEST_ASSERT_EQUAL(OWL_WIFI_JOINING, w.state);
+    TEST_ASSERT_EQUAL_UINT8(0, w.index);
+    TEST_ASSERT_FALSE(w.expect_leave); /* this was the leave the owl expected */
+    step = owl_wifi_disconnected(&w, OWL_WIFI_REASON_ASSOC_LEAVE, 1500);
+    assert_connect(1); /* so a later leave is a real failure */
+}
+
+static void test_station_leaving_while_online_is_a_drop(void)
+{
+    two_networks();
+    step = owl_wifi_got_address(&w);
+    step = owl_wifi_disconnected(&w, OWL_WIFI_REASON_STA_LEAVING, 9000);
+    assert_connect(0);
+}
+
 static void test_four_networks_are_walked_in_order_then_wait(void)
 {
     owl_wifi_init(&w);
@@ -335,6 +395,11 @@ int main(void)
     RUN_TEST(test_access_point_dropping_us_with_assoc_leave_rejoins);
     RUN_TEST(test_leaving_online_for_a_new_list_expects_one_leave);
     RUN_TEST(test_timed_out_attempt_expects_one_leave);
+    RUN_TEST(test_a_leave_that_never_came_does_not_hide_a_later_drop);
+    RUN_TEST(test_a_new_round_forgets_a_leave_that_never_came);
+    RUN_TEST(test_leaving_after_a_failure_does_not_fail_the_next_network);
+    RUN_TEST(test_leaving_a_scan_for_a_new_list_is_ignored);
+    RUN_TEST(test_station_leaving_while_online_is_a_drop);
     RUN_TEST(test_four_networks_are_walked_in_order_then_wait);
     RUN_TEST(test_one_network_goes_straight_to_waiting);
     RUN_TEST(test_list_change_while_joining_restarts_at_the_top);

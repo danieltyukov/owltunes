@@ -111,5 +111,107 @@ class BootChecksTest(unittest.TestCase):
             self.run_checks(fresh=True, status="playing")
 
 
+class WifiCredentialsTest(unittest.TestCase):
+    def credentials(self, env_file, environ):
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(hil_nano, "ROOT", pathlib.Path(d)), \
+                mock.patch.dict(hil_nano.os.environ, environ, clear=True):
+            if env_file is not None:
+                pathlib.Path(d, "private").mkdir()
+                pathlib.Path(d, "private", "hil.env").write_text(env_file)
+            return hil_nano.wifi_credentials()
+
+    def test_read_from_the_private_file(self):
+        self.assertEqual(self.credentials("OWL_WIFI_SSID=Home\nOWL_WIFI_PASSWORD=secret12\n", {}),
+                         ("Home", "secret12"))
+
+    def test_the_environment_wins(self):
+        self.assertEqual(self.credentials("OWL_WIFI_SSID=Home\n", {"OWL_WIFI_SSID": "Lab"}), ("Lab", ""))
+
+    def test_no_network_is_a_failure(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.credentials(None, {})
+
+
+class PrivateIpv4Test(unittest.TestCase):
+    def test_lan_addresses(self):
+        for ip in ("192.168.1.23", "10.0.0.5", "172.16.4.1"):
+            self.assertTrue(hil_nano.private_ipv4(ip), ip)
+
+    def test_public_empty_or_garbage(self):
+        for ip in ("8.8.8.8", "", "192.168.1", "fe80::1"):
+            self.assertFalse(hil_nano.private_ipv4(ip), ip)
+
+
+class MissingNetworkBoard:
+    """Answers like a board with only the missing network saved, failing it every round."""
+
+    def __init__(self, saved=(), error="wifi_not_found", wifi_after_failure="waiting"):
+        self.saved = list(saved)
+        self.error = error
+        self.wifi_after_failure = wifi_after_failure
+        self.requests = []
+
+    def hello(self):
+        return {"networks": list(self.saved)}
+
+    def mark(self):
+        return 0
+
+    def request(self, cmd, **params):
+        self.requests.append((cmd, params.get("ssid")))
+        if cmd == "wifi_add":
+            self.saved.append(params["ssid"])
+        elif cmd == "wifi_remove":
+            self.saved.remove(params["ssid"])
+        return {"ok": True}
+
+    def wait_event(self, event, state=None, timeout=30, since=0, where=None):
+        msg = {"event": event, "state": state, "ssid": hil_nano.MISSING_SSID, "error": self.error}
+        assert where is None or where(msg)
+        return msg
+
+    def command(self, text, event, state=None, timeout=10, where=None):
+        if self.saved:
+            return {"wifi": self.wifi_after_failure, "ssid": "", "status": "joining"}
+        return {"wifi": "idle", "ssid": "", "status": "needs_wifi"}
+
+
+class MissingNetworkChecksTest(unittest.TestCase):
+    def run_checks(self, board, failures_at=(100.0, 107.4, 119.8)):
+        clock = iter([*failures_at, *range(200, 260)])
+        with mock.patch.object(hil_nano.time, "monotonic", side_effect=lambda: float(next(clock))), \
+                mock.patch.object(hil_nano.time, "sleep"), mock.patch("builtins.print"):
+            hil_nano.missing_network_checks(board)
+
+    def test_report_backoff_and_cleanup_pass(self):
+        board = MissingNetworkBoard()
+        self.run_checks(board)
+        self.assertEqual(board.requests, [("wifi_add", hil_nano.MISSING_SSID),
+                                          ("wifi_remove", hil_nano.MISSING_SSID)])
+        self.assertEqual(board.saved, [])
+
+    def test_other_saved_networks_stop_the_check(self):
+        board = MissingNetworkBoard(saved=["Home"])
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(board)
+        self.assertEqual(board.requests, [])
+
+    def test_a_wrong_error_code_fails(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(MissingNetworkBoard(error="wifi_failed"))
+
+    def test_no_wait_between_rounds_fails(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(MissingNetworkBoard(), failures_at=(100.0, 102.4, 104.8))
+
+    def test_a_wait_that_does_not_grow_fails(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(MissingNetworkBoard(), failures_at=(100.0, 107.4, 114.8))
+
+    def test_not_waiting_after_a_failure_fails(self):
+        with self.assertRaises(hil_nano.Failure):
+            self.run_checks(MissingNetworkBoard(wifi_after_failure="joining"))
+
+
 if __name__ == "__main__":
     unittest.main()

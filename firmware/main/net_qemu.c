@@ -37,8 +37,9 @@ static void on_ip_event(void *arg, esp_event_base_t base, int32_t id, void *data
     }
 }
 
-void net_start(net_change_fn on_change)
+void net_start(net_change_fn on_change, net_failed_fn on_failed)
 {
+    (void)on_failed; /* Ethernet has nothing to join */
     s_on_change = on_change;
     esp_netif_config_t netif_config = ESP_NETIF_DEFAULT_ETH();
     esp_netif_t *netif = esp_netif_new(&netif_config);

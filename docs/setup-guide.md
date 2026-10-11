@@ -1,7 +1,8 @@
 # Setting up your owl
 
-**Status:** the setup page and the owl's side of it work today over USB and in the QEMU emulator.
-Setup over Bluetooth and joining the saved Wi-Fi networks arrive with the dev-kit firmware.
+**Status:** the setup page and the owl's side of it work today over USB, on the Arduino Nano ESP32
+dev board ([its guide](dev-board-nano-esp32.md)) and in the QEMU emulator. The dev board joins the
+saved Wi-Fi networks; setup over Bluetooth arrives with the round-screen dev kit.
 
 You need the owl (or the emulator, see the end), a computer with Chrome or Edge and a USB cable,
 Spotify Premium, and a free Spotify developer account, which is your normal Spotify login.
@@ -16,6 +17,9 @@ port. The page shows the owl's name, which matches the one under the QR code.
 
 Add your home network. To use the owl away from home, add your phone's hotspot as well. The owl
 keeps up to four networks.
+
+The owl uses 2.4 GHz Wi-Fi only. It tries the networks in the order you saved them, and if it
+cannot join one, the setup page says which network failed and why.
 
 ## 3. Your Spotify app
 

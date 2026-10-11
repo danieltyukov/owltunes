@@ -98,6 +98,10 @@ bool owl_prov_emit(struct cJSON *obj, char *out, size_t cap);
 bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
                     const char *value);
 
+/* Format {"event":"network","state":"failed","ssid":"Home","error":"wifi_wrong_password"}: joining a
+ * saved network failed. */
+bool owl_prov_network_failed(char *out, size_t cap, const char *ssid, const char *error);
+
 #ifdef __cplusplus
 }
 #endif

@@ -49,7 +49,9 @@ void app_main(void)
     owl_name(name, sizeof name);
     snprintf(setup_url, sizeof setup_url, "%s?owl=%s", CONFIG_OWL_SETUP_URL, name);
     provisioning_start(name, esp_app_get_description()->version);
-    net_start(provisioning_network);
+    net_start(provisioning_network, provisioning_network_failed);
+    /* The console starts last: a login (spotify_begin) cannot arrive before the network code has
+     * turned the radio on, and only then is esp_fill_random a true random source for PKCE. */
     shell_start(name);
 
     lv_init();

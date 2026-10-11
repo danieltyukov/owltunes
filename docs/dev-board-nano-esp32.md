@@ -2,9 +2,8 @@
 
 The Arduino Nano ESP32 carries the same chip and memory as the owl's own board: an ESP32-S3 (in a
 u-blox NORA-W106 module) with 16 MB of flash and 8 MB of octal PSRAM. It has no display, so the
-firmware draws the owl's screens into memory where nothing shows them. The setup protocol over USB
-works now. The board stays offline until later P3a tasks add Wi-Fi, the Spotify login and Spotify
-control, and the RGB LED showing the owl's status is planned for a later task too.
+firmware draws the owl's screens into memory where nothing shows them. The setup protocol over USB,
+the RGB status LED and Wi-Fi work now; later P3a tasks add the Spotify login and Spotify control.
 
 ## Build and flash
 
@@ -78,11 +77,35 @@ online owl shows until playback support arrives).
 `tools/hil_nano.py` flashes the build, resets the board and checks that it runs the firmware just
 built, finds its 8 MB of PSRAM, runs from the first OTA slot, keeps at least 32 KB of internal RAM
 free and answers on the console. `--fresh` erases the saved settings first, `--no-flash` only
-resets the board, and `--rom` flashes a board that waits in ROM download mode. The console log of
-the run is in `build/hil-nano/console.log`.
+resets the board, and `--rom` flashes a board that waits in ROM download mode. `--wifi` and
+`--missing-network` add the Wi-Fi checks described below. The console log of the run is in
+`build/hil-nano/console.log`.
 
 Opening the serial port resets the board: the USB-Serial/JTAG controller restarts the chip
 when a program opens the port (reset reason `usb` in `info`); opening it reset the board 3 of 3 times
 with DTR and RTS held low.
 Every open therefore starts the firmware again, and the scripts wait for its `OWL_BOOT_OK` line
 before they send anything. A terminal opened while a test runs restarts the board too.
+
+## Wi-Fi
+
+The board joins the saved networks in the order they were saved (home first, then a phone
+hotspot) and goes on to the next one when a network fails. When all of them fail it waits 5 s
+before trying again, and longer each time up to a minute. It joins 2.4 GHz networks only.
+
+For the hardware test with Wi-Fi, put a 2.4 GHz network in `private/hil.env` (git ignores
+`private/`):
+
+```text
+OWL_WIFI_SSID=Your network
+OWL_WIFI_PASSWORD=its password
+```
+
+Then run `tools/hil_nano.py --wifi`. It saves a network that is never in range ahead of yours,
+checks that the owl reports it and joins yours next, and checks that the owl rejoins by itself
+after a reset. The password goes to the board only; the script never prints it.
+
+`tools/hil_nano.py --missing-network` needs no credentials. It saves only the network that is never
+in range, checks that the owl reports `wifi_not_found`, waits 5 s before the next round and 10 s
+before the one after, and stops once the network is removed again. Other saved networks would
+change what it sees, so it refuses to run while any are saved.

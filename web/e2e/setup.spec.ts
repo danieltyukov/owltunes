@@ -132,7 +132,7 @@ test("setup checks input before the owl sees it", async ({ page }) => {
   await page.getByLabel("Password").fill("short");
   await page.getByRole("button", { name: "Save network" }).click();
   await expect(page.getByRole("status")).toHaveText(
-    "Wi-Fi passwords are 8 to 64 characters. Leave it empty for an open network.",
+    "Wi-Fi passwords are 8 to 64 characters, without tabs or line breaks. Leave it empty for an open network.",
   );
   await page.getByLabel("Client ID").fill("not-a-client-id");
   await page.getByRole("button", { name: "Save client ID" }).click();
