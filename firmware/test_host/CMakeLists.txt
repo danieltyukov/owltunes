@@ -61,3 +61,10 @@ owl_add_test(test_spotify_http spotify owl_core)
 target_sources(test_spotify_http PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/spotify_http.c)
 target_include_directories(test_spotify_http PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
                            ${CMAKE_CURRENT_LIST_DIR}/../main)
+
+# The Spotify runtime from firmware/main, with stand-ins for FreeRTOS, the token service and the
+# transport, and the real shared gate.
+owl_add_test(test_spotify_task owl_shell spotify owl_core cjson)
+target_sources(test_spotify_task PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/api_gate.c)
+target_include_directories(test_spotify_task PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
+                           ${CMAKE_CURRENT_LIST_DIR}/../main)
