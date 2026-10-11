@@ -90,6 +90,15 @@ GROUPS = {
         ("VIN_CHG", 0.25, [(22.5, 2.2), (22.5, 2.99)]),
         ("VIN_CHG", "via", [(23.4, -4.1), (22.5, 2.2)]),
     ],
+    # TPS_PG from U103 pin 5 to R212 on the ESP32 EN network: a via in the pocket west of pin 5
+    # (inside the +3V3 and FB runs), F.Cu north, east of the crystal and its load caps (nothing on
+    # F.Cu under them), and a via beside R212.
+    "tps_pg": [
+        ("TPS_PG", 0.15, [(13.1, -2.0), (12.2, -1.5)]),
+        ("TPS_PG", 0.15, [(12.2, -1.5), (12.2, 2.0), (16.2, 6.0), (16.2, 28.7), (14.6, 30.3)], "F"),
+        ("TPS_PG", 0.15, [(14.6, 30.3), (14.6, 31.19)]),
+        ("TPS_PG", "via", [(12.2, -1.5), (14.6, 30.3)]),
+    ],
     # Fuel gauge Kelvin tap (R37): CELL and VDD (pins 2 and 3) on their own trace to J101 pin 1,
     # apart from the charger's VBAT path, with C104 at pin 3.
     "gauge": [

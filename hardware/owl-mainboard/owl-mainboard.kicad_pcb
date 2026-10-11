@@ -26562,6 +26562,78 @@
 		(uuid "e7b7aab4-1856-4c5e-9fc0-5daf3f745def")
 	)
 	(segment
+		(start 112.2 101.5)
+		(end 112.2 98)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "TPS_PG")
+		(uuid "0cb44d30-fbeb-45e2-83b4-0027b90ff239")
+	)
+	(segment
+		(start 116.2 71.3)
+		(end 114.6 69.7)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "TPS_PG")
+		(uuid "23f63bf1-a933-4147-b178-99154ff22c53")
+	)
+	(segment
+		(start 112.2 98)
+		(end 116.2 94)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "TPS_PG")
+		(uuid "58d87bab-df9c-4a49-8422-558d5719c9e5")
+	)
+	(segment
+		(start 116.2 94)
+		(end 116.2 71.3)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "TPS_PG")
+		(uuid "697f3762-f90d-473e-a927-f08c80b3b2f3")
+	)
+	(via
+		(at 112.2 101.5)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "TPS_PG")
+		(uuid "345a1e08-1b6f-4b5d-83cf-87401efbdce2")
+	)
+	(via
+		(at 114.6 69.7)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "TPS_PG")
+		(uuid "55e36d3a-0d52-4f47-9aa5-d9d25a823f5c")
+	)
+	(segment
+		(start 114.6 69.7)
+		(end 114.6 68.81)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "TPS_PG")
+		(uuid "001a62da-e0d9-460c-a63d-c02e22762e12")
+	)
+	(segment
+		(start 113.1 102)
+		(end 112.2 101.5)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "TPS_PG")
+		(uuid "8d5f4d00-854b-4796-bc87-f646101085a3")
+	)
+	(segment
 		(start 115.85 102.25)
 		(end 116.5 102.25)
 		(width 0.5)
@@ -26761,6 +26833,14 @@
 			"353d478b-6e60-4028-a3c5-4f71ae56cae0" "464d2736-eb40-43e5-a93f-a2a52b4a192b"
 			"4ef0e2ef-048a-4a23-9648-54651d1990ce" "5030a18f-3056-468c-bdeb-77dbe88a2b05"
 			"dd527c29-740c-4ff8-8b3a-8b6cd9c81c0a"
+		)
+	)
+	(group "hw_route tps_pg"
+		(uuid "7cd817fe-a8c6-4a97-9b19-9c7c69ead700")
+		(members "001a62da-e0d9-460c-a63d-c02e22762e12" "0cb44d30-fbeb-45e2-83b4-0027b90ff239"
+			"23f63bf1-a933-4147-b178-99154ff22c53" "345a1e08-1b6f-4b5d-83cf-87401efbdce2"
+			"55e36d3a-0d52-4f47-9aa5-d9d25a823f5c" "58d87bab-df9c-4a49-8422-558d5719c9e5"
+			"697f3762-f90d-473e-a927-f08c80b3b2f3" "8d5f4d00-854b-4796-bc87-f646101085a3"
 		)
 	)
 	(group "hw_route tps63802_gnd"
