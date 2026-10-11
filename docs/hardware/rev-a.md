@@ -58,7 +58,9 @@ Bought separately and fitted at assembly ([assembly.md](assembly.md) steps 6 and
   mask at owl (-0.4, -9.5), 4.5 mm below the centre of U303 (the 2 x 2 mm LIS2DW12 on the
   board's centre line), with RT101 just past its end (on the right, seen from the back). The
   cell presses on it, so the patch, and RT101 through its neck, follow the cell more closely
-  than across the air gap alone.
+  than across the air gap alone. With a 1.5 W/mK pad RT101 should read about half way from the
+  board's temperature to the cell's (an estimate; `tools/hw/hw_route.py` bat_ntc has the
+  numbers), against a few percent without the pad.
 
 ## Calculations
 

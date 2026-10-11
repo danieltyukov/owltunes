@@ -25239,6 +25239,15 @@
 		(uuid "57db809a-be93-4dbb-901b-4b98083a8d9f")
 	)
 	(via
+		(at 95.49 111.6)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "GND")
+		(uuid "5f3dcc1b-d569-4073-8426-7ef20f1cd808")
+	)
+	(via
 		(at 115.65 72.65)
 		(size 0.5)
 		(drill 0.3)
@@ -25291,15 +25300,6 @@
 		(locked yes)
 		(net "GND")
 		(uuid "8980545b-cd49-48ef-9d9c-e53e52d1e5d8")
-	)
-	(via
-		(at 95.49 111.6)
-		(size 0.5)
-		(drill 0.3)
-		(layers "F.Cu" "B.Cu")
-		(locked yes)
-		(net "GND")
-		(uuid "a285a7d6-fe26-420d-ae14-ae7ef02d44a8")
 	)
 	(via
 		(at 120.8 98.25)
@@ -25563,6 +25563,15 @@
 		(uuid "8d82bbfc-6893-4901-92b5-e56d6609ef29")
 	)
 	(segment
+		(start 95.49 109.5)
+		(end 95.49 111.6)
+		(width 0.2)
+		(locked yes)
+		(layer "B.Cu")
+		(net "GND")
+		(uuid "92d2908b-388b-4678-b6ad-51972908fbe4")
+	)
+	(segment
 		(start 114.88 75.15)
 		(end 115.65 75.15)
 		(width 0.25)
@@ -25615,15 +25624,6 @@
 		(layer "B.Cu")
 		(net "GND")
 		(uuid "b5e4544f-31b0-4d51-a253-fd760a95124d")
-	)
-	(segment
-		(start 95.49 109.5)
-		(end 95.49 111.6)
-		(width 0.2)
-		(locked yes)
-		(layer "B.Cu")
-		(net "GND")
-		(uuid "c06fe880-3e23-46eb-bacb-6c81b475c1b3")
 	)
 	(segment
 		(start 119.2 126.4)
@@ -26946,7 +26946,7 @@
 		(locked yes)
 		(layer "F.Cu")
 		(net "BAT_NTC")
-		(uuid "98488ca8-cb22-4d4f-bd7c-2a5a2aad4f34")
+		(uuid "842cb609-f367-40bb-a9e1-fa7a801b71c2")
 	)
 	(segment
 		(start 120 102)
@@ -26955,7 +26955,7 @@
 		(locked yes)
 		(layer "F.Cu")
 		(net "BAT_NTC")
-		(uuid "e55b9c8e-8ce3-4fae-82b3-3f314c9dea59")
+		(uuid "f4806fc9-d680-4b6f-83e8-32f172d3c6c0")
 	)
 	(via
 		(at 120 102)
@@ -26964,7 +26964,7 @@
 		(layers "F.Cu" "B.Cu")
 		(locked yes)
 		(net "BAT_NTC")
-		(uuid "432f5efd-e047-47dc-b5ff-d24fd70b7485")
+		(uuid "7055e55b-5f71-46f9-ad6d-66d53a9e8568")
 	)
 	(via
 		(at 100.38 109.5)
@@ -26973,43 +26973,7 @@
 		(layers "F.Cu" "B.Cu")
 		(locked yes)
 		(net "BAT_NTC")
-		(uuid "4a44bbbb-1d5b-49fc-ad9a-b969f7f6b08a")
-	)
-	(segment
-		(start 122.75 102)
-		(end 120 102)
-		(width 0.2)
-		(locked yes)
-		(layer "B.Cu")
-		(net "BAT_NTC")
-		(uuid "98502acd-9b76-4035-83c0-368569a81f08")
-	)
-	(segment
-		(start 98.88 109.5)
-		(end 100.38 109.5)
-		(width 3)
-		(locked yes)
-		(layer "B.Cu")
-		(net "BAT_NTC")
-		(uuid "aa7f1b63-5b4e-4ea2-87c7-c17930b1f67d")
-	)
-	(segment
-		(start 96.51 109.5)
-		(end 98.88 109.5)
-		(width 0.3)
-		(locked yes)
-		(layer "B.Cu")
-		(net "BAT_NTC")
-		(uuid "b4b56c0e-f83f-4bb7-8ead-51b9730c3558")
-	)
-	(segment
-		(start 122.75 100.75)
-		(end 122.75 102)
-		(width 0.2)
-		(locked yes)
-		(layer "B.Cu")
-		(net "BAT_NTC")
-		(uuid "b682f9dc-f08a-4cc6-b0a3-981e2fc0bdeb")
+		(uuid "a1ccc8ed-b28e-48bf-8848-0a7f958eb038")
 	)
 	(segment
 		(start 123.062 100.75)
@@ -27018,7 +26982,43 @@
 		(locked yes)
 		(layer "B.Cu")
 		(net "BAT_NTC")
-		(uuid "d2c18489-e691-4b12-a80b-f04bf554b519")
+		(uuid "6d02be01-4996-4d83-a169-ae0006a27bb0")
+	)
+	(segment
+		(start 98.88 109.5)
+		(end 100.38 109.5)
+		(width 3)
+		(locked yes)
+		(layer "B.Cu")
+		(net "BAT_NTC")
+		(uuid "8455d905-c638-4fc6-aec7-291185b1a203")
+	)
+	(segment
+		(start 122.75 102)
+		(end 120 102)
+		(width 0.2)
+		(locked yes)
+		(layer "B.Cu")
+		(net "BAT_NTC")
+		(uuid "865eb8f6-b7cb-4e88-8b4f-e70d6698904c")
+	)
+	(segment
+		(start 122.75 100.75)
+		(end 122.75 102)
+		(width 0.2)
+		(locked yes)
+		(layer "B.Cu")
+		(net "BAT_NTC")
+		(uuid "9d051c2b-b4ce-433f-b860-8da86cdde9dd")
+	)
+	(segment
+		(start 96.51 109.5)
+		(end 98.88 109.5)
+		(width 0.3)
+		(locked yes)
+		(layer "B.Cu")
+		(net "BAT_NTC")
+		(uuid "fe21e948-03ea-4c8c-9dd0-34871c53e198")
 	)
 	(segment
 		(start 125.938 99.75)
@@ -27407,6 +27407,71 @@
 		(net "USB_DP")
 		(uuid "89cd4d55-f3ed-4ce1-9515-4c41afa27133")
 	)
+	(zone
+		(locked yes)
+		(layer "B.Cu")
+		(uuid "ba811798-7bd9-44ba-9275-77cb3ab6215d")
+		(name "hw_route bat_ntc no pour")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour not_allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 94.82 108.78) (xy 96.98 108.78) (xy 96.98 107.6) (xy 102.28 107.6) (xy 102.28 111.4) (xy 96.98 111.4)
+				(xy 96.98 110.22) (xy 95.89 110.22) (xy 95.89 111.3) (xy 95.09 111.3) (xy 95.09 110.22) (xy 94.82 110.22)
+			)
+		)
+	)
+	(zone
+		(locked yes)
+		(layer "In2.Cu")
+		(uuid "53de9195-8167-4fc8-97ca-6d686c5e1334")
+		(name "hw_route bat_ntc no pour")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour not_allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 97.38 108) (xy 101.88 108) (xy 101.88 111) (xy 97.38 111)
+			)
+		)
+	)
 	(group "hw_route gnd_vias"
 		(uuid "056072be-bf89-462e-b73e-876ef069d08e")
 		(members "00fa2d75-56ba-4f57-a7d0-588e67b58a39" "03033b4c-97d8-4667-8ad2-9eab00ce2357"
@@ -27428,13 +27493,14 @@
 		)
 	)
 	(group "hw_route bat_ntc"
-		(uuid "23007f27-cc59-4069-9d21-bbb8d1e57bb5")
-		(members "432f5efd-e047-47dc-b5ff-d24fd70b7485" "4a44bbbb-1d5b-49fc-ad9a-b969f7f6b08a"
-			"98488ca8-cb22-4d4f-bd7c-2a5a2aad4f34" "98502acd-9b76-4035-83c0-368569a81f08"
-			"a285a7d6-fe26-420d-ae14-ae7ef02d44a8" "aa7f1b63-5b4e-4ea2-87c7-c17930b1f67d"
-			"b4b56c0e-f83f-4bb7-8ead-51b9730c3558" "b682f9dc-f08a-4cc6-b0a3-981e2fc0bdeb"
-			"c06fe880-3e23-46eb-bacb-6c81b475c1b3" "d2c18489-e691-4b12-a80b-f04bf554b519"
-			"e55b9c8e-8ce3-4fae-82b3-3f314c9dea59"
+		(uuid "28b8c8b0-8bd7-4eb6-bf9e-ec4a5dcf69cc")
+		(members "53de9195-8167-4fc8-97ca-6d686c5e1334" "5f3dcc1b-d569-4073-8426-7ef20f1cd808"
+			"6d02be01-4996-4d83-a169-ae0006a27bb0" "7055e55b-5f71-46f9-ad6d-66d53a9e8568"
+			"842cb609-f367-40bb-a9e1-fa7a801b71c2" "8455d905-c638-4fc6-aec7-291185b1a203"
+			"865eb8f6-b7cb-4e88-8b4f-e70d6698904c" "92d2908b-388b-4678-b6ad-51972908fbe4"
+			"9d051c2b-b4ce-433f-b860-8da86cdde9dd" "a1ccc8ed-b28e-48bf-8848-0a7f958eb038"
+			"ba811798-7bd9-44ba-9275-77cb3ab6215d" "f4806fc9-d680-4b6f-83e8-32f172d3c6c0"
+			"fe21e948-03ea-4c8c-9dd0-34871c53e198"
 		)
 	)
 	(group "hw_route usb_fanout"

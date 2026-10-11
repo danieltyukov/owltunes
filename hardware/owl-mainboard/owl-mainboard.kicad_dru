@@ -17,9 +17,11 @@
 (rule "JLC silkscreen text back"
 	(layer "B.Silkscreen")
 	(constraint text_height (min 0.8mm)))
-# RT101 (board NTC, under the cell): no pour connects to its pads, so pad 2 reaches GND only
-# through its narrow neck and via, not straight through the B.Cu pour that spreads the charger's
-# heat (tools/hw/hw_route.py bat_ntc).
+# RT101 (board NTC, under the cell): this rule stops any pour connecting to RT101's two pads (no
+# spokes, a clearance gap instead). It does not keep a pour off the GND neck from pad 2 to its via:
+# a GND pour floods a GND track. The rule areas that tools/hw/hw_route.py bat_ntc draws do that
+# (B.Cu: no pour round RT101, along the pad 2 neck and round the patch; In2: no pour under the
+# patch), so pad 2 reaches GND only through its 1.5 mm neck and via.
 (rule "RT101 pads stay off the pours"
 	(condition "A.memberOfFootprint('RT101')")
 	(constraint zone_connection none))

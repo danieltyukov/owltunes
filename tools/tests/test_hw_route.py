@@ -99,11 +99,39 @@ class RouteTest(unittest.TestCase):
         layer = {t.GetNetname(): t.GetLayer() for t in board.GetTracks() if t.GetParentGroup() is not None}
         self.assertEqual(layer, {"N1": pcbnew.B_Cu, "N2": pcbnew.F_Cu})
 
+    def rule_areas(self, board):
+        """Every zone as (layer, no pour, no tracks, no vias, no pads, no footprints, locked, group
+        name, outline in owl mm); all of them must be rule areas."""
+        out = []
+        for z in board.Zones():
+            self.assertTrue(z.GetIsRuleArea())
+            outline = z.Outline().Outline(0)
+            pts = [(round(pcbnew.ToMM(outline.CPoint(i).x) - 100, 4), round(100 - pcbnew.ToMM(outline.CPoint(i).y), 4))
+                   for i in range(outline.PointCount())]
+            group = z.GetParentGroup()
+            out.append((board.GetLayerName(z.GetFirstLayer()), z.GetDoNotAllowZoneFills(), z.GetDoNotAllowTracks(),
+                        z.GetDoNotAllowVias(), z.GetDoNotAllowPads(), z.GetDoNotAllowFootprints(), z.IsLocked(),
+                        group.GetName() if group else None, pts))
+        return sorted(out)
+
+    def test_no_pour_rule_areas_are_drawn_and_replaced(self):
+        square = [(0, 0), (1, 0), (1, 1), (0, 1)]
+        self.route({"g": [("N1", 0.2, [(0, 0), (1, 0)]), ("", "no pour", square, "B")]}, "g")
+        board = self.route({"g": [("N1", 0.2, [(0, 0), (1, 0)]), ("", "no pour", [(0, 0), (2, 0), (2, 1)], "B"),
+                                  ("", "no pour", square, "In2")]}, "g")
+        self.assertEqual(self.rule_areas(board), [
+            ("B.Cu", True, False, False, False, False, True, "hw_route g", [(0.0, 0.0), (2.0, 0.0), (2.0, 1.0)]),
+            ("In2.Cu", True, False, False, False, False, True, "hw_route g",
+             [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]),
+        ])
+        self.assertEqual(self.copper(board), [("PCB_TRACK", "N1", 100.0, 100.0, 101.0, 100.0)])
+
     def test_rerun_in_a_fresh_interpreter(self):
         # Board.Remove leaves a removed item to its Python wrapper, and once the wrapper is freed
         # the board's track list stops being iterable. The fault shows in a fresh interpreter but
         # not in this test process, so the re-run happens in a fresh interpreter.
-        self.route({"g": [("N1", 0.2, [(0, 0), (1, 0), (1, 1)]), ("N1", "via", [(1, 1)])]}, "g")
+        self.route({"g": [("N1", 0.2, [(0, 0), (1, 0), (1, 1)]), ("N1", "via", [(1, 1)]),
+                          ("", "no pour", [(0, 0), (1, 0), (1, 1)], "B")]}, "g")
         script = "\n".join([
             "import pathlib, sys",
             f"sys.path.insert(0, {str(HW)!r})",
@@ -116,6 +144,7 @@ class RouteTest(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr[-1500:])
         board = pcbnew.LoadBoard(str(self.path))
         self.assertEqual(self.copper(board), [("PCB_TRACK", "N1", 100.0, 100.0, 102.0, 100.0)])
+        self.assertEqual(self.rule_areas(board), [])
 
 
 if __name__ == "__main__":

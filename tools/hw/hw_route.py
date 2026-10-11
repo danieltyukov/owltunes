@@ -2,12 +2,13 @@
 """Hand-route the main board's critical nets (Task 10 Step 1) and lock them.
 
 Each group is a list of (net, width mm, [owl points]) polylines on B.Cu, with "F" as a fourth
-item for F.Cu, or (net, "via", [owl points]) for through vias; owl coordinates are x right as
-seen from the front, y up, origin at the display centre (KiCad x = 100 + x, y = 100 - y). Widths
-neck down to 0.25 or 0.3 mm only where a track leaves a 0.5 mm pitch pin. Each group's tracks and
-vias go into a KiCad group named "hw_route <group>". Running a group again first removes
-everything in that KiCad group, so a group can be re-routed with new coordinates after a
-placement change.
+item for F.Cu, (net, "via", [owl points]) for through vias, or ("", "no pour", [owl polygon],
+layer) for a rule area that keeps copper pours out but allows tracks, vias, pads and footprints
+(layer "F", "B" or "In2"); owl coordinates are x right as seen from the front, y up, origin at
+the display centre (KiCad x = 100 + x, y = 100 - y). Widths neck down to 0.25 or 0.3 mm only
+where a track leaves a 0.5 mm pitch pin. Each group's tracks, vias and rule areas go into a KiCad
+group named "hw_route <group>". Running a group again first removes everything in that KiCad
+group, so a group can be re-routed with new coordinates after a placement change.
 GND vias that the planes will tie in are placed here and show as via_dangling in DRC until the
 pours exist; the pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
 
@@ -231,12 +232,23 @@ GROUPS = {
     # below at y -2.5) to a via south-west of C103, then F.Cu over In1 GND and across the B.Cu USB
     # pair: diagonally between the C105/C106 GND vias and the H4 hole (under the H4 bezel lug,
     # which only presses on the mask), and west at y -9.5 to a via in RT101's patch. RT101 reads
-    # the board under the cell, 30 mm from U101 and 19 mm from U103. Pad 1 joins a 4.5 x 3 mm
-    # patch (a 3 mm wide track) through a 0.6 mm long, 0.3 mm neck; the patch faces the cell
-    # across the 1.2 mm gap and is the landing for a gap-filler pad if bring-up finds the reading
-    # too far from the cell's. Pad 2 reaches its GND via through a 1.5 mm long, 0.2 mm neck, and a
-    # DRU rule keeps the pours off both pads: the NTC is not tied straight into the B.Cu GND pour
-    # that spreads U101's and U103's heat, and each pad of the 0402 sees a narrow neck at reflow.
+    # the board under the cell, 30 mm from U101 and 19 mm from U103. What each piece does:
+    # - Pad 1 joins a 4.5 x 3 mm patch (a 3 mm wide track) through a 0.6 mm long, 0.3 mm neck.
+    #   The thermal gap pad (docs/hardware/rev-a.md, off-board parts) presses the cell onto the
+    #   patch, so the patch, and RT101 through the neck, move towards the cell's temperature.
+    # - Pad 2 reaches its GND via through a 0.2 mm neck, about 1.5 mm long, so RT101 is not tied
+    #   straight into the GND pour that spreads U101's and U103's heat.
+    # - The B.Cu rule area keeps every pour off RT101 (0.4 mm round its pads), off the pad 2 neck
+    #   (0.3 mm either side, down to 0.05 mm short of the via, where the pour may join it) and
+    #   0.4 mm round the patch. A GND pour floods a GND track, so without it the pour takes the
+    #   neck right up to pad 2.
+    # - The In2 rule area keeps the In2 GND pour from under the patch (only BAT_NTC itself crosses
+    #   it): the nearest plane below the patch is then In1, 0.70 mm down, not In2 at 0.21 mm.
+    # - The DRU rule "RT101 pads stay off the pours" stops any pour connecting to the two pads,
+    #   and each pad of the 0402 sees a narrow neck at reflow.
+    # Estimate with a 1.5 W/mK pad (necks 146 and 557 K/W, pad 69 K/W, patch to the planes about
+    # 170 K/W with the In2 void, 60 without): RT101 sits about half way from the board's
+    # temperature to the cell's; 35 % without the In2 void, 14 % if the pour took the neck.
     "bat_ntc": [
         ("BAT_NTC", 0.2, [(23.062, -0.75), (22.75, -0.75), (22.75, -2.0), (20.0, -2.0)]),
         ("BAT_NTC", 0.2, [(20.0, -2.0), (12.5, -9.5), (0.38, -9.5)], "F"),
@@ -245,8 +257,15 @@ GROUPS = {
         ("GND", 0.2, [(-4.51, -9.5), (-4.51, -11.6)]),
         ("BAT_NTC", "via", [(20.0, -2.0), (0.38, -9.5)]),
         ("GND", "via", [(-4.51, -11.6)]),
+        ("", "no pour", [(-5.18, -8.78), (-3.02, -8.78), (-3.02, -7.6), (2.28, -7.6), (2.28, -11.4), (-3.02, -11.4),
+                         (-3.02, -10.22), (-4.11, -10.22), (-4.11, -11.3), (-4.91, -11.3), (-4.91, -10.22),
+                         (-5.18, -10.22)], "B"),
+        ("", "no pour", [(-2.62, -8.0), (1.88, -8.0), (1.88, -11.0), (-2.62, -11.0)], "In2"),
     ],
 }
+
+
+LAYERS = {"F": pcbnew.F_Cu, "B": pcbnew.B_Cu, "In2": pcbnew.In2_Cu}
 
 
 def pt(xy) -> pcbnew.VECTOR2I:
@@ -270,6 +289,8 @@ def remove_old(board: pcbnew.BOARD, name: str) -> None:
         board.Delete(group)
     segs = set()
     for _, width, pts, *_ in GROUPS[name]:
+        if width == "no pour":
+            continue
         if width == "via":
             segs |= {(pt(a).x, pt(a).y, pt(a).x, pt(a).y) for a in pts}
         for a, b in zip(pts, pts[1:]):
@@ -292,6 +313,23 @@ def route(board_name: str, groups: list[str]) -> int:
         board.Add(group)
         length = {}
         for net, width, pts, *layer in GROUPS[name]:
+            if width == "no pour":
+                area = pcbnew.ZONE(board)
+                area.SetIsRuleArea(True)
+                area.SetDoNotAllowZoneFills(True)
+                for allowed in (area.SetDoNotAllowTracks, area.SetDoNotAllowVias, area.SetDoNotAllowPads,
+                                area.SetDoNotAllowFootprints):
+                    allowed(False)
+                area.SetLayer(LAYERS[layer[0]])
+                area.SetZoneName(f"{tag(name)} no pour")
+                outline = area.Outline()
+                outline.NewOutline()
+                for a in pts:
+                    outline.Append(pt(a))
+                area.SetLocked(True)
+                board.Add(area)
+                group.AddItem(area)
+                continue
             info = board.FindNet(net)
             if info is None:
                 print(f"no net {net}")
