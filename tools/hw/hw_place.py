@@ -154,7 +154,9 @@ def hits(a, b, gap: float = SILK_GAP) -> bool:
 
 def place_references(board) -> list[str]:
     """Put each reference designator on its side's silkscreen next to the part, clear of every
-    pad, hole and other reference; hide it (the F.Fab or B.Fab copy stays) where nothing fits."""
+    pad, hole, other reference, footprint silkscreen drawing and board silkscreen text or mark
+    (tools/hw/hw_silk.py, the J101 marks); hide it (the F.Fab or B.Fab copy stays) where nothing
+    fits."""
     outline = pcbnew.SHAPE_POLY_SET()
     board.GetBoardPolygonOutlines(outline, False)
     copper = {False: [], True: []}
@@ -164,6 +166,11 @@ def place_references(board) -> list[str]:
                 if pad.IsOnLayer(pcbnew.B_Cu if back else pcbnew.F_Cu) or pad.HasHole():
                     copper[back].append(box(pad))
     taken = {False: [], True: []}
+    silk = {pcbnew.F_SilkS: False, pcbnew.B_SilkS: True}
+    drawings = list(board.GetDrawings()) + [g for fp in board.GetFootprints() for g in fp.GraphicalItems()]
+    for d in drawings:
+        if d.GetLayer() in silk:
+            taken[silk[d.GetLayer()]].append(box(d))
     hidden = []
     for fp in sorted(board.GetFootprints(), key=lambda f: f.GetReference()):
         ref, back = fp.Reference(), fp.IsFlipped()

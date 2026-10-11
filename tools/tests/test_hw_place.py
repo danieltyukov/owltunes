@@ -96,5 +96,64 @@ class MarkJ101Test(unittest.TestCase):
         self.assertEqual(refs, ["R1"])
 
 
+@unittest.skipIf(pcbnew is None, "needs KiCad's pcbnew module")
+class PlaceReferencesTest(unittest.TestCase):
+    """R1's reference cannot go above or below its pads (too close to them), so its first free
+    spot is left of the part, at KiCad (146.8 to 148.6, 149.3 to 150.7). Something on the
+    silkscreen there must push it elsewhere, without overlapping."""
+
+    def board_with_r1(self):
+        board = pcbnew.BOARD()
+        for a, b in (((140, 140), (160, 140)), ((160, 140), (160, 160)), ((160, 160), (140, 160)),
+                     ((140, 160), (140, 140))):
+            edge = pcbnew.PCB_SHAPE(board)
+            edge.SetShape(pcbnew.SHAPE_T_SEGMENT)
+            edge.SetLayer(pcbnew.Edge_Cuts)
+            edge.SetStart(pcbnew.VECTOR2I(pcbnew.FromMM(a[0]), pcbnew.FromMM(a[1])))
+            edge.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(b[0]), pcbnew.FromMM(b[1])))
+            board.Add(edge)
+        r1 = pcbnew.FootprintLoad("/usr/share/kicad/footprints/Resistor_SMD.pretty", "R_0402_1005Metric")
+        r1.SetReference("R1")
+        r1.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(150), pcbnew.FromMM(150)))
+        board.Add(r1)
+        return board, r1
+
+    def assert_clear(self, board, r1, others):
+        self.assertTrue(others)
+        self.assertEqual(hw_place.place_references(board), [])
+        ref = hw_place.box(r1.Reference())
+        for other in others:
+            self.assertFalse(hw_place.hits(ref, other, 0.0), (ref, other))
+
+    def test_references_keep_clear_of_board_silkscreen(self):
+        board, r1 = self.board_with_r1()
+        text = pcbnew.PCB_TEXT(board)  # a hw_silk.py mark
+        text.SetText("XX")
+        text.SetLayer(pcbnew.F_SilkS)
+        text.SetTextSize(pcbnew.VECTOR2I(pcbnew.FromMM(1.0), pcbnew.FromMM(1.0)))
+        text.SetTextPos(pcbnew.VECTOR2I(pcbnew.FromMM(147.7), pcbnew.FromMM(150)))
+        board.Add(text)
+        self.assert_clear(board, r1, [hw_place.box(text)])
+
+    def test_references_keep_clear_of_other_footprints_silkscreen(self):
+        board, r1 = self.board_with_r1()
+        r2 = pcbnew.FOOTPRINT(board)  # a part well below R1 whose silkscreen outline runs up past it
+        r2.SetReference("R2")
+        pad = pcbnew.PAD(r2)
+        pad.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
+        pad.SetLayerSet(pad.SMDMask())
+        pad.SetSize(pcbnew.VECTOR2I(pcbnew.FromMM(0.5), pcbnew.FromMM(0.5)))
+        pad.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(147.7), pcbnew.FromMM(156)))
+        r2.Add(pad)
+        line = pcbnew.PCB_SHAPE(r2)
+        line.SetShape(pcbnew.SHAPE_T_SEGMENT)
+        line.SetLayer(pcbnew.F_SilkS)
+        line.SetWidth(pcbnew.FromMM(0.12))
+        line.SetStart(pcbnew.VECTOR2I(pcbnew.FromMM(147.7), pcbnew.FromMM(148.5)))
+        line.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(147.7), pcbnew.FromMM(155)))
+        r2.Add(line)
+        board.Add(r2)
+        self.assert_clear(board, r1, [hw_place.box(g) for g in r2.GraphicalItems() if g.GetLayer() == pcbnew.F_SilkS])
+
 if __name__ == "__main__":
     unittest.main()

@@ -4537,6 +4537,18 @@
 			)
 		)
 	)
+	(gr_text "Tyukov Inc"
+		(locked yes)
+		(at 98 106.2 0)
+		(layer "F.SilkS")
+		(uuid "ab3b15dc-9bb4-4aad-a069-49172fffc447")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
 	(gr_text "CERN-OHL-P-2.0"
 		(at 100 106 0)
 		(layer "B.SilkS")
@@ -5676,6 +5688,10 @@
 				(xy 116.6005 92.3005)
 			)
 		)
+	)
+	(group "hw_silk"
+		(uuid "afa72870-53cb-47c2-a09c-a22c7d680b28")
+		(members "ab3b15dc-9bb4-4aad-a069-49172fffc447")
 	)
 	(embedded_fonts no)
 )
