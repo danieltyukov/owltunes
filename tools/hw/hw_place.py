@@ -34,10 +34,13 @@ PLACE = {
     "Y201": (12.0, 26.1, 90, "back"),
     "C204": (14.4, 27.35, 0, "back"),
     "C205": (14.4, 24.85, 0, "back"),
-    # USB: series resistors at pins 13 and 14; ESD, VBUS TVS and CC resistors at the receptacle.
-    "R204": (10.9, 20.37, 0, "back"),
-    "R203": (10.9, 19.1, 0, "back"),
-    "U202": (-4.5, -30.0, 0, "back"),
+    # USB: series resistors just below pins 13 and 14, standing with their connector pads (pad 1)
+    # at the bottom, D+ on the left; ESD, VBUS TVS and CC resistors at the receptacle. U202 at
+    # rot 180 has D+ (pins 1, 6) above D- (pins 3, 4) on both sides, so the pair leaves J201, runs
+    # through U202 and turns up into R203 and R204 without crossing (checked on the airwires).
+    "R203": (10.35, 17.3, 90, "back"),
+    "R204": (11.45, 17.3, 90, "back"),
+    "U202": (-4.5, -30.0, 180, "back"),
     "D201": (-12.0, -26.3, 0, "back"),
     "R201": (-8.4, -27.0, 90, "back"),
     "R202": (-15.6, -27.0, 90, "back"),
@@ -62,20 +65,20 @@ PLACE = {
     "U102": (26.0, 10.0, 0, "back"),
     "C104": (28.2, 10.8, 90, "back"),
     "TP107": (29.0, 8.0, 0, "back"),
-    # 3.3 V buck-boost at the right edge of the battery: VIN caps below, VOUT caps above, L101
-    # across L1 and L2, feedback divider at FB. L101 (1.2 mm, plus about 0.085 mm on its pads in
-    # the 3D export) sits just outside the cell, which it would touch by 0.035 mm underneath.
-    # It is about 44 mm from U302.
-    "U103": (13.55, -3.0, 0, "back"),
-    "L101": (16.3, -3.0, 90, "back"),
-    "C105": (15.05, -5.8, 0, "back"),
-    "C106": (12.35, -5.5, 0, "back"),
-    "C107": (15.05, -0.2, 0, "back"),
-    "C108": (15.05, 1.4, 0, "back"),
-    "C109": (12.35, 0.0, 0, "back"),
-    "R107": (10.55, -2.5, 90, "back"),
-    "R108": (9.35, -2.5, 90, "back"),
-    "TP104": (18.0, 2.4, 0, "back"),
+    # 3.3 V buck-boost at the right edge of the battery: C106 (100 nF) right at VIN pin 10 with C105
+    # behind it, VOUT caps above, L101 across L1 and L2, feedback divider at FB. L101 (1.2 mm) sits
+    # with its courtyard outside the battery zone (R44: under the cell only 1.1 mm parts). It is
+    # about 44 mm from U302.
+    "U103": (14.0, -3.0, 0, "back"),
+    "L101": (16.75, -3.0, 90, "back"),
+    "C106": (15.3, -5.32, 0, "back"),
+    "C105": (14.6, -6.7, 0, "back"),
+    "C107": (15.5, -0.2, 0, "back"),
+    "C108": (15.5, 1.4, 0, "back"),
+    "C109": (12.8, 0.0, 0, "back"),
+    "R107": (11.0, -2.5, 90, "back"),
+    "R108": (9.8, -2.5, 90, "back"),
+    "TP104": (18.3, 2.6, 0, "back"),
     # Display switch left of the module, above the battery (U104 is 1.45 mm) and clear of the H2 boss.
     "U104": (-12.6, 15.7, 270, "back"),
     "C110": (-15.0, 16.6, 90, "back"),
@@ -90,10 +93,11 @@ PLACE = {
     "R301": (-5.0, 12.0, 90, "back"),
     "R302": (-6.2, 12.0, 90, "back"),
     "R303": (-7.4, 12.0, 90, "back"),
-    # Haptics next to J302: LRA_P and LRA_N (pins 7 and 9) face the connector.
+    # Haptics next to J302: LRA_P and LRA_N (pins 7 and 9) face the connector; C304 spans VDD
+    # pin 10 and GND pin 8 on the outer side, C303 at REG.
     "U301": (25.0, -14.0, 0, "back"),
     "C303": (22.6, -16.4, 0, "back"),
-    "C304": (27.6, -11.5, 0, "back"),
+    "C304": (28.75, -14.5, 90, "back"),
     "C305": (25.2, -11.5, 0, "back"),
     # Ring sensor support beside U302.
     "C306": (-24.6, 1.0, 0, "back"),
@@ -200,9 +204,11 @@ J101_PIN1_DOT = (27.35, 16.0, 0.2)
 
 
 def mark_j101(board) -> None:
+    centre = pcbnew.VECTOR2I(pcbnew.FromMM(100 + J101_PIN1_DOT[0]), pcbnew.FromMM(100 - J101_PIN1_DOT[1]))
     old = [d for d in board.GetDrawings() if d.GetLayer() == pcbnew.B_SilkS
            and ((isinstance(d, pcbnew.PCB_TEXT) and d.GetText() in {m[0] for m in J101_MARKS})
-                or (isinstance(d, pcbnew.PCB_SHAPE) and d.GetShape() == pcbnew.SHAPE_T_CIRCLE))]
+                or (isinstance(d, pcbnew.PCB_SHAPE) and d.GetShape() == pcbnew.SHAPE_T_CIRCLE
+                    and d.GetCenter() == centre))]
     for d in old:
         board.Remove(d)
     for text, x, y in J101_MARKS:

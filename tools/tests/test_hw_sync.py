@@ -29,8 +29,7 @@ class SyncTest(unittest.TestCase):
         for ref, part in design.items():
             fp = fps[ref]
             self.assertEqual(fp.GetFPIDAsString(), part["footprint"], ref)
-            if not part["footprint"].startswith("MountingHole:"):  # a bare hole has no side
-                self.assertEqual(fp.IsFlipped(), part.get("side", "front") == "back", f"{ref} side")
+            self.assertEqual(fp.IsFlipped(), part.get("side", "front") == "back", f"{ref} side")
             for pad in fp.Pads():
                 want = part.get("pins", {}).get(pad.GetNumber())
                 if want is not None:
