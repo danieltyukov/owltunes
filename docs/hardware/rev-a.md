@@ -4,7 +4,7 @@ Rev A is the first OwlTunes board set: the owl main board (4 layers, JLCPCB asse
 sides), the perch board with a snap-off dock-pad section for the owl's back cover, enclosure v1
 and perch v1 (MJF PA12). Spec: `docs/design/2026-10-04-owltunes-system-design.md`, sections 7 and 8.
 
-Status on 11 October 2026: the main board schematic is complete (106 footprints, ERC clean, the
+Status on 11 October 2026: the main board schematic is complete (107 footprints, ERC clean, the
 connectivity matches `hardware/owl-mainboard/design.toml`) and enclosure v1 is drawn. Placement,
 routing, the perch board and perch v1 are in progress. The ring test has not been printed yet, so
 the magnet count, the ring variant (A with the 6710 bearing, B with the printed bushing) and the
@@ -18,10 +18,10 @@ is a header only for now: rev A board support arrives with the P3 board selectio
 ```
  USB-C --- USBLC6 --- 22R --- ESP32-S3 USB (GPIO19/20)
    |  CC: 5.1k x2
- VBUS_USB --TVS-- Schottky --+
+ VBUS_USB --TVS-- Schottky --+              TS: RT101 10k NTC
                              +-- VIN_CHG -- BQ24073 --- VSYS --- TPS63802 --- +3V3 (always on)
  VBUS_DOCK -TVS-- Schottky --+   (ILIM 0.42 A)  |  ICHG 0.45 A    (3.30 V)        |
-   (J303 from the dock pads)                    BAT --- JST PH: 1S LiPo + 10k NTC   +-- TPS22917 -- DISP_3V3
+   (J303 from the dock pads)                    BAT --- JST PH 2-pin: 1S LiPo       +-- TPS22917 -- DISP_3V3
                                                 |                                    |    (AMOLED, touch)
                                           MAX17048 (VBAT)                            +-- ESP32-S3-WROOM-1-N16R8
  Sensor I2C (+3V3): TMAG5273A2 0x35, MAX17048 0x36, LIS2DW12 0x19, OPT3001 0x44, DRV2605L 0x5A
@@ -61,10 +61,21 @@ Charger (BQ24073, TI SLUS810N section 8.5):
 - EN2 is tied high through R103, so firmware chooses between the ILIM limit (CHG_SUSPEND low)
   and input suspend (CHG_SUSPEND high).
 - Precharge 88 / 2000 = 44 mA; termination 10 % of ICHG = 45 mA; timers 30 min and 5 h (TMR open).
-- NTC: 75 uA into the 10k NTC. Charging stops above VHOT 0.30 V (4.0k): 47 to 51 C depending on
-  the NTC's B value (B 3950: 47.2 C, B 3435: 50.8 C, B 3380: 51.2 C). It stops below VCOLD 2.1 V
-  (28k): 0 to 4 C. An open TS (no NTC) reads above VCOLD, so it counts as cold. Check the bought
-  cell's charge temperature limit against the hot cut-off.
+- NTC: TS sources 75 uA (72 to 78 uA) into RT101, a 10k 1 % NTC on the board (Murata
+  NCP15XH103F03RC: B25/50 3380 K, B25/85 3434 K, the 103AT-2 curve the TS thresholds are set
+  for), so TS reads 0.75 V at 25 C. On Murata's R-T table charging stops above 51.2 C (VHOT
+  0.30 V, 4.0k) and resumes below 48.3 C; it stops below -0.5 C (VCOLD 2.1 V, 28.0k) and resumes
+  above 3.1 C. TI gives 51 C and -0.6 C for the 103AT-2. With the VHOT, VCOLD and bias
+  tolerances the hot cut-off lies between 47.1 and 55.7 C and the cold one between -2.5 and
+  1.6 C; RT101's own 1 % tolerances add about 0.4 C. An open TS reads above VCOLD, so it counts
+  as cold.
+- RT101 reads the board, not the cell: it sits on the back under the middle of the cell, which
+  is 1.2 mm behind the board, 30 mm from U101 and 19 mm from U103. In fast charge U101's heat
+  reaches it through the planes, so it reads warmer than the cell: charging stops while the cell
+  is still a few degrees below the hot cut-off, and a cell a few degrees below the cold cut-off
+  still charges. The charge temperature window is approximate.
+- Cells are often rated for charging from 0 to 45 C, below the 51 C cut-off. Resistors on TS can
+  only widen the window, not narrow it (SLUS810N 9.3.6). Check the bought cell's limit.
 - Dissipation in fast charge: (VIN - VOUT) x IIN + (VOUT - VBAT) x ICHG with OUT at 4.4 V and
   about 4.6 V at IN. At the typical limit (charge current 0.424 A): 0.2 x 0.424 + 0.9 x 0.424 =
   0.47 W at VBAT 3.5 V, about 0.68 W at VBAT 3.0 V where fast charge starts; up to about 0.77 W
@@ -145,14 +156,15 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 
 ## Protection and known limits
 
-- J101 (battery) has no reverse-polarity protection. Check the pack's polarity against the
-  silkscreen `+ NTC -` before plugging it in (see [assembly.md](assembly.md)).
-- TD (U101 pin 15) is tied to GND, so an open TS reads as cold (SLUS810N 9.3.5.3 and 9.3.6): a
-  pack without an NTC does not charge, and CHG stays low as if charging while no current flows.
-  The BQ24075 alternate listed in `design.toml` behaves the same. The pack must carry a 10k NTC
-  on a JST PH 3-pin housing wired +, NTC, - to match J101. For bring-up with a 2-wire pack, a 10k
-  resistor between the NTC and - contacts of the housing lets it charge, with no temperature
-  protection.
+- The pack is any 1S LiPo 803040 (8 x 30 x 40 mm) with a protection circuit and a 2-wire lead on
+  a JST PH 2.0 2-pin plug. J101 is a 2-pin JST PH, S2B-PH-SM4-TB (pin 1 VBAT, pin 2 GND). A
+  pack's own NTC wire, if it has one, is not used: the board's RT101 is on TS.
+- J101 (battery) has no reverse-polarity protection. Many packs are wired the other way round,
+  so check that the plug's red wire lands on the silkscreen `+` (pin 1, with the dot) before
+  plugging it in; the housing can be re-pinned (see [assembly.md](assembly.md)).
+- TD (U101 pin 15) is tied to GND, so an open TS reads as cold (SLUS810N 9.3.5.3 and 9.3.6): with
+  RT101 open or missing nothing charges, and CHG stays low as if charging while no current flows.
+  The BQ24075 alternate listed in `design.toml` behaves the same.
 - U202 (USBLC6-2SC6) pin 5 (VBUS) is left unconnected so the ESP32-S3's default D+ pull-up cannot
   back-feed the receptacle's VBUS through the upper steering diode when no cable is present. The
   USBLC6 still clamps through its internal rail; D201 (SMF5.0A) protects VBUS_USB and D301 protects
@@ -172,6 +184,7 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Dock pads | on the main board | separate dock-pad board, cabled to J303 | the main board is about 11 mm in front of the back surface |
 | Antenna keep-out | 15 mm from the ring | not reachable in 66 x 84 mm | to be measured in the ring test (RSSI with and without the ring stack); WROOM-1U fallback on the same pads |
 | Owl depth | about 22 mm | 23.5 mm | bearing plus a 3.0 mm sensor gap |
+| Battery NTC | 10k NTC in the pack, JST PH (8.1) | 2-wire pack on a 2-pin JST PH; RT101 (10k NTC) on the board under the cell | cheap off-the-shelf 803040 packs are 2-wire, and the BQ24073 does not charge with TS open. Cost: RT101 reads the board under the cell, so the charge temperature window is approximate (a few degrees warm in fast charge) |
 | Charger input limit | not stated | 0.424 A typical, 0.478 A worst case (R102 3.6k) | USB 2.0 default power without CC sensing; faster charging needs CC sensing in rev B |
 | Cover glass retention | not stated | adhesive: glass on an adhesive ring, 1.3 mm retainer ring glued into the lip opening | a snap does not fit the 1.3 mm lip with the bearing behind it. Owner review point: the glass could come loose if a glue joint fails in a drop; a mechanical lock (a taller lip or a bayonet) is a v2 item |
 | Perch USB-C | on the back of the perch (7.3) | right side of the back rest, the plug enters along +X | J1 is an edge-mount receptacle in the tilted rest plane and the perch board is Economic PCBA (top side only). Owner review point: a back exit needs a vertical receptacle on the board's bottom side, hand-soldered or with Standard PCBA, plus a boss on the rest's back; rev B can move it. The side channel takes the largest Type-C overmold (12.35 x 6.5 mm) |
@@ -187,7 +200,10 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 - Touch I2C at 3.3 V: the VIEWE drawing notes touch I2C at 1.8 V; the Waveshare kit runs it at
   3.3 V.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
-- TS cut-off with the bought cell's NTC, against the cell's charge temperature limit.
+- RT101 against the cell: during a 0.45 A charge from about 3.5 V, compare RT101's temperature
+  (from the TS voltage, 75 uA x R) with a thermocouple taped to the cell. If it reads more than a
+  few degrees off, a piece of thermal gap pad between the cell and RT101's copper patch couples
+  them better. Check the hot cut-off (51 C) against the bought cell's charge temperature limit.
 - RTC crystal drift (18 pF load capacitors).
 - Deep-sleep current against the 44 uA estimate, and DISP_3V3 near 0 V with the panel off (no
   back-powering through an I/O pin).

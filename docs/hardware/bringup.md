@@ -8,7 +8,8 @@ steps that drive pins need a test build that takes its pins from
 `firmware/main/board_owltunes_reva.h`, or the `esptool` and I2C commands of your choice.
 
 1. **Look.** Under a loupe: U101, U103, U201 and J301 soldered without bridges; D101, D102, D201
-   and D301 cathode bands match the silkscreen; J101 pin 1 marked `+`.
+   and D301 cathode bands match the silkscreen; J101 pin 1 marked `+`; RT101 (the 0402 NTC under
+   the cell area) flat on both pads.
 2. **Rails without the battery.** Bench supply on TP103 (VBAT) and TP106 (GND): 3.7 V, 150 mA
    limit. Expect VSYS (TP102) about 3.65 V, +3V3 (TP104) 3.21 to 3.39 V (3.30 V nominal), ESP_EN
    (TP201) high about 10 ms after +3V3, DISP_3V3 (TP105) 0 V, and a supply current under 60 mA
@@ -31,14 +32,16 @@ steps that drive pins need a test build that takes its pins from
 8. **Ring.** Read the TMAG5273 at 0x35 while turning the ring: the angle advances half the
    magnet count of cycles per turn.
 9. **Battery and charging.** Check the pack's polarity first (J101 has no reverse-polarity
-   protection; see [assembly.md](assembly.md) step 6). Connect the pack: BAT_NTC (J101 pin 2,
-   the charger's TS pin) reads about 0.75 V at 25 C (75 uA x 10k), CHG_STAT (GPIO8) is low while
-   charging, the MAX17048 reports a sensible state of charge, and the charge current measured in
-   the battery lead is about 0.42 A less the system load (on USB the input limit, typically
-   0.424 A, is below the 0.445 A ICHG setting). CHG_STAT low with no charge current means a TS
-   fault: an open or out-of-range NTC. A 2-wire pack (no NTC) does not charge; for the bench, a
-   10k resistor between the NTC and - contacts of its housing lets it charge, but then nothing
-   stops charging when the cell is too hot or too cold.
+   protection; see [assembly.md](assembly.md) step 6). Connect the pack with USB plugged in:
+   BAT_NTC (U101 pin 1, TS, or RT101's pad on the copper patch side) reads about 0.75 V at 25 C
+   (75 uA into RT101's 10k), CHG_STAT (GPIO8) is low while charging, the MAX17048 reports a
+   sensible state of charge, and the charge current measured in the battery lead is about 0.42 A
+   less the system load (on USB the input limit, typically 0.424 A, is below the 0.445 A ICHG
+   setting). CHG_STAT low with no charge current means a TS fault: RT101 open (a lifted or
+   tombstoned pad), or the board at RT101 outside -0.5 to 51 C (TS outside 0.30 to 2.1 V). Then
+   charge a cell from about 3.5 V with a thermocouple taped to it and compare it with RT101's
+   temperature (from the TS voltage and the NCP15XH103 table) after 30 minutes: RT101 reads the
+   board under the cell, so expect it a few degrees warmer (see `rev-a.md`, open items).
 10. **Perch.** Dock on a powered perch: DOCK_DET (GPIO1) about 330 mV, CHG_PGOOD low, LED on
     the perch lit.
 11. **Power.** Measure deep-sleep current from the pack (target about 44 uA, see `rev-a.md`),

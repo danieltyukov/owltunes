@@ -172,8 +172,9 @@ pins = { 1 = "VIN_CHG", 2 = "VBUS_DOCK" }
 # a JST PH 2.0 plug. The BQ24073 does not charge with TS open, so the board carries its own NTC,
 # RT101, on the back under the cell; a pack's own NTC wire, if it has one, is not used.
 # NCP15XH103F03RC follows the 103AT-2 curve that the TS thresholds assume (B25/85 3434 K against
-# 3435 K; 27.2k at 0 C and 4.16k at 50 C against 27.3k and 4.16k). No 10k NTC is Basic or Preferred
-# at JLC (checked 2026-10-11); this Murata part is Extended, stock 299792 on 2026-10-11.
+# 3435 K; 27.4k at 0 C and 4.16k at 50 C on Murata's table against 27.3k and 4.16k). No 10k NTC is
+# Basic or Preferred at JLC (checked 2026-10-11); this Murata part is Extended, stock 299792 on
+# 2026-10-11.
 [[part]]
 ref = "J101"
 sheet = "power"

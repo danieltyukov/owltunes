@@ -21,13 +21,15 @@ from the ring test; see [ring-test.md](ring-test.md).
 4. **Keys.** Beak key into the face slot from inside; ear keys into the top slots from inside.
 5. **LRA.** Crimp SSH-003T-P0.2-H contacts on the motor's two leads, push them into an
    SHR-02V-S-B housing (red lead in pin 1), glue the motor into the back cover cup.
-6. **Battery.** The pack is a 1S LiPo 803040 (about 1000 mAh) with a protection circuit and a
-   10k NTC, on a JST PH 3-pin housing wired +, NTC, - to match J101. A pack without the NTC does
-   not charge: the charger reads the open NTC contact as cold (see `bringup.md` step 9 for a
-   bench workaround). J101 has no reverse-polarity protection, so before plugging in, check with a
-   multimeter that the pack's plug carries + on pin 1, about 10 kOhm (NTC at 25 C) between pins 2
-   and 3, and - on pin 3 (silkscreen `+ NTC -` next to J101, pin 1 marked). If the order differs,
-   lift each contact's latch with a needle and move the wires. No soldering.
+6. **Battery.** The pack is a 1S LiPo 803040 (8 x 30 x 40 mm, about 1000 mAh) with a protection
+   circuit and a 2-wire lead on a JST PH 2.0 2-pin plug. It needs no NTC wire: the charger reads
+   RT101, an NTC on the board under the cell. A 3-wire pack (with its own NTC) works too: move
+   its positive and negative contacts into a 2-pin JST PHR-2 housing and insulate the NTC wire,
+   which is unused. J101 has no reverse-polarity protection, and many packs are wired the other
+   way round. Before plugging in, hold the plug the way it mates with J101 and check with a
+   multimeter that the contact facing the `+` mark (pin 1, with the dot) is positive and the one
+   facing `-` is negative; the red wire should be on `+`. If the order differs, lift each
+   contact's latch with a needle and swap the two wires. No soldering.
 7. **Dock pads.** Snap the dock-pad section off the perch board at the mouse bites, file the
    neck flush, glue it into the back cover recess with the gold pads facing out. Plug a straight
    4-pin JST SH cable (pin 1 to pin 1) into its J2; the other end goes to J303 on the main board.
