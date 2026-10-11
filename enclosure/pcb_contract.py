@@ -98,8 +98,10 @@ PLACEMENTS = (
     Placement("SW202", 20.0, EAR_SWITCH_Y, 0.0, "back", 4.7, 2.9, 1.35,
               "right ear switch, knob faces up, key runs behind the board", knob=EVQ_KNOB),
     Placement("U304", 17.0, 31.5, 0.0, "front", 2.1, 2.1, 0.65, "ambient light sensor behind the brow window"),
-    Placement("J301", 0.0, 12.0, 0.0, "front", 11.5, 5.6, 1.0,
-              "display FPC, provisional until the paper FPC check", cv=1.0),
+    # rot 180: the FH26W takes the FPC from footprint +v, which then faces up, so the flex that
+    # folds over the panel's top edge runs straight down into it (at rot 0 it would need a fold).
+    Placement("J301", 0.0, 12.0, 180.0, "front", 11.5, 5.6, 1.0,
+              "display FPC, entry faces the panel's top edge; reach provisional until the paper FPC check", cv=1.0),
     Placement("J101", 22.0, 18.0, 90.0, "back", 9.9, 7.6, 4.8, "battery connector, wires run down to the pack", cv=0.6),
     Placement("J303", 14.0, -32.0, 180.0, "back", 6.0, 4.25, 2.95, "dock link to the dock-pad board", cv=SH_CV),
     Placement("J302", 24.0, -20.0, 90.0, "back", 4.0, 4.25, 2.95, "LRA lead connector, motor on the right", cv=SH_CV),

@@ -564,10 +564,10 @@
       "kicad_y": 88.0,
       "knob": [],
       "ref": "J301",
-      "rot": 0.0,
+      "rot": 180.0,
       "side": "front",
       "w": 11.5,
-      "why": "display FPC, provisional until the paper FPC check",
+      "why": "display FPC, entry faces the panel's top edge; reach provisional until the paper FPC check",
       "x": 0.0,
       "y": 12.0
     },
