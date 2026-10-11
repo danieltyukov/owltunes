@@ -102,6 +102,12 @@ POLARITY_BUMP_R = 31.75
 SENSOR_ANGLE_DEG = 180.0
 PCB_T = 1.0  # main board thickness (4-layer)
 HALL_ELEMENT_H = 0.70  # Hall element height above its seating plane, TMAG5273 figure 6-2 (estimate)
+# Product gap (Task 7, provisional until the Task 9 measurements): 3.0 mm, so the board front sits
+# 0.3 mm behind the rotating carrier flange (the product carrier has no polarity bumps). Kept at
+# 3.0 rather than 3.2 (0.5 mm) because enclosure v1 is already 23.5 mm deep, every 0.1 mm of gap
+# adds 0.1 mm of depth, and pressing the ring cannot push it back towards the board: its front lip
+# rests on the bearing or sleeve front face (the carrier lets it move 0.2 mm forward only). Task 9
+# measures the real flange-to-board clearance on the prints and may move this to 3.2 (23.7 mm deep).
 HALL_GAP_NOMINAL = 3.0  # test: magnet face to Hall element; the board front then sits 0.3 mm behind the flange
 HALL_GAP_STEPS = (4.5, 3.5, 2.5, 1.5)  # gaps the jig gives with spacers of 0, 1, 2 and 3 mm
 
@@ -161,3 +167,9 @@ ANT_Y_BOTTOM = ANT_Y_TOP - ANTENNA_L  # 36.6
 ANT_TAB_W = 32.0
 ANT_TAB_TOP = 50.0
 MODULE_SIDE = "back"  # the WROOM-1 sits on the PCB back side; its antenna overhangs the top edge
+
+# Dock contacts on the owl's back cover (dock-pad board) and the perch's pogo pins. Owl
+# coordinates; nets from left to right as seen from the front, x = -4.5, 0, +4.5.
+DOCK_PAD_PITCH = 4.5
+DOCK_PAD_Y = -31.0
+DOCK_PAD_ORDER = ("PAD_DET", "PAD_GND", "PAD_VBUS")
