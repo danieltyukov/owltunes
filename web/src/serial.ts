@@ -32,7 +32,10 @@ export async function openSerial(onData: (chunk: Uint8Array) => void, onClose: (
   await port.open({ baudRate: 115200 });
   try {
     // Keep DTR and RTS low: on boards with an auto-reset circuit, moving them resets the ESP32.
-    await port.setSignals?.({ dataTerminalReady: false, requestToSend: false });
+    // RTS goes first. Chrome applies each line on its own, and DTR low while RTS is still high is
+    // the reset request of the ESP32-S3's own USB port.
+    await port.setSignals?.({ requestToSend: false });
+    await port.setSignals?.({ dataTerminalReady: false });
     if (port.readable === null || port.writable === null) {
       throw new Error("the port opened without streams");
     }
