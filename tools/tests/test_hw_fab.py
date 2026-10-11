@@ -52,6 +52,29 @@ class FabVerifyTest(unittest.TestCase):
         self.assertIn("BOM refs differ: extra ['TP1'], missing []", errors)
         self.assertIn("U1: CPL layer top, design side back", errors)
 
+    def test_duplicate_designators_and_wrong_quantity_fail(self):
+        good_pos = "U1,0,0,90,bottom\nSW1,0,-35,0,top\n"
+        out = self.write('U1,QFN,1,BQ,C15220\nSW1,SW,1,Beak,C720477\nSW1,SW,1,Beak,C720477\n', good_pos)
+        self.assertIn("BOM lists SW1 more than once", verify(out, "b", DESIGN, 4))
+        out = self.write('U1,QFN,1,BQ,C15220\nSW1,SW,1,Beak,C720477\n', good_pos + "SW1,0,-35,0,top\n")
+        self.assertIn("CPL lists SW1 more than once", verify(out, "b", DESIGN, 4))
+        out = self.write('U1,QFN,2,BQ,C15220\nSW1,SW,1,Beak,C720477\n', good_pos)
+        self.assertIn("BOM row 'U1' has quantity 2 for 1 designator(s)", verify(out, "b", DESIGN, 4))
+
+    def test_npth_only_drill_fails(self):
+        out = self.write('U1,QFN,1,BQ,C15220\nSW1,SW,1,Beak,C720477\n', "U1,0,0,90,bottom\nSW1,0,-35,0,top\n")
+        with zipfile.ZipFile(out / "b.zip", "w") as z:
+            for layer in LAYERS[4]:
+                z.writestr(f"b-{layer}.gbr", "")
+            z.writestr("b-NPTH.drl", "")
+        self.assertIn("drill file missing", verify(out, "b", DESIGN, 4))
+
+    def test_assembled_part_without_lcsc_is_an_error_not_a_crash(self):
+        design = {"part": DESIGN["part"] + [{"ref": "C9", "side": "front"}]}
+        out = self.write('U1,QFN,1,BQ,C15220\nSW1,SW,1,Beak,C720477\nC9,0402,1,1u,C1\n',
+                         "U1,0,0,90,bottom\nSW1,0,-35,0,top\nC9,0,0,0,top\n")
+        self.assertIn("C9: assembled part has no lcsc in design.toml", verify(out, "b", design, 4))
+
 
 if __name__ == "__main__":
     unittest.main()
