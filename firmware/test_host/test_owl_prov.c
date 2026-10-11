@@ -259,6 +259,32 @@ static void test_expired_session_rejects_code(void)
                              owl_prov_accept_code(&prov, "AQDcode", STATE, OWL_PROV_SESSION_MS + 1));
 }
 
+static void test_longest_code_fits_one_line(void)
+{
+    /* 1023 characters, the longest code the owl takes, with a state that carries the longest
+     * IPv4 address: the request still fits one protocol line. */
+    static char code[1024];
+    static char json[OWL_PROV_LINE_MAX];
+    memset(code, 'A', 1023);
+    code[1023] = '\0';
+    fresh();
+    owl_prov_set_network(&prov, true, "192.168.123.234");
+    send("{\"id\":1,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT "\",\"redirect_uri\":\"" REDIRECT
+         "\"}");
+    TEST_ASSERT_TRUE(ok());
+    owl_prov_take_actions(&prov);
+    send("{\"id\":2,\"cmd\":\"spotify_begin\"}");
+    TEST_ASSERT_TRUE(ok());
+    const char *state = strstr(field("authorize_url"), "&state=");
+    TEST_ASSERT_NOT_NULL(state);
+    int n = snprintf(json, sizeof json,
+                     "{\"id\":2147483647,\"cmd\":\"spotify_code\",\"code\":\"%s\",\"state\":\"%s\"}", code,
+                     state + strlen("&state="));
+    TEST_ASSERT_TRUE(n > 0 && (size_t)n + strlen("@owl \n") <= OWL_PROV_LINE_MAX);
+    send(json);
+    TEST_ASSERT_TRUE(ok());
+}
+
 static void test_code_with_unsafe_characters_is_rejected(void)
 {
     linkable();
@@ -525,6 +551,7 @@ int main(void)
     RUN_TEST(test_wrong_state_is_rejected);
     RUN_TEST(test_code_without_session_is_rejected);
     RUN_TEST(test_expired_session_rejects_code);
+    RUN_TEST(test_longest_code_fits_one_line);
     RUN_TEST(test_code_with_unsafe_characters_is_rejected);
     RUN_TEST(test_second_code_while_exchanging_is_busy);
     RUN_TEST(test_failed_exchange_ends_session);

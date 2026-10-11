@@ -7,7 +7,7 @@ now and are meant to travel over Bluetooth later, so the console can also be use
 
 - One message per line: the prefix `@owl ` (with its space), compact JSON, then a newline. A
   line also ends at a carriage return, so CR LF and a bare CR work too.
-- A line is at most 1024 bytes, prefix and newline included. Longer lines are dropped whole.
+- A line is at most 1536 bytes, prefix and newline included. Longer lines are dropped whole.
 - Lines the owl prints without the prefix are the firmware's log; the setup page skips them. Lines
   the computer sends without the prefix are not ignored: the owl treats them as developer
   commands ([console.md](console.md)) and answers with `@owl` events this page does not list, which
@@ -73,7 +73,7 @@ Errors in a reply (`"ok":false`):
 | `no_session` | `spotify_code` without an open login. |
 | `expired` | The login was opened more than 10 minutes ago. |
 | `bad_state` | The `state` does not match the open login. |
-| `bad_code` | The code is empty, longer than 511 characters, or has characters outside `A-Z a-z 0-9 - . _ ~`. |
+| `bad_code` | The code is empty, longer than 1023 characters, or has characters outside `A-Z a-z 0-9 - . _ ~`. |
 | `busy` | The owl is already exchanging a code. |
 
 The `error` of a `spotify` event:
@@ -119,7 +119,7 @@ The `error` of a `network` event:
    - the line `@owl {"id":1,"cmd":"spotify_code","code":"...","state":"..."}` pasted into the USB
      console.
 4. The owl accepts a code only for an open, unexpired login whose state matches exactly (compared
-   in constant time), and only when the code is 1 to 511 URL-safe characters
+   in constant time), and only when the code is 1 to 1023 URL-safe characters
    (`A-Z a-z 0-9 - . _ ~`). It exchanges the code at `https://accounts.spotify.com/api/token`
    itself, saves the refresh token to flash, and then reports `spotify` `linked`, or `failed`
    when the exchange or the save did not work. The verifier, access token and refresh token never

@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 #define OWL_PROV_PREFIX "@owl "
-#define OWL_PROV_LINE_MAX 1024
+#define OWL_PROV_LINE_MAX 1536 /* holds a spotify_code request with a 1023-character code */
 #define OWL_PROV_PROTOCOL 1
 #define OWL_PROV_MAX_NETWORKS 4
 #define OWL_PROV_SESSION_MS (10 * 60 * 1000)

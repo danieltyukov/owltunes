@@ -1,7 +1,7 @@
 // The @owl line protocol, mirrored from firmware/components/provisioning (docs/provisioning-protocol.md).
 
 export const PREFIX = "@owl ";
-export const LINE_MAX = 1024;
+export const LINE_MAX = 1536;
 
 export type Params = Record<string, unknown>;
 

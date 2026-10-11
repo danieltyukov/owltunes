@@ -14,7 +14,7 @@
 #include "spotify_gate.h"
 #include "spotify_parse.h"
 
-#define REQUEST_MAX 1024
+#define REQUEST_MAX 2048 /* the code exchange body carries a code of up to 1023 characters */
 #define RESPONSE_MAX 4096
 
 static const char *TAG = "spotify_link";

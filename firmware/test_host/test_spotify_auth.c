@@ -48,10 +48,17 @@ static void test_code_validation(void)
     TEST_ASSERT_FALSE(spotify_code_valid(""));
     TEST_ASSERT_FALSE(spotify_code_valid("abc&state=x"));
     TEST_ASSERT_FALSE(spotify_code_valid("abc\"def"));
-    char long_code[SPOTIFY_CODE_LEN + 1];
-    memset(long_code, 'A', SPOTIFY_CODE_LEN);
-    long_code[SPOTIFY_CODE_LEN] = '\0';
-    TEST_ASSERT_FALSE(spotify_code_valid(long_code));
+    /* Spotify's codes were 563 characters long in October 2026; up to 1023 are accepted. */
+    static char code[1025];
+    memset(code, 'A', 563);
+    code[563] = '\0';
+    TEST_ASSERT_TRUE(spotify_code_valid(code));
+    memset(code, 'A', 1023);
+    code[1023] = '\0';
+    TEST_ASSERT_TRUE(spotify_code_valid(code));
+    memset(code, 'A', 1024);
+    code[1024] = '\0';
+    TEST_ASSERT_FALSE(spotify_code_valid(code));
 }
 
 static void test_pkce_from_random_bytes(void)
