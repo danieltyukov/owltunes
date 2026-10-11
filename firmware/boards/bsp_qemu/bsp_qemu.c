@@ -33,3 +33,11 @@ lv_display_t *bsp_display_init(void)
     lv_display_set_flush_cb(disp, flush_cb);
     return disp;
 }
+
+void bsp_status_led(uint8_t r, uint8_t g, uint8_t b)
+{
+    /* QEMU has no status LED. */
+    (void)r;
+    (void)g;
+    (void)b;
+}

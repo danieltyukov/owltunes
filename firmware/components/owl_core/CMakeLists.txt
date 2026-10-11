@@ -8,6 +8,7 @@ set(OWL_CORE_SRCS
     src/owl_gesture.c
     src/owl_app.c
     src/owl_crypto.c
+    src/owl_status.c
 )
 
 if(ESP_PLATFORM)

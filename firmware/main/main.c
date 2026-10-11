@@ -14,9 +14,11 @@
 #include "lvgl.h"
 #include "net.h"
 #include "owl_app.h"
+#include "owl_status.h"
 #include "owl_ui.h"
 #include "provisioning_task.h"
 #include "settings_store.h"
+#include "status.h"
 
 static const char *TAG = "owltunes";
 
@@ -67,7 +69,10 @@ void app_main(void)
         inputs.wifi = view.network_up;
         inputs.setup =
             (owl_ui_setup_t){view.mode, setup_url, name, view.error[0] != '\0' ? view.error : NULL};
-        owl_ui_render(ui, &app, &player, &inputs, esp_timer_get_time() / 1000);
+        int64_t now = esp_timer_get_time() / 1000;
+        owl_ui_render(ui, &app, &player, &inputs, now);
+        owl_rgb_t led = owl_status_led(status_now(), now);
+        bsp_status_led(led.r, led.g, led.b);
         uint32_t wait = lv_timer_handler();
         if (!announced) {
             ESP_LOGI(TAG, "OWL_BOOT_OK board=%s track=\"%s\" name=%s", CONFIG_OWL_BOARD_NAME,

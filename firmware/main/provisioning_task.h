@@ -1,13 +1,16 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "owl_ui.h"
 
 typedef struct {
     owl_ui_setup_mode_t mode;
     bool network_up;
-    char error[64]; /* sentence for the setup screen, "" when there is none */
+    bool linked;        /* a Spotify login is saved */
+    uint8_t n_networks; /* saved Wi-Fi networks */
+    char error[64];     /* sentence for the setup screen, "" when there is none */
 } provisioning_view_t;
 
 /* Load the saved settings, take over the console and start the protocol task. */

@@ -50,3 +50,24 @@ Serial, so close the monitor before you connect the page: only one program can h
 Console output is dropped when nobody is reading the port, so the firmware never stalls waiting
 for a host. After the transmit buffer fills, a line may be cut short. If the setup page reports the
 port as busy, close the monitor (or any other program holding it) and connect again.
+
+## Status LED
+
+The RGB LED shows the one thing the owl most needs you to know. The console's `info` command will
+report the same status by name once the developer console arrives (a later task). The Wi-Fi, login and
+playback statuses appear as those features arrive: until then only `needs_wifi`, `joining`,
+`needs_login`, `linking` and `log_in_again` can show.
+
+| LED | Status | Meaning |
+|---|---|---|
+| Blue, slow blink | `needs_wifi` | No Wi-Fi network saved: open the setup page |
+| Blue, fast blink | `joining` | Joining a saved network, or waiting to try again |
+| Amber, slow blink | `needs_login` | Online, but not linked to Spotify yet |
+| Cyan, fast blink | `linking` | Exchanging the Spotify login code |
+| Red, slow blink | `log_in_again` | Spotify refused the saved login: log in again |
+| Green, fast blink | `starting` | Linked and online, reading the playback state |
+| Green | `playing` | Something is playing |
+| Dim green | `paused` | Playback is paused |
+| Amber | `no_device` | No Spotify device is active: start Spotify on a phone or computer |
+| Magenta, slow blink | `rate_limited` | Spotify asked the owl to slow down for a moment |
+| Magenta | `quota` | Spotify's quota for the app is used up until its Retry-After time |

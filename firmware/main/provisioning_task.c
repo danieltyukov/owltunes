@@ -96,6 +96,8 @@ static void publish_view(void)
     xSemaphoreTake(s_view_lock, portMAX_DELAY);
     s_view.mode = mode;
     s_view.network_up = s_prov.network_up;
+    s_view.linked = s_prov.settings.refresh_token[0] != '\0';
+    s_view.n_networks = s_prov.settings.n_networks;
     owl_utf8_copy(s_view.error, sizeof s_view.error, s_error);
     xSemaphoreGive(s_view_lock);
 }
