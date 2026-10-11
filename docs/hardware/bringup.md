@@ -15,7 +15,7 @@ steps that drive pins need a test build that takes its pins from
    while the ESP32-S3 boots.
 3. **USB.** Plug USB-C into a computer: `lsusb` shows `303a:1001` (USB Serial/JTAG). VIN_CHG
    (TP101) about 4.6 V and CHG_PGOOD low (measure at GPIO7 or R105). With a USB current meter in
-   line, the input current settles at or below 0.52 A.
+   line, the input current settles at or below 0.48 A.
 4. **Flash.** Flash over USB with `esptool`. If the module does not enumerate, hold BOOT low
    (short TP202 to TP203) while touching RESET (TP201 to TP203), then release BOOT.
 5. **Sensor bus.** An I2C scan on GPIO42 (SDA) and GPIO41 (SCL) finds 0x19, 0x35, 0x36, 0x44 and
@@ -31,11 +31,14 @@ steps that drive pins need a test build that takes its pins from
 8. **Ring.** Read the TMAG5273 at 0x35 while turning the ring: the angle advances half the
    magnet count of cycles per turn.
 9. **Battery and charging.** Check the pack's polarity first (J101 has no reverse-polarity
-   protection; see [assembly.md](assembly.md) step 6). Connect the pack: CHG_STAT (GPIO8) low
-   while charging, the MAX17048 reports a sensible state of charge, and the charge current
-   measured in the battery lead is up to about 0.45 A (less by the system load, since the input
-   is limited to about 0.46 A). BAT_NTC (J101 pin 2, the charger's TS pin) reads about 0.75 V at
-   25 C (75 uA into 10k).
+   protection; see [assembly.md](assembly.md) step 6). Connect the pack: BAT_NTC (J101 pin 2,
+   the charger's TS pin) reads about 0.75 V at 25 C (75 uA x 10k), CHG_STAT (GPIO8) is low while
+   charging, the MAX17048 reports a sensible state of charge, and the charge current measured in
+   the battery lead is about 0.42 A less the system load (on USB the input limit, typically
+   0.424 A, is below the 0.445 A ICHG setting). CHG_STAT low with no charge current means a TS
+   fault: an open or out-of-range NTC. A 2-wire pack (no NTC) does not charge; for the bench, a
+   10k resistor between the NTC and - contacts of its housing lets it charge, but then nothing
+   stops charging when the cell is too hot or too cold.
 10. **Perch.** Dock on a powered perch: DOCK_DET (GPIO1) about 330 mV, CHG_PGOOD low, LED on
     the perch lit.
 11. **Power.** Measure deep-sleep current from the pack (target about 44 uA, see `rev-a.md`),

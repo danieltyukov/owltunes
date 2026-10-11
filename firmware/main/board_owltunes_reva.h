@@ -51,7 +51,7 @@
 #define OWL_PIN_CHG_STAT 8  /* BQ24073 CHG, low while charging or in a TS fault (not a wake source) */
 
 /* Charger input control: high suspends the input (BQ24073 EN1 with EN2 high); low leaves the
- * input limit set by ILIM (about 0.46 A). 100k pull-down; GPIO45 is the VDD_SPI strapping pin
+ * input limit set by ILIM (about 0.42 A). 100k pull-down; GPIO45 is the VDD_SPI strapping pin
  * and must be low at reset. */
 #define OWL_PIN_CHG_SUSPEND 45
 
@@ -84,8 +84,8 @@
 #define OWL_DOCK_MV_PERCH_MAX 600
 #define OWL_DOCK_MV_OPEN_MIN 2500
 
-/* USB: the charger input limit (R102 3.3k) is 0.46 A typical and 0.52 A worst case, sized for USB
- * 2.0 default power, so any USB configuration descriptor the firmware sends declares 500 mA. */
+/* USB: the charger input limit (R102 3.6k) is 0.42 A typical and 0.48 A worst case, inside USB 2.0
+ * default power, so any USB configuration descriptor the firmware sends declares 500 mA. */
 #define OWL_USB_MAX_POWER_MA 500
 
 /* Panel power order. Nothing may hold DISP_3V3 up through an I/O pin while it is off.

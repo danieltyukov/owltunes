@@ -20,7 +20,7 @@ is a header only for now: rev A board support arrives with the P3 board selectio
    |  CC: 5.1k x2
  VBUS_USB --TVS-- Schottky --+
                              +-- VIN_CHG -- BQ24073 --- VSYS --- TPS63802 --- +3V3 (always on)
- VBUS_DOCK -TVS-- Schottky --+   (ILIM 0.46 A)  |  ICHG 0.45 A    (3.30 V)        |
+ VBUS_DOCK -TVS-- Schottky --+   (ILIM 0.42 A)  |  ICHG 0.45 A    (3.30 V)        |
    (J303 from the dock pads)                    BAT --- JST PH: 1S LiPo + 10k NTC   +-- TPS22917 -- DISP_3V3
                                                 |                                    |    (AMOLED, touch)
                                           MAX17048 (VBAT)                            +-- ESP32-S3-WROOM-1-N16R8
@@ -50,13 +50,14 @@ gap adds 0.1 mm of depth.
 
 Charger (BQ24073, TI SLUS810N section 8.5):
 - Fast charge: ICHG = KISET / RISET = 890 / 2000 = 0.445 A (0.399 to 0.488 A over KISET 797 to 975).
-- Input limit: IIN = KILIM / RILIM with R102 = 3.3k: 1525 / 3300 = 0.46 A (0.40 to 0.52 A over
-  KILIM 1330 to 1720). The typical 0.46 A stays inside USB 2.0 default power (500 mA); the
-  worst-case 0.52 A is 4 % above it. USB 2.0 default power is the target because the board has
-  plain 5.1k Rd on CC1 and CC2 and does not read CC, the ESP32-S3 is a USB 2.0 device, and VIN-DPM
-  is off in ILIM mode.
-  When the system load plus the charge current reaches the limit, the charger takes the
-  difference out of the charge current. Faster charging needs CC sensing (rev B).
+- Input limit: IIN = KILIM / RILIM with R102 = 3.6k: 1330, 1525 and 1720 A-ohm (minimum,
+  typical, maximum) give 0.369, 0.424 and 0.478 A (0.483 A with the resistor 1 % low), so even the
+  worst case stays inside USB 2.0 default power (500 mA), which the firmware declares. USB 2.0
+  default power is the target because the board has plain 5.1k Rd on CC1 and CC2 and does not
+  read CC, the ESP32-S3 is a USB 2.0 device, and VIN-DPM is off in ILIM mode. A 3.3k ILIM would
+  charge about 9 % faster but reaches 0.52 A at its worst case.
+- The typical input limit (0.424 A) is below ICHG (0.445 A), so on USB the input limit sets the
+  charge current: about 0.42 A less the system load. Faster charging needs CC sensing (rev B).
 - EN2 is tied high through R103, so firmware chooses between the ILIM limit (CHG_SUSPEND low)
   and input suspend (CHG_SUSPEND high).
 - Precharge 88 / 2000 = 44 mA; termination 10 % of ICHG = 45 mA; timers 30 min and 5 h (TMR open).
@@ -65,9 +66,10 @@ Charger (BQ24073, TI SLUS810N section 8.5):
   (28k): 0 to 4 C. An open TS (no NTC) reads above VCOLD, so it counts as cold. Check the bought
   cell's charge temperature limit against the hot cut-off.
 - Dissipation in fast charge: (VIN - VOUT) x IIN + (VOUT - VBAT) x ICHG with OUT at 4.4 V and
-  about 4.6 V at IN: 0.2 x 0.46 + 0.9 x 0.445 = 0.49 W at VBAT 3.5 V, up to about 0.72 W at
-  VBAT 3.0 V where fast charge starts. The charger regulates at 125 C junction; U101 is kept out
-  of the battery footprint.
+  about 4.6 V at IN. At the typical limit (charge current 0.424 A): 0.2 x 0.424 + 0.9 x 0.424 =
+  0.47 W at VBAT 3.5 V, about 0.68 W at VBAT 3.0 V where fast charge starts; up to about 0.77 W
+  with the worst-case 0.478 A limit at VBAT 3.0 V. The charger regulates at 125 C junction; U101
+  is kept out of the battery footprint.
 - Schottky PMEG2020EH: under 0.38 V at the input limit, so the charger sees about 4.6 V from a
   5.0 V source.
 - IN capacitance: C101 4.7 uF (BQ24073 IN accepts 1 to 10 uF) keeps the capacitance a USB host
@@ -167,7 +169,7 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Dock pads | on the main board | separate dock-pad board, cabled to J303 | the main board is about 11 mm in front of the back surface |
 | Antenna keep-out | 15 mm from the ring | not reachable in 66 x 84 mm | to be measured in the ring test (RSSI with and without the ring stack); WROOM-1U fallback on the same pads |
 | Owl depth | about 22 mm | 23.5 mm | bearing plus a 3.0 mm sensor gap |
-| Charger input limit | not stated | about 0.46 A | USB 2.0 default power without CC sensing; faster charging needs CC sensing in rev B |
+| Charger input limit | not stated | 0.424 A typical, 0.478 A worst case (R102 3.6k) | USB 2.0 default power without CC sensing; faster charging needs CC sensing in rev B |
 | Cover glass retention | not stated | adhesive: glass on an adhesive ring, 1.3 mm retainer ring glued into the lip opening | a snap does not fit the 1.3 mm lip with the bearing behind it; a mechanical lock is a v2 item |
 
 ## Open items checked at bring-up
