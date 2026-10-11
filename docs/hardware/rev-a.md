@@ -62,7 +62,8 @@ Charger (BQ24073, TI SLUS810N section 8.5):
 - Precharge 88 / 2000 = 44 mA; termination 10 % of ICHG = 45 mA; timers 30 min and 5 h (TMR open).
 - NTC: 75 uA into the 10k NTC. Charging stops above VHOT 0.30 V (4.0k): 47 to 51 C depending on
   the NTC's B value (B 3950: 47.2 C, B 3435: 50.8 C, B 3380: 51.2 C). It stops below VCOLD 2.1 V
-  (28k): 0 to 4 C. Check the bought cell's charge temperature limit against the hot cut-off.
+  (28k): 0 to 4 C. An open TS (no NTC) reads above VCOLD, so it counts as cold. Check the bought
+  cell's charge temperature limit against the hot cut-off.
 - Dissipation in fast charge: (VIN - VOUT) x IIN + (VOUT - VBAT) x ICHG with OUT at 4.4 V and
   about 4.6 V at IN: 0.2 x 0.46 + 0.9 x 0.445 = 0.49 W at VBAT 3.5 V, up to about 0.72 W at
   VBAT 3.0 V where fast charge starts. The charger regulates at 125 C junction; U101 is kept out
@@ -141,8 +142,12 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 
 - J101 (battery) has no reverse-polarity protection. Check the pack's polarity against the
   silkscreen `+ NTC -` before plugging it in (see [assembly.md](assembly.md)).
-- With TS floating (a pack without an NTC), the BQ24073 charges without temperature monitoring.
-  The BQ24075 alternate listed in `design.toml` would block charging instead.
+- TD (U101 pin 15) is tied to GND, so an open TS reads as cold (SLUS810N 9.3.5.3 and 9.3.6): a
+  pack without an NTC does not charge, and CHG stays low as if charging while no current flows.
+  The BQ24075 alternate listed in `design.toml` behaves the same. The pack must carry a 10k NTC
+  on a JST PH 3-pin housing wired +, NTC, - to match J101. For bring-up with a 2-wire pack, a 10k
+  resistor between the NTC and - contacts of the housing lets it charge, with no temperature
+  protection.
 - U202 (USBLC6-2SC6) pin 5 (VBUS) is left unconnected so the ESP32-S3's default D+ pull-up cannot
   back-feed the receptacle's VBUS through the upper steering diode when no cable is present. The
   USBLC6 still clamps through its internal rail; D201 (SMF5.0A) protects VBUS_USB and D301 protects

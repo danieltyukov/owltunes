@@ -21,7 +21,10 @@ from the ring test; see [ring-test.md](ring-test.md).
 4. **Keys.** Beak key into the face slot from inside; ear keys into the top slots from inside.
 5. **LRA.** Crimp SSH-003T-P0.2-H contacts on the motor's two leads, push them into an
    SHR-02V-S-B housing (red lead in pin 1), glue the motor into the back cover cup.
-6. **Battery.** J101 has no reverse-polarity protection, so before plugging in, check with a
+6. **Battery.** The pack is a 1S LiPo 803040 (about 1000 mAh) with a protection circuit and a
+   10k NTC, on a JST PH 3-pin housing wired +, NTC, - to match J101. A pack without the NTC does
+   not charge: the charger reads the open NTC contact as cold (see `bringup.md` step 9 for a
+   bench workaround). J101 has no reverse-polarity protection, so before plugging in, check with a
    multimeter that the pack's plug carries + on pin 1, about 10 kOhm (NTC at 25 C) between pins 2
    and 3, and - on pin 3 (silkscreen `+ NTC -` next to J101, pin 1 marked). If the order differs,
    lift each contact's latch with a needle and move the wires. No soldering.

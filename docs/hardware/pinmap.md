@@ -19,7 +19,7 @@ seen from the ESP32-S3. "Wake source" marks the seven ext1 `ANY_LOW` deep-sleep 
 | 5 | 5 | `HALL_INT` | In, active low | TMAG5273 INT, open drain, 47k pull-up; use latched mode. Wake source |
 | 6 | 6 | `IMU_INT1` | In, active low | LIS2DW12 INT1, push-pull, no pull-up; firmware sets it active low (H_LACTIVE = 1). Wake source |
 | 7 | 7 | `CHG_PGOOD` | In, active low | BQ24073 PGOOD, low while input power is valid; 100k pull-up. Wake source |
-| 8 | 12 | `CHG_STAT` | In, active low | BQ24073 CHG, low while charging; 100k pull-up |
+| 8 | 12 | `CHG_STAT` | In, active low | BQ24073 CHG, low while charging; also low during a TS fault, with no charge current; 100k pull-up |
 | 9 | 17 | `LCD_D3` | QSPI data | FSPI IO_MUX (FSPIHD) |
 | 10 | 18 | `LCD_CS` | Out, active low | FSPI IO_MUX (FSPICS0) |
 | 11 | 19 | `LCD_D0` | QSPI data | FSPI IO_MUX (FSPID) |

@@ -48,7 +48,7 @@
 #define OWL_PIN_HALL_INT 5  /* TMAG5273 INT, open drain, 47k pull-up; use latched interrupt mode */
 #define OWL_PIN_IMU_INT1 6  /* LIS2DW12 INT1: set push-pull, active low (H_LACTIVE = 1) before sleep */
 #define OWL_PIN_CHG_PGOOD 7 /* BQ24073 PGOOD, low while input power is valid */
-#define OWL_PIN_CHG_STAT 8  /* BQ24073 CHG, low while charging (not a wake source) */
+#define OWL_PIN_CHG_STAT 8  /* BQ24073 CHG, low while charging or in a TS fault (not a wake source) */
 
 /* Charger input control: high suspends the input (BQ24073 EN1 with EN2 high); low leaves the
  * input limit set by ILIM (about 0.46 A). 100k pull-down; GPIO45 is the VDD_SPI strapping pin
