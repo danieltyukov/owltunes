@@ -85,11 +85,18 @@ resets the board, and `--rom` flashes a board that waits in ROM download mode. `
 `--missing-network` add the Wi-Fi checks described below. The console log of the run is in
 `build/hil-nano/console.log`.
 
-Opening the serial port resets the board: the USB-Serial/JTAG controller restarts the chip
-when a program opens the port (reset reason `usb` in `info`); opening it reset the board 3 of 3 times
-with DTR and RTS held low.
-Every open therefore starts the firmware again, and the scripts wait for its `OWL_BOOT_OK` line
-before they send anything. A terminal opened while a test runs restarts the board too.
+The USB-Serial/JTAG controller restarts the chip (reset reason `usb` in `info`) when DTR goes low
+while RTS is still high. Opening the port alone does not restart it (measured on 11 October 2026).
+The scripts use pyserial, which lowers DTR before RTS when it opens the port, so every script
+restarts the firmware and waits for its `OWL_BOOT_OK` line before it sends anything. The setup
+page lowers RTS first and leaves the owl running. A terminal opened while a test runs may restart
+the board too.
+
+pyserial also leaves the port set to return at once when no data is waiting (`stty` shows
+`min = 0`), and Linux keeps that setting after the port is closed. Chrome's Web Serial then takes
+the empty read for a lost device, and the setup page says the owl was disconnected right after it
+connected. The scripts put the default back when they close the port. After any other serial tool,
+unplug the board and plug it in again, or run `stty -F /dev/ttyACM0 min 1` once.
 
 ## Wi-Fi
 

@@ -60,7 +60,10 @@ If the setup page was closed, the Spotify tab offers two other ways:
   default restarts the owl and wipes the open login. Press Enter after pasting.
 
 On Linux the browser needs permission to use the serial port: add your user to the `dialout`
-group (or the group that owns `/dev/ttyACM0`) or add a udev rule, then log in again.
+group (or the group that owns `/dev/ttyACM0`) or add a udev rule, then log in again. If the setup
+page says the owl was disconnected right after it connected, and a serial terminal used the port
+before, unplug the owl and plug it in again: some terminals leave the port in a mode that the
+browser takes for a lost device.
 
 Finish the login within 10 minutes of pressing **Log in with Spotify**.
 
