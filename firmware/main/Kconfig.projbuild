@@ -12,11 +12,15 @@ menu "OwlTunes"
         config OWL_BOARD_QEMU
             bool "QEMU emulator (virtual RGB panel, Ethernet)"
             select OWL_NET_ETH_QEMU
+
+        config OWL_BOARD_NANO_ESP32
+            bool "Arduino Nano ESP32 (no display, RGB status LED)"
     endchoice
 
     config OWL_BOARD_NAME
         string
         default "qemu" if OWL_BOARD_QEMU
+        default "nano_esp32" if OWL_BOARD_NANO_ESP32
 
     config OWL_NET_ETH_QEMU
         bool

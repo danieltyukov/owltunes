@@ -14,7 +14,7 @@ how the parts fit together should start as an issue so the design can be discuss
 | Writing style | `python3 tools/check_style.py` |
 | Host unit tests | `tools/test_host.sh` |
 | Simulator screenshots | `tools/sim.sh` |
-| Firmware build | `tools/firmware.sh build` (with ESP-IDF v6.1 activated) |
+| Firmware build | `tools/firmware.sh build` and `tools/firmware.sh build nano_esp32` (with ESP-IDF v6.1 activated) |
 | C formatting | `tools/format.sh --check` (`tools/format.sh` fixes it) |
 | Setup protocol in QEMU | `tools/qemu_prov_test.py` (after the firmware build) |
 | Setup site | `cd web && npm ci && npm test && npx playwright install chromium && npm run e2e` |
