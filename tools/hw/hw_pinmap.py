@@ -38,6 +38,10 @@ def check(pins: dict[str, int], nets: dict[str, set[str]]) -> list[str]:
             if ref == MODULE and pin in PIN_TO_GPIO and not name.startswith("unconnected-"):
                 gpio_net[PIN_TO_GPIO[pin]] = name.lstrip("/")
     errors = []
+    if not pins:
+        errors.append("the header has no OWL_PIN_ macros")
+    if not gpio_net:
+        errors.append(f"{MODULE} has no GPIO pin on a named net in the netlist")
     for name, gpio in sorted(pins.items()):
         if gpio_net.get(gpio) != name:
             errors.append(f"OWL_PIN_{name} = {gpio}, but GPIO{gpio} is on {gpio_net.get(gpio)!r}")

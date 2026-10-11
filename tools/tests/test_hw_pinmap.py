@@ -25,6 +25,12 @@ class PinmapTest(unittest.TestCase):
         self.assertIn("OWL_PIN_LCD_CS = 11, but GPIO11 is on None", errors)
         self.assertIn("GPIO0 carries 'BOOT' but the header has no OWL_PIN_BOOT 0", errors)
 
+    def test_empty_header_or_missing_module_is_an_error(self):
+        self.assertIn("the header has no OWL_PIN_ macros", check({}, NETS))
+        errors = check({}, {"GND": {"U1.1"}})
+        self.assertIn("the header has no OWL_PIN_ macros", errors)
+        self.assertIn("U201 has no GPIO pin on a named net in the netlist", errors)
+
     def test_unconnected_module_pins_need_no_macro(self):
         nets = dict(NETS, **{"unconnected-(U201-IO35-Pad28)": {"U201.28"}})
         self.assertEqual(check({"LCD_CS": 10, "BOOT": 0}, nets), [])
