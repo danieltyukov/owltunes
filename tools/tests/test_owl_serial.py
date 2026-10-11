@@ -62,6 +62,13 @@ class LoadEnvFileTest(unittest.TestCase):
             path.write_text("# private\nOWL_WIFI_SSID = Home 5G\n\nOWL_WIFI_PASSWORD=a=b#c\nnot a setting\n")
             self.assertEqual(load_env_file(path), {"OWL_WIFI_SSID": "Home 5G", "OWL_WIFI_PASSWORD": "a=b#c"})
 
+    def test_double_quotes_keep_spaces_at_the_ends(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d, "hil.env")
+            path.write_text('OWL_WIFI_SSID="Home 5G "\nOWL_WIFI_PASSWORD="a"b"\nOWL_X="\n')
+            self.assertEqual(load_env_file(path),
+                             {"OWL_WIFI_SSID": "Home 5G ", "OWL_WIFI_PASSWORD": 'a"b', "OWL_X": '"'})
+
     def test_missing_file_is_empty(self):
         self.assertEqual(load_env_file(pathlib.Path("/nonexistent/hil.env")), {})
 

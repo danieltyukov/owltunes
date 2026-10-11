@@ -65,14 +65,18 @@ def find_port(explicit: str | None = None, pattern: str = PORT_GLOB) -> str:
 
 
 def load_env_file(path: pathlib.Path) -> dict[str, str]:
-    """KEY=value lines from a private settings file such as private/hil.env; # starts a comment."""
+    """KEY=value lines from a private settings file such as private/hil.env; # starts a comment.
+    A value in double quotes keeps the spaces at its ends (a Wi-Fi name can end with one)."""
     values: dict[str, str] = {}
     if path.exists():
         for raw in path.read_text(encoding="utf-8").splitlines():
             line = raw.strip()
             if line and not line.startswith("#") and "=" in line:
                 key, value = line.split("=", 1)
-                values[key.strip()] = value.strip()
+                value = value.strip()
+                if len(value) >= 2 and value[0] == value[-1] == '"':
+                    value = value[1:-1]
+                values[key.strip()] = value
     return values
 
 
