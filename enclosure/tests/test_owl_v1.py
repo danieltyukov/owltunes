@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from build123d import Box, Compound, Cylinder, Edge, Pos, Vector, Vertex, import_step
+from build123d import Box, Compound, Cylinder, Edge, Pos, Rot, Vector, Vertex, import_step
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import owl_params as P  # noqa: E402
@@ -130,6 +130,37 @@ def test_lra_cup_is_clear_of_the_battery_and_magnets():
     assert x + r < C.BODY_W / 2 - C.WALL_T
     hall = placement("U302")
     assert ((x - hall.x) ** 2 + (y - hall.y) ** 2) ** 0.5 > 40.0
+
+
+def test_lra_cup_has_a_slot_for_the_lead_tab(parts):
+    cover = parts["back_cover"]
+    x0, y0 = V.LRA_XY
+    a = math.radians(P.LRA_SLOT_ANGLE_DEG)
+    along, across = Vector(math.cos(a), math.sin(a), 0), Vector(-math.sin(a), math.cos(a), 0)
+    wall = Vector(x0, y0, 0) + along * ((V.LRA_POCKET_D + V.LRA_CUP_OD) / 4)  # middle of the cup wall
+    # the slot cuts the whole wall height at the stated angle and is LRA_SLOT_W wide
+    assert P.LRA_SLOT_W >= P.LRA_TAB_W + 0.5
+    for z in (V.BATTERY_BACK_Z + 0.05, V.BATTERY_BACK_Z + V.LRA_CUP_H - 0.05):
+        for side in (-1, 1):
+            assert not cover.is_inside(wall + across * side * (P.LRA_SLOT_W / 2 - 0.05) + Vector(0, 0, z))
+            assert cover.is_inside(wall + across * side * (P.LRA_SLOT_W / 2 + 0.05) + Vector(0, 0, z))
+    # the plate under the slot stays whole
+    assert chords(cover, (wall.X, wall.Y, V.BACK_Z - 1.0), (wall.X, wall.Y, V.BATTERY_BACK_Z + 2.0)) == [pytest.approx(V.COVER_T)]
+    # the tab and its glue fit, 1.0 or more from the dock magnet bosses and the board-mount bosses
+    r0 = P.LRA_D / 2
+    tab = Pos(x0, y0, V.BATTERY_BACK_Z + P.LRA_TAB_H / 2) * Rot(0, 0, P.LRA_SLOT_ANGLE_DEG) * Pos(
+        (r0 + P.LRA_TAB_R) / 2, 0, 0
+    ) * Box(P.LRA_TAB_R - r0, P.LRA_TAB_W, P.LRA_TAB_H)
+    assert overlap_volume(tab, cover) < 1e-3
+    mid_z = V.BATTERY_BACK_Z + P.LRA_TAB_H / 2
+    for (bx, by), r in [(m, V.DOCK_MAGNET_D / 2 + V.DOCK_MAGNET_WALL) for m in V.DOCK_MAGNETS] + [(h, V.BOSS_R) for h in C.MOUNT_HOLES]:
+        assert tab.distance_to(Vector(bx, by, mid_z)) - r >= 1.0 - 1e-6
+    # the rest of the wall still holds the motor: seated it is free, pushed 0.5 towards the slot it
+    # meets the wall, and the slot is far narrower than the motor
+    motor = Pos(x0, y0, V.BATTERY_BACK_Z) * Cylinder(P.LRA_D / 2, P.LRA_T, align=R.BOTTOM)
+    assert overlap_volume(motor, cover) < 1e-3
+    assert overlap_volume(Pos(*(along * 0.5)) * motor, cover) > 0.01
+    assert 360 - 2 * math.degrees(math.asin(P.LRA_SLOT_W / V.LRA_POCKET_D)) >= 270
 
 
 def button_head(x: float, y: float, seat: float, towards: int):

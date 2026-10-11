@@ -27,6 +27,7 @@ from build123d import (
     Polyline,
     Pos,
     RectangleRounded,
+    Rot,
     Sketch,
     Text,
     export_step,
@@ -112,7 +113,7 @@ DOCK_MAGNET_FLOOR = 1.0  # cover skin between each magnet and the perch
 DOCK_MAGNET_WALL = 1.2
 LRA_XY = (26.0, -14.5)  # LD0832AA-0099F, 8 x 3.25 mm, glued into a cup on the cover
 LRA_POCKET_D = 8.3
-LRA_CUP_OD = 10.3  # 1.0 wall
+LRA_CUP_OD = 10.3  # 1.0 wall, slotted for the lead tab (owl_params LRA_SLOT_*)
 LRA_CUP_H = 1.5
 ALIGN_RECESSES = ((-20.0, -34.0), (20.0, -34.0))  # outside the dock-pad board recess
 ALIGN_D = 4.0
@@ -240,6 +241,14 @@ def back_cover(mark: bool = True) -> Part:
         plate -= by_depth(x, y, DOCK_MAGNET_D / 2, BACK_Z + DOCK_MAGNET_FLOOR, magnet_top + EPS)
     plate += by_depth(*LRA_XY, LRA_CUP_OD / 2, BATTERY_BACK_Z - EPS, BATTERY_BACK_Z + LRA_CUP_H)
     plate -= by_depth(*LRA_XY, LRA_POCKET_D / 2, BATTERY_BACK_Z, BATTERY_BACK_Z + LRA_CUP_H + EPS)
+    # slot through the cup wall for the motor's lead tab, down to the plate
+    r0, r1 = LRA_POCKET_D / 2 - 0.5, LRA_CUP_OD / 2 + 0.5
+    plate -= (
+        Pos(*LRA_XY, BATTERY_BACK_Z + (LRA_CUP_H + EPS) / 2)
+        * Rot(0, 0, P.LRA_SLOT_ANGLE_DEG)
+        * Pos((r0 + r1) / 2, 0, 0)
+        * Box(r1 - r0, P.LRA_SLOT_W, LRA_CUP_H + EPS)
+    )
     for x, y in ALIGN_RECESSES:
         plate -= by_depth(x, y, ALIGN_D / 2, BACK_Z - EPS, BACK_Z + ALIGN_DEPTH)
     if mark:
