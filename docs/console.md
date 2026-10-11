@@ -21,6 +21,8 @@ Commands are lowercase words.
 |---|---|---|
 | `help` | Lists the commands | `help` |
 | `info` | Describes the board and what it is doing | `info` |
+| `status`, `auth [refresh]`, `devices` | The Spotify runtime's own commands | Refused with `unavailable` until the runtime exists |
+| `play`, `pause`, `toggle`, `next`, `prev`, `vol <0-100\|+n\|-n>`, `like`, `unlike`, `transfer <n\|device id>` | Playback commands, sent one at a time (a device id is 1 to 64 letters, digits, `_` or `-`) | Refused with `unavailable` until the runtime exists |
 
 ## Lines
 
@@ -52,7 +54,7 @@ means a known command had a missing, extra or malformed argument.
 
 ### help
 
-`{"event":"help","commands":"help, info"}`
+`{"event":"help","commands":"help, info, status, auth [refresh], devices, play, pause, toggle, next, prev, vol <0-100|+n|-n>, like, unlike, transfer <n|device id>"}`
 
 ### time
 

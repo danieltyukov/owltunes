@@ -109,8 +109,10 @@ static void on_line(const char *line)
         built = owl_shell_cmd_line(s_out, sizeof s_out, "refused", name, "bad_arg", 0);
     } else if (cmd.verb == OWL_SHELL_HELP) {
         built = owl_shell_help_line(s_out, sizeof s_out);
-    } else {
+    } else if (cmd.verb == OWL_SHELL_INFO) {
         reply_info();
+    } else {
+        built = owl_shell_cmd_line(s_out, sizeof s_out, "refused", name, "unavailable", 0);
     }
     if (built) {
         owl_console_write(s_out);
