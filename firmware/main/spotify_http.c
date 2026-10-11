@@ -17,6 +17,8 @@ static const char *TAG = "spotify_http";
 static esp_http_client_handle_t s_client;
 static bool s_used;     /* the connection carried a request before, so Spotify may have closed it */
 static bool s_answered; /* the current request got at least a status line back */
+static bool s_opened;   /* the current request opened a new connection: it reused none */
+static bool s_dropped;  /* esp_http_client closed the connection during the current request */
 static char *s_body;
 static size_t s_len;
 static bool s_truncated;
@@ -26,6 +28,12 @@ static char s_auth[sizeof "Bearer " + SPOTIFY_ACCESS_TOKEN_LEN];
 static esp_err_t on_event(esp_http_client_event_t *evt)
 {
     switch (evt->event_id) {
+    case HTTP_EVENT_ON_CONNECTED:
+        s_opened = true;
+        break;
+    case HTTP_EVENT_DISCONNECTED:
+        s_dropped = true; /* for example after an answer with "Connection: close" */
+        break;
     case HTTP_EVENT_ON_STATUS_CODE:
     case HTTP_EVENT_ON_HEADERS_COMPLETE:
         s_answered = true;
@@ -100,6 +108,8 @@ static esp_err_t perform(const spotify_request_t *req, const char *access_token)
     s_len = 0;
     s_truncated = false;
     s_answered = false;
+    s_opened = false;
+    s_dropped = false;
     s_retry_after_s = -1;
     esp_http_client_set_url(s_client, url);
     esp_http_client_set_method(s_client, method_of(req->method));
@@ -150,8 +160,10 @@ esp_err_t spotify_http_call(const spotify_request_t *req, const char *access_tok
     if (!ensure_client()) {
         return ESP_ERR_NO_MEM;
     }
-    bool reused = s_used;
     esp_err_t err = perform(req, access_token);
+    /* Reused only when the connection had carried a request and is still the one this request
+     * went out on: esp_http_client reconnects by itself after it closed a connection. */
+    bool reused = s_used && !s_opened;
     if (err != ESP_OK && send_again(err, reused)) {
         ESP_LOGI(TAG, "the kept-alive connection was closed; reconnecting");
         spotify_http_close();
@@ -179,7 +191,7 @@ esp_err_t spotify_http_call(const spotify_request_t *req, const char *access_tok
         spotify_http_close();
         return err;
     }
-    s_used = true;
+    s_used = !s_dropped; /* a closed connection is fresh again for the next request */
     s_body[s_len] = '\0';
     out->status = esp_http_client_get_status_code(s_client);
     out->retry_after_s = s_retry_after_s;

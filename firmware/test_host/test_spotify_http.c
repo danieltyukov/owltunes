@@ -22,12 +22,14 @@ typedef struct {
     int status;
     const char *retry_after; /* NULL: no Retry-After header */
     const char *chunks[MAX_CHUNKS];
-    int repeat; /* send chunks[0] this many times (long bodies) */
+    int repeat;  /* send chunks[0] this many times (long bodies) */
+    bool closes; /* the client closes the connection after it (an answer with Connection: close) */
 } scripted_t;
 
 struct esp_http_client {
     esp_http_client_config_t config;
     int status;
+    bool connected; /* like esp_http_client, it opens a connection when it holds none */
 };
 
 static struct esp_http_client s_clients[MAX_PERFORMS];
@@ -79,6 +81,7 @@ esp_http_client_handle_t esp_http_client_init(const esp_http_client_config_t *co
     esp_http_client_handle_t c = &s_clients[s_inits++];
     c->config = *config;
     c->status = -1;
+    c->connected = false;
     s_authorization[0] = '\0';
     s_content_type[0] = '\0';
     return c;
@@ -148,6 +151,10 @@ esp_err_t esp_http_client_perform(esp_http_client_handle_t client)
     const scripted_t *s = &s_script[s_performs++];
     snprintf(s_auth_at_perform, sizeof s_auth_at_perform, "%s", s_authorization);
     client->status = -1; /* esp_http_client_fetch_headers starts each answer at -1 */
+    if (!client->connected) {
+        client->connected = true;
+        emit(client, HTTP_EVENT_ON_CONNECTED, NULL, NULL, NULL);
+    }
     if (s->status_line) {
         client->status = s->status;
         emit(client, HTTP_EVENT_ON_STATUS_CODE, NULL, NULL, NULL);
@@ -167,6 +174,10 @@ esp_err_t esp_http_client_perform(esp_http_client_handle_t client)
         for (int r = 0; r < (s->repeat > 0 && i == 0 ? s->repeat : 1); r++) {
             emit(client, HTTP_EVENT_ON_DATA, NULL, NULL, s->chunks[i]);
         }
+    }
+    if (s->closes) {
+        client->connected = false;
+        emit(client, HTTP_EVENT_DISCONNECTED, NULL, NULL, NULL);
     }
     return s->result;
 }
@@ -475,6 +486,22 @@ static void test_a_fetch_header_error_is_not_sent_again_on_a_fresh_connection_or
     TEST_ASSERT_EQUAL_INT(2, s_performs);
 }
 
+static void test_a_connection_the_client_closed_is_fresh_again(void)
+{
+    static spotify_request_t req;
+    spotify_http_response_t resp;
+    post("/v1/me/player/next", &req);
+    script((scripted_t){.result = ESP_OK, .status_line = true, .status = 204, .closes = true});
+    TEST_ASSERT_EQUAL(ESP_OK, spotify_http_call(&req, "tok", &resp));
+    /* The next request goes out on the new connection the client opens by itself; a failure there
+     * is not the stale case, so it is not sent twice (P8). */
+    script((scripted_t){.result = ESP_ERR_HTTP_FETCH_HEADER});
+    script(OK_204);
+    TEST_ASSERT_EQUAL(ESP_ERR_HTTP_FETCH_HEADER, spotify_http_call(&req, "tok", &resp));
+    TEST_ASSERT_EQUAL_INT(2, s_performs);
+    TEST_ASSERT_EQUAL_INT(1, s_inits); /* esp_http_client reconnected, the handle stayed */
+}
+
 #define RUN(test)                                                                                            \
     do {                                                                                                     \
         start();                                                                                             \
@@ -498,5 +525,6 @@ int main(void)
     RUN(test_a_401_is_an_answer_although_esp_http_client_fails_it);
     RUN(test_a_fetch_header_error_on_a_kept_alive_connection_is_sent_again);
     RUN(test_a_fetch_header_error_is_not_sent_again_on_a_fresh_connection_or_after_an_answer);
+    RUN(test_a_connection_the_client_closed_is_fresh_again);
     return UNITY_END();
 }
