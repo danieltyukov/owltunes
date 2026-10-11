@@ -169,6 +169,7 @@ class PlaybackTest(unittest.TestCase):
         owl = FakeOwl()
         out = self.checks(owl, idle=True)
         self.assertIn("ok - it went out on a new connection", out)
+        self.assertIn("ok - pause goes through (pause: done)\n", out)
         self.assertEqual(owl.typed[-2:], ["play", "status"])
         with self.assertRaises(hil_spotify.Failure):
             self.checks(FakeOwl(reconnects=False), idle=True)

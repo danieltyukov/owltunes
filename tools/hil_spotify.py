@@ -92,7 +92,8 @@ def run_ok(board: Board, text: str, what: str) -> int:
     """Run a command that must succeed. Returns the mark from which its confirming poll arrives."""
     since = board.mark()
     result = run(board, text)
-    check(result.get("state") == "done", f"{what} ({text}: {result.get('state')} {result.get('error', '')})".strip())
+    outcome = f"{result.get('state')} {result.get('error', '')}".strip()
+    check(result.get("state") == "done", f"{what} ({text}: {outcome})")
     return since
 
 
