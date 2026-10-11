@@ -42,7 +42,7 @@ The album art is a generated placeholder; the device shows the real cover.
 | `web/` | The setup site (TypeScript and Vite), published on GitHub Pages |
 | `enclosure/` | build123d sources for the owl, the ring and the perch |
 | `hardware/` | KiCad 10 projects for the owl main board and the perch board |
-| `docs/hardware/` | Hardware notes, ring test, bring-up and ordering |
+| `docs/hardware/` | Hardware notes, ring test, assembly, bring-up and ordering |
 | `tools/` | Build, test, style and font scripts |
 
 ## Building
