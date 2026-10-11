@@ -163,6 +163,31 @@ def test_lra_cup_has_a_slot_for_the_lead_tab(parts):
     assert 360 - 2 * math.degrees(math.asin(P.LRA_SLOT_W / V.LRA_POCKET_D)) >= 270
 
 
+def test_j303_cable_relief_leaves_a_structural_wall(parts):
+    # measured on the body: chords through the bottom wall behind J303, along y
+    body = parts["body"]
+    x = placement("J303").x
+    z1 = V.PCB_BACK_Z
+    z0 = z1 - P.J303_RELIEF_H
+    bottom = C.BODY_CY - C.BODY_H / 2
+
+    def wall(wx, wz):
+        return chords(body, (wx, bottom + 3.0, wz), (wx, bottom - 1.0, wz))
+
+    # outside the relief (below it and beside it) the wall is whole
+    full = wall(x, z0 - 0.5)
+    assert full == [pytest.approx(C.WALL_T)]
+    assert wall(x - P.J303_RELIEF_W / 2 - 0.5, (z0 + z1) / 2) == [pytest.approx(C.WALL_T)]
+    # across the relief's width and height the inner face is set back and 1.0 is left
+    for wx in (x - P.J303_RELIEF_W / 2 + 0.05, x, x + P.J303_RELIEF_W / 2 - 0.05):
+        for wz in (z0 + 0.05, (z0 + z1) / 2, z1 - 0.05):
+            left = wall(wx, wz)
+            assert len(left) == 1 and P.MJF_STRUCT_WALL - 1e-6 <= left[0] <= P.MJF_STRUCT_WALL + 0.01, (wx, wz)
+    depth = full[0] - wall(x, (z0 + z1) / 2)[0]
+    assert depth == pytest.approx(0.6)
+    assert P.J303_RELIEF_WALL >= P.MJF_STRUCT_WALL
+
+
 def button_head(x: float, y: float, seat: float, towards: int):
     """ISO 7380 M2 head as a cylinder dk x k (it encloses the dome), its bearing face at z = seat
     and the head on the side opposite to the shank direction `towards` (+1 or -1 in z)."""

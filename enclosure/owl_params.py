@@ -200,6 +200,16 @@ LRA_TAB_H = 2.5
 LRA_SLOT_W = 4.0  # tab width plus 0.25 per side
 LRA_SLOT_ANGLE_DEG = 185.0  # slot centre line from the motor centre, counter-clockwise from +X (owl coordinates)
 
+# J303 cable relief: the dock link's JST SH 4-pin plug (SHR-04V-S-B, 7.0 wide with its protrusions,
+# 5.0 without, 2.8 high: JST SH catalogue eSH) mates side-on in J303 with its rear close to the body's
+# bottom wall, which leaves the wires little room to turn. Behind J303 the wall's inner face is set
+# back until J303_RELIEF_WALL is left (0.6 deeper in the 1.6 wall), centred on J303's x, as wide as the
+# plug plus 1.0 and from the board's back face J303_RELIEF_H down (J303 is 2.95 high). The relief
+# depends on J303's x only: its y may move along the board.
+J303_RELIEF_W = 7.0 + 1.0
+J303_RELIEF_H = 4.0
+J303_RELIEF_WALL = MJF_STRUCT_WALL  # the owl stands on this wall on the perch seat
+
 # Owner mark, debossed into the owl back cover's outer face and the perch's underside. MJF PA12 detail
 # limits (JLC3DP): 0.5 mm deep, strokes and the gaps between them at least 0.6 mm, cap height at least
 # 4 mm. Font: Inter Bold 4.0 from the fonts-inter package (SIL Open Font Licence); its capitals are 1490

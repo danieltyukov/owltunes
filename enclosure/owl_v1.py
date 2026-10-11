@@ -190,6 +190,13 @@ def body() -> Part:
         sw = placement(ref)
         slot = (EAR_KEY[0] + 2 * EAR_SLOT_CLEAR, 12.0, EAR_KEY[1] + 2 * EAR_SLOT_CLEAR)
         shell -= Pos(sw.x, sw.y + slot[1] / 2, ear_key_z()) * Box(*slot)
+    # cable relief behind J303: the bottom wall's inner face follows the silhouette inset by
+    # J303_RELIEF_WALL instead of WALL_T over the plug's width, from the board's back face down
+    bottom = C.BODY_CY - C.BODY_H / 2
+    band = Pos(placement("J303").x, bottom + C.WALL_T / 2, PCB_BACK_Z - P.J303_RELIEF_H / 2) * Box(
+        P.J303_RELIEF_W, C.WALL_T + 2.0, P.J303_RELIEF_H
+    )
+    shell -= prism(silhouette(P.J303_RELIEF_WALL), PCB_BACK_Z - P.J303_RELIEF_H, PCB_BACK_Z) & band
     return shell
 
 
