@@ -273,10 +273,11 @@ static void test_transfer_takes_a_number_or_a_device_id(void)
     TEST_ASSERT_EQUAL(OWL_SHELL_TRANSFER, refused_verb_of("transfer \"x\""));
     TEST_ASSERT_EQUAL(OWL_SHELL_TRANSFER, verb_of("transfer ab_C-9"));
     TEST_ASSERT_EQUAL_STRING("ab_C-9", cmd.arg);
+    TEST_ASSERT_EQUAL_INT(63, OWL_SHELL_ARG_LEN);
     char long_id[OWL_SHELL_ARG_LEN + 16] = "transfer ";
     memset(long_id + 9, 'a', OWL_SHELL_ARG_LEN);
     long_id[9 + OWL_SHELL_ARG_LEN] = '\0';
-    TEST_ASSERT_EQUAL(OWL_SHELL_TRANSFER, verb_of(long_id)); /* 64 characters are the limit */
+    TEST_ASSERT_EQUAL(OWL_SHELL_TRANSFER, verb_of(long_id)); /* 63 characters are the limit (P16) */
     TEST_ASSERT_EQUAL_size_t(OWL_SHELL_ARG_LEN, strlen(cmd.arg));
     long_id[9 + OWL_SHELL_ARG_LEN] = 'a';
     long_id[10 + OWL_SHELL_ARG_LEN] = '\0';
@@ -375,9 +376,15 @@ static void test_transfer_by_number_or_id(void)
     TEST_ASSERT_NULL(resolve("transfer cccc3333", &p, &devices));
     TEST_ASSERT_EQUAL_STRING("cccc3333", out_cmd.uri);
     TEST_ASSERT_EQUAL_STRING("not_playback", resolve("devices", &p, &devices));
+    /* The longest id the console takes fits the command whole; one more character is bad_arg. */
+    static const char id63[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    TEST_ASSERT_EQUAL_size_t(63, strlen(id63));
+    char line63[96];
+    snprintf(line63, sizeof line63, "transfer %s", id63);
+    TEST_ASSERT_NULL(resolve(line63, &p, &devices));
+    TEST_ASSERT_EQUAL_STRING(id63, out_cmd.uri);
     owl_shell_parse("transfer aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", &cmd);
-    TEST_ASSERT_FALSE(cmd.bad_arg);
-    TEST_ASSERT_EQUAL_STRING("no_such_device", owl_shell_resolve(&cmd, &p, &devices, &out_cmd));
+    TEST_ASSERT_TRUE(cmd.bad_arg);
 }
 
 static void test_player_line_carries_the_state(void)

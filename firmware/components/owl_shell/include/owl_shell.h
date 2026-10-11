@@ -17,7 +17,7 @@ extern "C" {
  * "vol +5". The owl answers with JSON lines in the @owl framing (docs/console.md), so a host
  * script can follow along. Pure: parsing and formatting only, no I/O. */
 
-#define OWL_SHELL_ARG_LEN 64 /* the longest device id the console accepts */
+#define OWL_SHELL_ARG_LEN 63 /* the longest device id the console accepts (owl_cmd_t.uri holds 63) */
 
 typedef enum {
     OWL_SHELL_NONE,    /* an empty line: ignore it */

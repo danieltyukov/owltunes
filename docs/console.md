@@ -25,7 +25,7 @@ Commands are lowercase words.
 | `auth` | Reports the Spotify access token the owl holds | `auth` |
 | `auth refresh` | Gets a new access token from Spotify first | `auth` |
 | `devices` | Lists the Spotify devices | Refused with `not_ready` in this version |
-| `play`, `pause`, `toggle`, `next`, `prev`, `vol <0-100\|+n\|-n>`, `like`, `unlike`, `transfer <n\|device id>` | Playback commands, sent one at a time (a device id is 1 to 64 letters, digits, `_` or `-`) | Refused with `not_ready` in this version, which holds the Spotify login but sends no playback requests yet |
+| `play`, `pause`, `toggle`, `next`, `prev`, `vol <0-100\|+n\|-n>`, `like`, `unlike`, `transfer <n\|device id>` | Playback commands, sent one at a time (a device id is 1 to 63 letters, digits, `_` or `-`; a longer one is `bad_arg`) | Refused with `not_ready` in this version, which holds the Spotify login but sends no playback requests yet |
 
 Commands for the Spotify runtime wait in a queue of eight; when it is full they are refused with
 `busy`.
