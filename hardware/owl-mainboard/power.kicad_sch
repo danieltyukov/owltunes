@@ -545,7 +545,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Connector_Generic_MountingPin:Conn_01x03_MountingPin"
+		(symbol "Connector_Generic_MountingPin:Conn_01x02_MountingPin"
 			(pin_names
 				(offset 1.016)
 				(hide yes)
@@ -556,7 +556,7 @@
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
 			(property "Reference" "J"
-				(at 0 5.08 0)
+				(at 0 2.54 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -565,7 +565,7 @@
 					)
 				)
 			)
-			(property "Value" "Conn_01x03_MountingPin"
+			(property "Value" "Conn_01x02_MountingPin"
 				(at 1.27 -5.08 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -598,7 +598,7 @@
 					)
 				)
 			)
-			(property "Description" "Generic connectable mounting pin connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(property "Description" "Generic connectable mounting pin connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -631,9 +631,9 @@
 					)
 				)
 			)
-			(symbol "Conn_01x03_MountingPin_1_1"
+			(symbol "Conn_01x02_MountingPin_1_1"
 				(rectangle
-					(start -1.27 3.81)
+					(start -1.27 1.27)
 					(end 1.27 -3.81)
 					(stroke
 						(width 0.254)
@@ -641,17 +641,6 @@
 					)
 					(fill
 						(type background)
-					)
-				)
-				(rectangle
-					(start -1.27 2.667)
-					(end 0 2.413)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
 					)
 				)
 				(rectangle
@@ -697,7 +686,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 2.54 0)
+					(at -5.08 0 0)
 					(length 3.81)
 					(name "Pin_1"
 						(effects
@@ -715,7 +704,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 0 0)
+					(at -5.08 -2.54 0)
 					(length 3.81)
 					(name "Pin_2"
 						(effects
@@ -725,24 +714,6 @@
 						)
 					)
 					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at -5.08 -2.54 0)
-					(length 3.81)
-					(name "Pin_3"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1371,6 +1342,279 @@
 				)
 			)
 			(symbol "R_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 1.27)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Device:Thermistor_NTC"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "TH"
+				(at -4.445 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Thermistor_NTC"
+				(at 3.175 0 90)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 1.27 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 1.27 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Temperature dependent resistor, negative temperature coefficient"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "thermistor NTC resistor sensor RTD"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "R_* RV_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Thermistor_NTC_0_1"
+				(arc
+					(start -3.175 2.413)
+					(mid -3.0506 2.3165)
+					(end -3.048 2.159)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -3.048 2.794)
+					(mid -2.9736 2.9736)
+					(end -2.794 3.048)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.794 3.048)
+					(mid -2.6144 2.9736)
+					(end -2.54 2.794)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.794 2.54)
+					(mid -2.9736 2.6144)
+					(end -3.048 2.794)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.794 1.905)
+					(mid -2.9736 1.9794)
+					(end -3.048 2.159)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.54 2.159)
+					(mid -2.6144 1.9794)
+					(end -2.794 1.905)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.159 2.794)
+					(mid -2.434 2.5608)
+					(end -2.794 2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -2.54 2.159) (xy -2.54 2.794)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -2.54 -3.683) (xy -2.54 -1.397) (xy -2.794 -2.159) (xy -2.286 -2.159) (xy -2.54 -1.397) (xy -2.54 -1.651)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 2.54) (xy -1.778 1.524) (xy 1.778 -1.524) (xy 1.778 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 -1.397) (xy -1.778 -3.683) (xy -2.032 -2.921) (xy -1.524 -2.921) (xy -1.778 -3.683)
+						(xy -1.778 -3.429)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(rectangle
+					(start -1.016 2.54)
+					(end 1.016 -2.54)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Thermistor_NTC_1_1"
 				(pin passive line
 					(at 0 3.81 270)
 					(length 1.27)
@@ -2688,7 +2932,7 @@
 		)
 		(uuid "f8943b88-9313-4cc6-a761-745aea9ea3fe")
 	)
-	(text_box "Values and why (datasheets: BQ24073 SLUS810N section 8.5; TPS63802 SLVSEU9D section 10; TPS22917 SLVSDW8B section 6)\n- Inputs: VBUS_USB and VBUS_DOCK each reach VIN_CHG through a PMEG2020EH Schottky (under 0.38 V at the input limit),\n  so neither input, nor a shorted dock pad, can back-feed the other or the USB host. TVS diodes sit at the connectors.\n  C101 4.7 uF (IN takes 1 to 10 uF) keeps the capacitance a USB host sees through D101 within USB's 10 uF.\n- ISET 2.0k: ICHG = KISET / RISET = 890 / 2000 = 0.445 A (KISET 797 to 975: 0.40 to 0.49 A), 0.45 C for the\n  1000 mAh pack. Precharge 88 / 2000 = 44 mA.\n- ILIM 3.6k: IIN = KILIM / RILIM = 1525 / 3600 = 0.42 A (KILIM 1330 to 1720 for 200 to 500 mA: 0.37 to 0.48 A),\n  inside USB 2.0 default power (500 mA): the board has plain 5.1k Rd and does not read CC, and VIN-DPM is off in ILIM mode.\n  When the system load and ICHG together exceed the limit, the charger cuts ICHG (DPPM). Faster charging needs CC sensing.\n- EN2 100k to VIN_CHG, EN1 from GPIO45 with 100k to GND: (EN2, EN1) = (1, 0) selects the ILIM resistor on any input;\n  GPIO45 high gives (1, 1), USB suspend. The pull-up only draws current while input power is present\n  (EN pins have 285k internal pull-downs).\n- CE and TD to GND (charging enabled, termination on), TMR open (30 min precharge and 5 h fast-charge timers).\n- TS to the pack's 10k NTC on J101 pin 2: 75 uA bias, charging stops below about 0 to 4 C (VCOLD 2.1 V, 28k)\n  and above about 47 to 51 C (VHOT 0.30 V, 4.0k) for an NTC beta of 3950 to 3380.\n- TPS63802: VOUT = 0.5 x (1 + 560k / 100k) = 3.300 V; R2 = 100k is the datasheet maximum; MODE low (power save);\n  EN to VSYS (always on); L = 0.47 uH; 10 uF + 100 nF in, 2 x 22 uF + 100 nF out.\n  PG (open drain, sinks up to 1 mA) is TPS_PG: through R212 4.7k (mcu_usb) it sinks 0.70 mA at most and holds ESP_EN\n  at 0.30 V or less, so the module runs only in regulation (EN: 47k to +3V3, 220 nF).\n- TPS22917: CT 1 nF from CT to VIN, QOD tied to VOUT (fast discharge when the panel is switched off),\n  ON pulled down by 100k (GPIO46 strap must be low at reset).\n- MAX17048: CELL and VDD to VBAT, CTG and QSTRT to GND, ALRT only to TP107; I2C pull-ups are on the periph sheet."
+	(text_box "Values and why (datasheets: BQ24073 SLUS810N section 8.5; TPS63802 SLVSEU9D section 10; TPS22917 SLVSDW8B section 6)\n- Inputs: VBUS_USB and VBUS_DOCK each reach VIN_CHG through a PMEG2020EH Schottky (under 0.38 V at the input limit),\n  so neither input, nor a shorted dock pad, can back-feed the other or the USB host. TVS diodes sit at the connectors.\n  C101 4.7 uF (IN takes 1 to 10 uF) keeps the capacitance a USB host sees through D101 within USB's 10 uF.\n- ISET 2.0k: ICHG = KISET / RISET = 890 / 2000 = 0.445 A (KISET 797 to 975: 0.40 to 0.49 A), 0.45 C for the\n  1000 mAh pack. Precharge 88 / 2000 = 44 mA.\n- ILIM 3.6k: IIN = KILIM / RILIM = 1525 / 3600 = 0.42 A (KILIM 1330 to 1720 for 200 to 500 mA: 0.37 to 0.48 A),\n  inside USB 2.0 default power (500 mA): the board has plain 5.1k Rd and does not read CC, and VIN-DPM is off in ILIM mode.\n  When the system load and ICHG together exceed the limit, the charger cuts ICHG (DPPM). Faster charging needs CC sensing.\n- EN2 100k to VIN_CHG, EN1 from GPIO45 with 100k to GND: (EN2, EN1) = (1, 0) selects the ILIM resistor on any input;\n  GPIO45 high gives (1, 1), USB suspend. The pull-up only draws current while input power is present\n  (EN pins have 285k internal pull-downs).\n- CE and TD to GND (charging enabled, termination on), TMR open (30 min precharge and 5 h fast-charge timers).\n- TS to RT101, a 10k NTC on the board under the cell (the pack is 2-wire): 75 uA bias, charging stops below\n  -0.6 C (VCOLD 2.1 V, 28k) and above 51 C (VHOT 0.30 V, 4.0k) on the NCP15XH103 curve (B25/85 3434 K).\n- TPS63802: VOUT = 0.5 x (1 + 560k / 100k) = 3.300 V; R2 = 100k is the datasheet maximum; MODE low (power save);\n  EN to VSYS (always on); L = 0.47 uH; 10 uF + 100 nF in, 2 x 22 uF + 100 nF out.\n  PG (open drain, sinks up to 1 mA) is TPS_PG: through R212 4.7k (mcu_usb) it sinks 0.70 mA at most and holds ESP_EN\n  at 0.30 V or less, so the module runs only in regulation (EN: 47k to +3V3, 220 nF).\n- TPS22917: CT 1 nF from CT to VIN, QOD tied to VOUT (fast discharge when the panel is switched off),\n  ON pulled down by 100k (GPIO46 strap must be low at reset).\n- MAX17048: CELL and VDD to VBAT, CTG and QSTRT to GND, ALRT only to TP107; I2C pull-ups are on the periph sheet."
 		(exclude_from_sim no)
 		(at 20.32 223.52 0)
 		(size 130.81 49.53)
@@ -2936,16 +3180,16 @@
 	)
 	(global_label "BAT_NTC"
 		(shape bidirectional)
-		(at 193.04 76.2 180)
+		(at 213.36 91.44 90)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "221ae0ed-e470-48e0-ace4-fc4f4040b0aa")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 193.04 76.2 0)
+			(at 213.36 91.44 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3750,7 +3994,7 @@
 	)
 	(global_label "VBAT"
 		(shape bidirectional)
-		(at 193.04 73.66 180)
+		(at 193.04 76.2 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3759,7 +4003,7 @@
 		)
 		(uuid "b220df2c-dea2-48a9-881b-74eb6ab8de05")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 193.04 73.66 0)
+			(at 193.04 76.2 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8968,7 +9212,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Generic_MountingPin:Conn_01x03_MountingPin")
+		(lib_id "Connector_Generic_MountingPin:Conn_01x02_MountingPin")
 		(at 198.12 76.2 0)
 		(unit 1)
 		(body_style 1)
@@ -8979,7 +9223,7 @@
 		(dnp no)
 		(uuid "b353c09f-0f01-4368-8d61-3861eaca3133")
 		(property "Reference" "J101"
-			(at 196.85 71.12 0)
+			(at 196.85 73.66 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -8989,7 +9233,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Battery +, NTC, -"
+		(property "Value" "Battery +, -"
 			(at 201.93 76.2 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9000,7 +9244,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_PH_S3B-PH-SM4-TB_1x03-1MP_P2.00mm_Horizontal"
+		(property "Footprint" "Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal"
 			(at 198.12 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -9022,7 +9266,7 @@
 				)
 			)
 		)
-		(property "Description" "Generic connectable mounting pin connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
+		(property "Description" "Generic connectable mounting pin connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 198.12 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -9033,7 +9277,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C265101"
+		(property "LCSC Part #" "C295747"
 			(at 198.12 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -9044,7 +9288,7 @@
 				)
 			)
 		)
-		(property "MPN" "S3B-PH-SM4-TB(LF)(SN)"
+		(property "MPN" "S2B-PH-SM4-TB(LF)(SN)"
 			(at 198.12 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -9072,9 +9316,6 @@
 		(pin "2"
 			(uuid "4593a2ee-4607-4657-9fe0-b0d3ebd594aa")
 		)
-		(pin "3"
-			(uuid "a130266f-01fc-4743-aeed-7870bc7b8d9d")
-		)
 		(pin "MP"
 			(uuid "031390bd-7037-42cc-99d4-da273d4f2ce0")
 		)
@@ -9082,6 +9323,197 @@
 			(project "owl-mainboard"
 				(path "/fb846a48-d7cd-4e1f-898e-fc44b04beae7/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa"
 					(reference "J101")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:Thermistor_NTC")
+		(at 213.36 95.25 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bf5af90d-1c2c-48db-b4c9-d3b8cea1f43a")
+		(property "Reference" "RT101"
+			(at 209.55 93.98 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "10k NTC B3380"
+			(at 209.55 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+			(at 213.36 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 213.36 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Temperature dependent resistor, negative temperature coefficient"
+			(at 213.36 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC Part #" "C77131"
+			(at 213.36 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "NCP15XH103F03RC"
+			(at 213.36 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Murata Electronics"
+			(at 213.36 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "25f0a20e-7324-4c0f-9353-3e5bd89746d8")
+		)
+		(pin "2"
+			(uuid "b43f0533-1c84-4889-b48a-abfbac78febe")
+		)
+		(instances
+			(project "owl-mainboard"
+				(path "/fb846a48-d7cd-4e1f-898e-fc44b04beae7/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa"
+					(reference "RT101")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 213.36 99.06 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6e40110b-0be9-4db9-81ba-42fdd3aabe9d")
+		(property "Reference" "#PWR0139"
+			(at 213.36 92.71 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 213.36 102.87 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 213.36 99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 213.36 99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 213.36 99.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9b0c67e7-68f3-41a3-b002-997ba6069424")
+		)
+		(instances
+			(project "owl-mainboard"
+				(path "/fb846a48-d7cd-4e1f-898e-fc44b04beae7/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa"
+					(reference "#PWR0139")
 					(unit 1)
 				)
 			)

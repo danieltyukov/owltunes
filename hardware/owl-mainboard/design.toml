@@ -168,19 +168,39 @@ side = "back"
 height = 1.1
 pins = { 1 = "VIN_CHG", 2 = "VBUS_DOCK" }
 
+# Battery (controller ruling, 11 October 2026): any 2-wire 803040 LiPo with a protection circuit and
+# a JST PH 2.0 plug. The BQ24073 does not charge with TS open, so the board carries its own NTC,
+# RT101, on the back under the cell; a pack's own NTC wire, if it has one, is not used.
+# NCP15XH103F03RC follows the 103AT-2 curve that the TS thresholds assume (B25/85 3434 K against
+# 3435 K; 27.2k at 0 C and 4.16k at 50 C against 27.3k and 4.16k). No 10k NTC is Basic or Preferred
+# at JLC (checked 2026-10-11); this Murata part is Extended, stock 299792 on 2026-10-11.
 [[part]]
 ref = "J101"
 sheet = "power"
-symbol = "Connector_Generic_MountingPin:Conn_01x03_MountingPin"
-footprint = "Connector_JST:JST_PH_S3B-PH-SM4-TB_1x03-1MP_P2.00mm_Horizontal"
-value = "Battery +, NTC, -"
-lcsc = "C265101"
-mpn = "S3B-PH-SM4-TB(LF)(SN)"
+symbol = "Connector_Generic_MountingPin:Conn_01x02_MountingPin"
+footprint = "Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal"
+value = "Battery +, -"
+lcsc = "C295747"
+mpn = "S2B-PH-SM4-TB(LF)(SN)"
 manufacturer = "JST"
-alt = "C3029441 XUNPU WAFER-PH2.0-3PWB, check the footprint"
+alt = "C3029440 XUNPU WAFER-PH2.0-2PWB, check the footprint"
 side = "back"
 height = 4.8
-pins = { 1 = "VBAT", 2 = "BAT_NTC", 3 = "GND", MP = "GND" }
+pins = { 1 = "VBAT", 2 = "GND", MP = "GND" }
+
+[[part]]
+ref = "RT101"
+sheet = "power"
+symbol = "Device:Thermistor_NTC"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k NTC B3380"
+lcsc = "C77131"
+mpn = "NCP15XH103F03RC"
+manufacturer = "Murata Electronics"
+alt = "C5121989 TDK NTCG103JF103FT1S (B25/85 3435 K), same 0402 footprint"
+side = "back"
+height = 0.55
+pins = { 1 = "BAT_NTC", 2 = "GND" }
 
 [[part]]
 ref = "U102"

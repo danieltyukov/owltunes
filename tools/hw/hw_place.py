@@ -61,6 +61,10 @@ PLACE = {
     "TP102": (29.3, 3.0, 0, "back"),
     "TP103": (20.6, 3.4, 0, "back"),
     "TP106": (29.3, -8.2, 0, "back"),
+    # Board NTC on TS (the pack is 2-wire): on the cell-facing side under the cell, 4.7 mm from its
+    # centre (0, -7) and as far from the heat as the cell allows (U101 30 mm, U103 19 mm, L101 22 mm);
+    # pad 1 (BAT_NTC) faces east onto its copper patch, pad 2 (GND) west (hw_route.py bat_ntc).
+    "RT101": (-4.0, -9.5, 180, "back"),
     # Fuel gauge below J101: CELL and VDD (pins 2 and 3) face J101 pin 1, C104 at pin 3.
     "U102": (26.0, 10.0, 0, "back"),
     "C104": (28.2, 10.8, 90, "back"),
@@ -196,22 +200,29 @@ def place_references(board) -> list[str]:
     return hidden
 
 
-# Battery connector polarity on the back silkscreen beside J101's pins (pin 1 VBAT at y 16,
-# pin 2 BAT_NTC at y 18, pin 3 GND at y 20), with a dot marking pin 1. The pack has no
-# reverse-polarity protection, so this is what the person plugging it in checks.
-J101_MARKS = (("+", 28.4, 16.0), ("NTC", 28.7, 18.0), ("-", 28.4, 20.0))
-J101_PIN1_DOT = (27.35, 16.0, 0.2)
+# Battery connector polarity on the back silkscreen beside J101's pins (pin 1 VBAT at y 17,
+# pin 2 GND at y 19), with a dot marking pin 1. The board has no reverse-polarity protection on
+# J101, so this is what the person plugging the pack in checks.
+J101_MARKS = (("+", 28.4, 17.0), ("-", 28.4, 19.0))
+J101_PIN1_DOT = (27.35, 17.0, 0.2)
+J101_MARK_AREA = (26.9, 15.0, 29.6, 21.0)  # owl x0, y0, x1, y1 of these marks and of the 3-pin J101's
 
 
 def clear_j101_marks(board) -> None:
-    """Delete the marks a previous run drew. Delete, not Remove: Remove hands the C++ item to its
-    Python wrapper, and once that wrapper is freed pcbnew's bindings return untyped SwigPyObjects
-    for every board (KiCad 10.0.6)."""
-    centre = pcbnew.VECTOR2I(pcbnew.FromMM(100 + J101_PIN1_DOT[0]), pcbnew.FromMM(100 - J101_PIN1_DOT[1]))
-    old = [d for d in board.GetDrawings() if d.GetLayer() == pcbnew.B_SilkS
-           and ((isinstance(d, pcbnew.PCB_TEXT) and d.GetText() in {m[0] for m in J101_MARKS})
-                or (isinstance(d, pcbnew.PCB_SHAPE) and d.GetShape() == pcbnew.SHAPE_T_CIRCLE
-                    and d.GetCenter() == centre))]
+    """Delete the marks a previous run drew: every board text and dot on the back silkscreen
+    beside J101's pins. Delete, not Remove: Remove hands the C++ item to its Python wrapper, and
+    once that wrapper is freed pcbnew's bindings return untyped SwigPyObjects for every board
+    (KiCad 10.0.6)."""
+    x0, y0, x1, y1 = J101_MARK_AREA
+
+    def beside(d) -> bool:
+        p = d.GetTextPos() if isinstance(d, pcbnew.PCB_TEXT) else d.GetCenter()
+        x, y = pcbnew.ToMM(p.x) - 100, 100 - pcbnew.ToMM(p.y)
+        return x0 <= x <= x1 and y0 <= y <= y1
+
+    old = [d for d in board.GetDrawings() if d.GetLayer() == pcbnew.B_SilkS and beside(d)
+           and (isinstance(d, pcbnew.PCB_TEXT)
+                or (isinstance(d, pcbnew.PCB_SHAPE) and d.GetShape() == pcbnew.SHAPE_T_CIRCLE))]
     for d in old:
         board.Delete(d)
 

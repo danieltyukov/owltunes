@@ -25,6 +25,12 @@ class MarkJ101Test(unittest.TestCase):
         fp.SetReference("R1")
         board.Add(fp)
         hw_place.mark_j101(board)
+        # A mark the 3-pin J101 had and the 2-pin one does not.
+        old = pcbnew.PCB_TEXT(board)
+        old.SetText("NTC")
+        old.SetLayer(pcbnew.B_SilkS)
+        old.SetTextPos(pcbnew.VECTOR2I(pcbnew.FromMM(128.7), pcbnew.FromMM(82.0)))
+        board.Add(old)
         pcbnew.SaveBoard(str(self.path), board)
 
     def tearDown(self):
