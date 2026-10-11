@@ -8,9 +8,10 @@ neck down to 0.25 or 0.3 mm only where a track leaves a 0.5 mm pitch pin. Each g
 vias go into a KiCad group named "hw_route <group>". Running a group again first removes
 everything in that KiCad group, so a group can be re-routed with new coordinates after a
 placement change.
-GND vias, pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
+GND vias that the planes will tie in are placed here and show as via_dangling in DRC until the
+pours exist; the pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
 
-Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb usb_fanout crystal dock]
+Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb usb_fanout crystal dock qspi]
 Needs KiCad's pcbnew Python module.
 """
 
@@ -109,6 +110,47 @@ GROUPS = {
         ("USB_DM_CONN", 0.2, [(-6.7, -31.0), (-5.638, -30.95)]),
         ("USB_DP_CONN", "via", [(-11.75, -28.4), (-12.75, -28.4), (-6.7, -28.75)]),
         ("USB_DM_CONN", "via", [(-12.25, -31.05), (-11.25, -31.05), (-6.7, -31.0)]),
+    ],
+    # QSPI from the module's bottom row (B.Cu; left to right D2 D1 CLK D0 CS D3, the FSPI IO_MUX
+    # pins) to J301 on F.Cu (top row CS D1 D3 TE, bottom row D0 CLK D2), Fine class 0.1 mm, one
+    # via per net, no track between J301's pads. D2, CLK and D0 turn west, run down the back under
+    # J301 and come back east below it, which reverses their order; vias below the bottom row, then
+    # F.Cu up into the pads. D1 drops to F.Cu at the module and crosses over the CLK and D0 lanes;
+    # CS runs west on B.Cu under D1 to a via just above its pad, D3 likewise to the east of D1. The
+    # D1 serpentine (F.Cu) and the CS and D3 trombones (B.Cu, under J301) keep every length within
+    # 5 mm of LCD_CLK. TE leaves the module's left column, drops to F.Cu there and comes down into
+    # its pad east of D3. GND vias sit beside each layer change (B.Cu returns on In2, F.Cu on In1);
+    # the two below J301 also feed its GND pins 10 and 20 and the C301/C302 GND pads.
+    "qspi": [
+        ("LCD_D2", 0.1, [(-1.905, 17.85), (-1.905, 16.75), (-2.4, 16.255), (-2.4, 8.5), (-2.1, 8.2), (1.2, 8.2)]),
+        ("LCD_CLK", 0.1, [(0.635, 17.85), (0.635, 16.0), (-1.75, 16.0), (-2.05, 15.7), (-2.05, 9.0), (-1.7, 8.65),
+                          (0.6, 8.65)]),
+        ("LCD_D0", 0.1, [(1.905, 17.85), (1.905, 15.65), (-1.4, 15.65), (-1.7, 15.35), (-1.7, 9.4), (-1.4, 9.1),
+                         (0.0, 9.1)]),
+        ("LCD_D2", 0.1, [(1.2, 8.2), (1.2, 10.562)], "F"),
+        ("LCD_CLK", 0.1, [(0.6, 8.65), (0.6, 10.562)], "F"),
+        ("LCD_D0", 0.1, [(0.0, 9.1), (0.0, 10.562)], "F"),
+        ("LCD_D1", 0.1, [(-0.635, 17.85), (-0.635, 16.55)]),
+        ("LCD_D1", 0.1, [(-0.635, 16.55), (1.25, 16.55), (1.25, 16.1), (-0.85, 16.1), (-0.85, 15.75), (1.25, 15.75),
+                         (1.25, 15.4), (-0.85, 15.4), (-0.85, 15.05), (0.3, 15.05), (0.3, 13.438)], "F"),
+        ("LCD_CS", 0.1, [(3.175, 17.85), (3.175, 15.3), (0.4, 15.3), (0.4, 11.4), (-0.3, 11.4), (-0.3, 14.45)]),
+        ("LCD_CS", 0.1, [(-0.3, 14.45), (-0.3, 13.438)], "F"),
+        ("LCD_D3", 0.1, [(4.445, 17.85), (4.445, 12.0), (3.85, 12.0), (3.85, 15.0), (0.9, 15.0), (0.9, 14.55)]),
+        ("LCD_D3", 0.1, [(0.9, 14.55), (0.9, 13.438)], "F"),
+        ("LCD_TE", 0.1, [(-8.75, 24.18), (-10.25, 24.18)]),
+        ("LCD_TE", 0.1, [(-10.25, 24.18), (-3.27, 17.2), (1.5, 17.2), (1.5, 13.438)], "F"),
+        ("GND", 0.25, [(-1.1, 9.65), (-1.2, 9.95), (-1.2, 10.562)], "F"),
+        ("GND", 0.25, [(-1.1, 9.65), (-1.77, 9.1), (-1.77, 8.0)], "F"),
+        ("GND", 0.25, [(1.8, 9.6), (1.8, 10.562)], "F"),
+        ("LCD_D2", "via", [(1.2, 8.2)]),
+        ("LCD_CLK", "via", [(0.6, 8.65)]),
+        ("LCD_D0", "via", [(0.0, 9.1)]),
+        ("LCD_D1", "via", [(-0.635, 16.55)]),
+        ("LCD_CS", "via", [(-0.3, 14.45)]),
+        ("LCD_D3", "via", [(0.9, 14.55)]),
+        ("LCD_TE", "via", [(-10.25, 24.18)]),
+        ("GND", "via", [(-1.35, 16.6), (-1.05, 14.45), (2.1, 14.35), (-1.1, 9.65), (1.8, 9.6), (0.6, 7.65),
+                        (-11.0, 24.18)]),
     ],
 }
 
