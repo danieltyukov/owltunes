@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Hand-route the main board's critical nets (Task 10 Step 1) on B.Cu and lock them.
+"""Hand-route the main board's critical nets (Task 10 Step 1) and lock them.
 
-Each group is a list of (net, width mm, [owl points]) polylines; owl coordinates are x right as
+Each group is a list of (net, width mm, [owl points]) polylines on B.Cu, with "F" as a fourth
+item for F.Cu, or (net, "via", [owl points]) for through vias; owl coordinates are x right as
 seen from the front, y up, origin at the display centre (KiCad x = 100 + x, y = 100 - y). Widths
 neck down to 0.25 or 0.3 mm only where a track leaves a 0.5 mm pitch pin. Running a group again
 first removes the tracks it drew before, so a group can be re-routed after a placement change.
 GND vias, pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
 
-Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb crystal dock]
+Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb usb_fanout crystal dock]
 Needs KiCad's pcbnew Python module.
 """
 
@@ -91,6 +92,22 @@ GROUPS = {
                             (19.6, -13.0), (23.5, -10.0), (26.9, -10.0), (26.9, -7.9)]),
         ("DOCK_PAD", 0.25, [(13.5, -30.0), (13.5, -28.2), (11.3, -27.0), (11.3, -26.6), (11.49, -24.8)]),
     ],
+    # J201 fan-out to U202: each D+ pad (A6, B6) drops to a via just above the pad row and each D-
+    # pad (A7, B7) to a via just below it, the pairs join and run on F.Cu (over the solid In1 GND)
+    # to vias beside U202 pins 6 and 4; D- passes below the J201 peg hole and the through-hole shell
+    # tab. B.Cu above the pads stays free for CC1, CC2 and VBUS.
+    "usb_fanout": [
+        ("USB_DP_CONN", 0.2, [(-11.75, -29.755), (-11.75, -28.4)]),
+        ("USB_DP_CONN", 0.2, [(-12.75, -29.755), (-12.75, -28.4)]),
+        ("USB_DM_CONN", 0.2, [(-12.25, -29.755), (-12.25, -31.05)]),
+        ("USB_DM_CONN", 0.2, [(-11.25, -29.755), (-11.25, -31.05)]),
+        ("USB_DP_CONN", 0.2, [(-12.75, -28.4), (-11.75, -28.4), (-6.7, -28.75)], "F"),
+        ("USB_DM_CONN", 0.2, [(-12.25, -31.05), (-11.25, -31.05), (-10.3, -32.3), (-6.7, -32.3), (-6.7, -31.0)], "F"),
+        ("USB_DP_CONN", 0.2, [(-6.7, -28.75), (-5.638, -29.05)]),
+        ("USB_DM_CONN", 0.2, [(-6.7, -31.0), (-5.638, -30.95)]),
+        ("USB_DP_CONN", "via", [(-11.75, -28.4), (-12.75, -28.4), (-6.7, -28.75)]),
+        ("USB_DM_CONN", "via", [(-12.25, -31.05), (-11.25, -31.05), (-6.7, -31.0)]),
+    ],
 }
 
 
@@ -106,7 +123,9 @@ def route(board_name: str, groups: list[str]) -> int:
             print(f"unknown group {name}")
             return 1
         segs = set()
-        for _, _, pts in GROUPS[name]:
+        for _, width, pts, *_ in GROUPS[name]:
+            if width == "via":
+                segs |= {(pt(a).x, pt(a).y, pt(a).x, pt(a).y) for a in pts}
             for a, b in zip(pts, pts[1:]):
                 segs |= {(pt(a).x, pt(a).y, pt(b).x, pt(b).y), (pt(b).x, pt(b).y, pt(a).x, pt(a).y)}
         old = [t for t in board.GetTracks()
@@ -114,17 +133,27 @@ def route(board_name: str, groups: list[str]) -> int:
         for t in old:
             board.Remove(t)
         length = {}
-        for net, width, pts in GROUPS[name]:
+        for net, width, pts, *layer in GROUPS[name]:
             info = board.FindNet(net)
             if info is None:
                 print(f"no net {net}")
                 return 1
+            if width == "via":
+                for a in pts:  # JLC no-fee via: 0.3 mm drill, 0.5 mm pad, through
+                    v = pcbnew.PCB_VIA(board)
+                    v.SetPosition(pt(a))
+                    v.SetWidth(pcbnew.FromMM(0.5))
+                    v.SetDrill(pcbnew.FromMM(0.3))
+                    v.SetNet(info)
+                    v.SetLocked(True)
+                    board.Add(v)
+                continue
             for a, b in zip(pts, pts[1:]):
                 t = pcbnew.PCB_TRACK(board)
                 t.SetStart(pt(a))
                 t.SetEnd(pt(b))
                 t.SetWidth(pcbnew.FromMM(width))
-                t.SetLayer(pcbnew.B_Cu)
+                t.SetLayer(pcbnew.F_Cu if layer == ["F"] else pcbnew.B_Cu)
                 t.SetNet(info)
                 t.SetLocked(True)
                 board.Add(t)
