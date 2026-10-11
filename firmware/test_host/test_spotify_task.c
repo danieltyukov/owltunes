@@ -379,6 +379,46 @@ static void test_a_command_without_a_token_is_not_sent_and_not_recorded(void)
     TEST_ASSERT_EQUAL_UINT8(0, gate.web.failures);
 }
 
+/* auth refresh, or a 401, at a closed gate: nothing is asked, and the copy Spotify may have refused
+ * is not handed out afterwards either. */
+static void test_a_forced_request_at_a_closed_gate_forgets_the_token(void)
+{
+    start_playing();
+    TEST_ASSERT_EQUAL(PROVISIONING_TOKEN_OK, get_token(false));
+    TEST_ASSERT_EQUAL_STRING("tok-1", s_token);
+    api_gate_record_token(NULL, now_ms()); /* a lost connection: backoff */
+    TEST_ASSERT_EQUAL(PROVISIONING_TOKEN_RETRY, get_token(true));
+    TEST_ASSERT_EQUAL_INT(1, s_token_calls);
+    advance_ms(SPOTIFY_GATE_BACKOFF_MAX_MS);
+    TEST_ASSERT_EQUAL(PROVISIONING_TOKEN_OK, get_token(false));
+    TEST_ASSERT_EQUAL_INT(2, s_token_calls);
+    TEST_ASSERT_EQUAL_STRING("tok-2", s_token);
+}
+
+/* During an outage the gate opens between failed refreshes: without a token the api line stays on
+ * backoff instead of flapping to ready, and says ready once a token is held again. */
+static void test_the_api_line_waits_for_a_token_before_ready(void)
+{
+    start_playing();
+    forget_token();
+    api_gate_record_token(NULL, now_ms());
+    announce(now_ms());
+    TEST_ASSERT_EQUAL_INT(1, lines_with("\"event\":\"api\",\"state\":\"backoff\""));
+    advance_ms(SPOTIFY_GATE_BACKOFF_MAX_MS);
+    announce(now_ms());
+    TEST_ASSERT_EQUAL_INT(0, lines_with("\"event\":\"api\",\"state\":\"ready\""));
+    spotify_task_view_t view;
+    publish();
+    spotify_task_view(&view);
+    TEST_ASSERT_EQUAL(SPOTIFY_BLOCK_BACKOFF, view.block);
+    TEST_ASSERT_EQUAL(PROVISIONING_TOKEN_OK, get_token(false));
+    announce(now_ms());
+    TEST_ASSERT_EQUAL_INT(1, lines_with("\"event\":\"api\",\"state\":\"ready\""));
+    publish();
+    spotify_task_view(&view);
+    TEST_ASSERT_EQUAL(SPOTIFY_BLOCK_NONE, view.block);
+}
+
 static void test_a_429_closes_the_gate_and_commands_are_refused_as_rate_limited(void)
 {
     start_playing();
@@ -491,6 +531,8 @@ int main(void)
     RUN_TEST(test_a_401_gets_one_forced_refresh_and_one_more_try);
     RUN_TEST(test_a_second_401_fails_with_auth_and_is_not_tried_a_third_time);
     RUN_TEST(test_a_command_without_a_token_is_not_sent_and_not_recorded);
+    RUN_TEST(test_a_forced_request_at_a_closed_gate_forgets_the_token);
+    RUN_TEST(test_the_api_line_waits_for_a_token_before_ready);
     RUN_TEST(test_a_429_closes_the_gate_and_commands_are_refused_as_rate_limited);
     RUN_TEST(test_a_lost_connection_is_a_backoff_not_a_rate_limit);
     RUN_TEST(test_a_quota_lockout_switches_the_link_to_ble);

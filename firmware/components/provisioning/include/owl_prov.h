@@ -87,18 +87,25 @@ void owl_prov_finish_exchange(owl_prov_t *p, bool ok, const char *refresh_token)
  * LOG_IN_AGAIN and BAD_CLIENT forget it. True when the login was forgotten. */
 bool owl_prov_apply_refresh(owl_prov_t *p, spotify_token_result_t result, const char *refresh_token);
 
+/* After a successful refresh or login, the next automatic refresh waits at least this long, even
+ * when Spotify's token already expires within the margin (a token that lasts a minute or less must
+ * not turn into a refresh on every pass). A forced refresh does not wait for it. */
+#define OWL_PROV_REFRESH_MIN_MS (5 * 60 * 1000)
+
 /* What decides whether the provisioning task may ask Spotify for a new access token now. */
 typedef struct {
-    bool force;            /* Spotify just refused the access token the runtime holds */
-    bool gate_open;        /* spotify_gate_open: no Retry-After, quota lockout or backoff is running */
-    bool save_pending;     /* settings wait to be written: a rotated refresh token is not used before */
-    int64_t not_before_ms; /* no automatic refresh before this, after an answer the gate lets through
-                            * (an unexpected reply that repeating at once would not change) */
+    bool force;              /* Spotify just refused the access token the runtime holds */
+    bool gate_open;          /* spotify_gate_open: no Retry-After, quota lockout or backoff is running */
+    bool save_pending;       /* settings wait to be written: a rotated refresh token is not used before */
+    int64_t not_before_ms;   /* no automatic refresh before this, after an answer the gate lets through
+                              * (an unexpected reply that repeating at once would not change) */
+    int64_t refreshed_at_ms; /* the last successful refresh or login; 0: none since the start */
 } owl_prov_refresh_t;
 
 /* True when a login is saved, the owl is online, the gate is open and nothing waits to be saved,
  * and either r->force is set or access is missing or expires within SPOTIFY_REFRESH_MARGIN_MS
- * (spotify_token_needs_refresh) and r->not_before_ms has passed (spec 9.4, 9.6). */
+ * (spotify_token_needs_refresh), r->not_before_ms has passed and OWL_PROV_REFRESH_MIN_MS has
+ * passed since r->refreshed_at_ms (spec 9.4, 9.6). */
 bool owl_prov_refresh_due(const owl_prov_t *p, const spotify_token_t *access, const owl_prov_refresh_t *r,
                           int64_t now_ms);
 

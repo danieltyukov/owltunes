@@ -26,6 +26,7 @@ extern "C" {
 #define SPOTIFY_ACCESS_TOKEN_LEN 512
 #define SPOTIFY_REFRESH_TOKEN_LEN 384
 #define SPOTIFY_REFRESH_MARGIN_MS 60000
+#define SPOTIFY_TOKEN_LIFETIME_MAX_S (24 * 3600) /* a longer expires_in is read as this */
 
 bool spotify_client_id_valid(const char *s);
 bool spotify_redirect_uri_valid(const char *s);

@@ -417,6 +417,22 @@ static void test_an_unexpected_answer_delays_the_next_refresh(void)
     TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
 }
 
+/* A token that lasts a minute or less is inside the margin as soon as it arrives. The floor after a
+ * success keeps that from turning into a refresh on every pass; a forced refresh still goes. */
+static void test_a_short_lived_token_is_not_refreshed_again_before_the_floor(void)
+{
+    linked_with_token();
+    refresh.refreshed_at_ms = 1000;
+    access.expires_at_ms = 1000 + 30 * 1000;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 2000));
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 1000 + OWL_PROV_REFRESH_MIN_MS - 1));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 1000 + OWL_PROV_REFRESH_MIN_MS));
+    refresh.force = true;
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 2000));
+    refresh.gate_open = false;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 2000));
+}
+
 static void test_settings_from_another_version_fall_back_to_defaults(void)
 {
     owl_settings_t saved;
@@ -522,6 +538,7 @@ int main(void)
     RUN_TEST(test_refresh_never_goes_out_while_the_gate_is_closed);
     RUN_TEST(test_refresh_waits_for_a_pending_save);
     RUN_TEST(test_an_unexpected_answer_delays_the_next_refresh);
+    RUN_TEST(test_a_short_lived_token_is_not_refreshed_again_before_the_floor);
     RUN_TEST(test_settings_from_another_version_fall_back_to_defaults);
     RUN_TEST(test_event_lines);
     RUN_TEST(test_network_failure_event_names_the_network);

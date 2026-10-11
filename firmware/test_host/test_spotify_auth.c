@@ -151,6 +151,13 @@ static void test_refresh_without_new_token_keeps_old_one(void)
     TEST_ASSERT_EQUAL_STRING("AQRefresh1", token.refresh_token);
 }
 
+static void test_an_absurd_lifetime_is_read_as_a_day(void)
+{
+    memset(&token, 0, sizeof token);
+    TEST_ASSERT_EQUAL(SPOTIFY_TOKEN_OK, parse(200, "{\"access_token\":\"BQNew\",\"expires_in\":9e15}"));
+    TEST_ASSERT_EQUAL_INT64(1000 + (int64_t)SPOTIFY_TOKEN_LIFETIME_MAX_S * 1000, token.expires_at_ms);
+}
+
 static void test_invalid_grant_means_log_in_again(void)
 {
     TEST_ASSERT_EQUAL(
@@ -202,6 +209,7 @@ int main(void)
     RUN_TEST(test_token_bodies);
     RUN_TEST(test_successful_exchange_stores_tokens);
     RUN_TEST(test_refresh_without_new_token_keeps_old_one);
+    RUN_TEST(test_an_absurd_lifetime_is_read_as_a_day);
     RUN_TEST(test_invalid_grant_means_log_in_again);
     RUN_TEST(test_invalid_client_is_a_setup_problem);
     RUN_TEST(test_server_error_is_retryable);

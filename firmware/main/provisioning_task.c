@@ -68,6 +68,7 @@ static bool s_save_pending;             /* a save failed and must be retried */
 static bool s_boot_check;               /* the saved login has not been refreshed since the start */
 static spotify_token_t s_access;        /* the current access token; its refresh_token stays empty */
 static int64_t s_refresh_not_before_ms; /* see REFRESH_RETRY_MS; 0: no wait */
+static int64_t s_refreshed_at_ms;       /* the last successful refresh or login (OWL_PROV_REFRESH_MIN_MS) */
 static uint32_t s_login_seq;
 static char s_out[OWL_PROV_LINE_MAX + 64];
 
@@ -200,6 +201,7 @@ static void exchange_code(void)
         s_relink = false;
         s_boot_check = false; /* this login is reported below */
         s_refresh_not_before_ms = 0;
+        s_refreshed_at_ms = now_ms();
         s_login_seq++; /* the runtime drops a token from the login this one replaced */
         if (persist_login()) {
             emit("spotify", "linked", NULL, NULL);
@@ -228,8 +230,15 @@ static bool refresh_login(void)
     memset(&token, 0, sizeof token);
     if (result == SPOTIFY_TOKEN_OK) {
         bool boot_check = s_boot_check;
+        int64_t now = now_ms();
         s_boot_check = false;
         s_refresh_not_before_ms = 0;
+        s_refreshed_at_ms = now;
+        if (s_access.expires_at_ms - now <= 2 * SPOTIFY_REFRESH_MARGIN_MS) {
+            /* Spotify documents an hour; the next automatic refresh still waits OWL_PROV_REFRESH_MIN_MS. */
+            ESP_LOGW(TAG, "the new access token lasts only %d s",
+                     (int)((s_access.expires_at_ms - now) / 1000));
+        }
         if (persist_login() && boot_check) {
             emit("spotify", "linked", NULL, NULL);
         }
@@ -259,6 +268,7 @@ static bool refresh_due(bool force)
         .gate_open = api_gate_open(now),
         .save_pending = s_save_pending,
         .not_before_ms = s_refresh_not_before_ms,
+        .refreshed_at_ms = s_refreshed_at_ms,
     };
     return owl_prov_refresh_due(&s_prov, &s_access, &r, now);
 }
@@ -285,6 +295,12 @@ static void reply_token(bool force, uint32_t seq)
     reply.seq = seq;
     bool fresh = refresh_due(force) && refresh_login();
     reply.result = token_verdict(force, fresh);
+    if (force && !fresh) {
+        /* Spotify refused this token: no later request gets it either, and the next automatic refresh
+         * goes as soon as the gate allows instead of waiting for the floor. */
+        forget_access();
+        s_refreshed_at_ms = 0;
+    }
     if (reply.result == PROVISIONING_TOKEN_OK) {
         reply.expires_at_ms = s_access.expires_at_ms;
         owl_utf8_copy(reply.token, sizeof reply.token, s_access.access_token);
@@ -468,9 +484,13 @@ provisioning_token_t provisioning_access_token(char *out, size_t cap, int64_t *e
     msg_t msg = {.kind = MSG_TOKEN, .force = force_refresh, .seq = ++seq};
     bool answered = false;
     if (xQueueSend(s_queue, &msg, pdMS_TO_TICKS(timeout_ms)) == pdTRUE) {
-        /* The reply to an earlier request that timed out may come first: skip it. */
-        while (!answered && xQueueReceive(s_token_reply, &reply, pdMS_TO_TICKS(timeout_ms)) == pdTRUE) {
+        /* The reply to an earlier request that timed out may come first: skip it, within one deadline. */
+        TickType_t limit = pdMS_TO_TICKS(timeout_ms);
+        TickType_t start = xTaskGetTickCount();
+        TickType_t spent = 0;
+        while (!answered && spent < limit && xQueueReceive(s_token_reply, &reply, limit - spent) == pdTRUE) {
             answered = reply.seq == msg.seq;
+            spent = xTaskGetTickCount() - start;
         }
     }
     if (answered) {

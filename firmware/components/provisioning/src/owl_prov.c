@@ -124,7 +124,11 @@ bool owl_prov_refresh_due(const owl_prov_t *p, const spotify_token_t *access, co
         r->save_pending) {
         return false;
     }
-    return r->force || (spotify_token_needs_refresh(access, now_ms) && now_ms >= r->not_before_ms);
+    if (r->force) {
+        return true;
+    }
+    bool floor_passed = r->refreshed_at_ms == 0 || now_ms >= r->refreshed_at_ms + OWL_PROV_REFRESH_MIN_MS;
+    return spotify_token_needs_refresh(access, now_ms) && now_ms >= r->not_before_ms && floor_passed;
 }
 
 /* ---- output -------------------------------------------------------------------------------- */

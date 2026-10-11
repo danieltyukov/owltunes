@@ -37,7 +37,8 @@ static const char *TAG = "spotify";
 
 static QueueHandle_t s_commands;
 static SemaphoreHandle_t s_view_lock;
-static spotify_task_view_t s_view; /* active and player; the gate fields are read when asked */
+static spotify_task_view_t s_view;  /* active and player; the gate fields are read when asked */
+static spotify_block_t s_view_held; /* a block the api line still shows although the gate is open */
 
 static int64_t now_ms(void)
 {
@@ -53,6 +54,7 @@ void spotify_task_view(spotify_task_view_t *out)
 {
     xSemaphoreTake(s_view_lock, portMAX_DELAY);
     *out = s_view;
+    spotify_block_t held = s_view_held;
     xSemaphoreGive(s_view_lock);
     out->link = OWL_LINK_NONE;
     out->wait_s = 0;
@@ -64,6 +66,9 @@ void spotify_task_view(spotify_task_view_t *out)
         out->link = spotify_gate_link(&gate, now);
         out->wait_s = spotify_gate_wait_s(&gate, now);
         out->block = spotify_gate_block(&gate, now);
+        if (out->block == SPOTIFY_BLOCK_NONE) {
+            out->block = held; /* the LED agrees with the api line (announce) */
+        }
     }
 }
 
@@ -163,10 +168,17 @@ static void drop_queue(const char *error, int32_t retry_s)
 /* A valid access token in s_token. The provisioning task is asked only when the copy here is
  * missing, about to expire or refused by Spotify (force), and only while the gate is open: a
  * failed refresh is tried again when the gate's wait (Retry-After or backoff) is over. */
+static bool token_held(int64_t now)
+{
+    return s_token[0] != '\0' && s_token_expires_ms - now > SPOTIFY_REFRESH_MARGIN_MS;
+}
+
 static provisioning_token_t get_token(bool force)
 {
     int64_t now = now_ms();
-    if (!force && s_token[0] != '\0' && s_token_expires_ms - now > SPOTIFY_REFRESH_MARGIN_MS) {
+    if (force) {
+        forget_token(); /* Spotify refused it: never hand it out again, even if no refresh can go now */
+    } else if (token_held(now)) {
         return PROVISIONING_TOKEN_OK;
     }
     if (!api_gate_open(now)) {
@@ -463,6 +475,9 @@ static void announce(int64_t now)
     if (s_announced && block == s_shown) {
         return;
     }
+    if (s_announced && block == SPOTIFY_BLOCK_NONE && !token_held(now)) {
+        return; /* open between refreshes that keep failing: say ready once a token is held again */
+    }
     s_announced = true;
     s_shown = block;
     if (block == SPOTIFY_BLOCK_NONE) {
@@ -500,6 +515,7 @@ static void publish(void)
     xSemaphoreTake(s_view_lock, portMAX_DELAY);
     s_view.active = s_active;
     s_view.player = s_player;
+    s_view_held = s_active && s_announced ? s_shown : SPOTIFY_BLOCK_NONE;
     xSemaphoreGive(s_view_lock);
 }
 
