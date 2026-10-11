@@ -228,6 +228,7 @@ static void handle(msg_t *msg)
     case MSG_CODE: {
         const char *error = owl_prov_accept_code(&s_prov, msg->text, msg->state, now_ms());
         xQueueOverwrite(s_code_reply, &error);
+        wipe(msg->text); /* the login code */
         break;
     }
     case MSG_NETWORK:

@@ -53,6 +53,14 @@ describe("LineSplitter", () => {
     expect(lines[2]).toBe('@owl {"event":"network","state":"up"}');
   });
 
+  test("ends a line at a bare CR, CR LF or CR LF split across chunks", () => {
+    const lines: string[] = [];
+    const splitter = new LineSplitter((line) => lines.push(line));
+    splitter.pushText("info\rhelp\r\nthird\r");
+    splitter.pushText("\nfourth\n");
+    expect(lines).toEqual(["info", "help", "third", "fourth"]);
+  });
+
   test("keeps multi-byte characters split across chunks", () => {
     const lines: string[] = [];
     const splitter = new LineSplitter((line) => lines.push(line));

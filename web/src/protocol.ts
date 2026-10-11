@@ -61,7 +61,8 @@ export function decodeLine(line: string): OwlReply | OwlEvent | null {
   }
 }
 
-/** Reassembles a byte stream into lines; over-long lines are dropped whole, "\r\n" is accepted. */
+/** Reassembles a byte stream into lines; over-long lines are dropped whole. A line ends at "\n", "\r" or "\r\n" (the
+ * LF of a CR LF pair, even in the next chunk, only makes an empty line, which is skipped), like the owl. */
 export class LineSplitter {
   private buffer = "";
   private discarding = false;
@@ -74,7 +75,7 @@ export class LineSplitter {
   }
 
   pushText(text: string): void {
-    const parts = text.split("\n");
+    const parts = text.split(/[\r\n]/);
     parts.forEach((part, i) => {
       if (!this.discarding) {
         this.buffer += part;
@@ -84,9 +85,8 @@ export class LineSplitter {
         }
       }
       if (i < parts.length - 1) {
-        const line = this.buffer.endsWith("\r") ? this.buffer.slice(0, -1) : this.buffer;
-        if (!this.discarding && line.length > 0) {
-          this.onLine(line);
+        if (!this.discarding && this.buffer.length > 0) {
+          this.onLine(this.buffer);
         }
         this.buffer = "";
         this.discarding = false;
