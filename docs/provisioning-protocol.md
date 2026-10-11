@@ -66,7 +66,7 @@ Errors in a reply (`"ok":false`):
 | `too_long` | The reply, or the authorize URL for `spotify_begin`, would not fit in one line. |
 | `bad_ssid`, `bad_password`, `full`, `not_found` | Wi-Fi network checks, see the table above. |
 | `bad_client_id`, `bad_redirect_uri` | Client ID or redirect URI checks, see the table above. |
-| `offline` | `spotify_begin` while the owl is not online. The login could not finish without a network, and the owl makes the PKCE verifier only while its radio runs, so its random numbers are truly random. A login that is already open stays open. |
+| `offline` | `spotify_begin` while the owl is not online. The login could not finish without a network. It also means the owl makes the PKCE verifier only while its Wi-Fi is enabled, which ESP-IDF documents as the condition for true random numbers from the chip's generator (the radio may still sleep between beacons, and the emulator uses the host's generator). A login that is already open stays open. |
 | `no_client_id` | `spotify_begin` before a client ID and redirect URI were saved. |
 | `no_session` | `spotify_code` without an open login. |
 | `expired` | The login was opened more than 10 minutes ago. |

@@ -27,6 +27,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from owl_serial import redact_line  # noqa: E402
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUILD = ROOT / "build" / "firmware"
 WORK = ROOT / "build" / "qemu-prov"
@@ -91,7 +94,7 @@ class Owl:
         assert self.proc.stdout is not None
         for raw in self.proc.stdout:
             line = raw.decode("utf-8", "replace").rstrip("\r\n")
-            self.log.write(line + "\n")
+            self.log.write(redact_line(line) + "\n")  # --link puts your own client ID on the console
             self.log.flush()
             self.fresh.put(line)
 

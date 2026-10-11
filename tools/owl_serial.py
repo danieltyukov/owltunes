@@ -13,6 +13,7 @@ import glob
 import json
 import pathlib
 import queue
+import re
 import threading
 import time
 from typing import Any, Callable
@@ -20,6 +21,8 @@ from typing import Any, Callable
 PREFIX = "@owl "
 PORT_GLOB = "/dev/serial/by-id/*Espressif*"
 BOOT_MARKER = "OWL_BOOT_OK"  # the line the firmware logs when it has started
+# A client ID is personal: logs in build/ must not show it, whichever script wrote them.
+CLIENT_ID = re.compile(r'("client_id"\s*:\s*"|client_id=)[0-9A-Fa-f]{32}(?![0-9A-Fa-f])')
 
 Message = dict[str, Any]
 
@@ -37,6 +40,16 @@ def parse_line(line: str) -> Message | None:
     except json.JSONDecodeError:
         return None
     return msg if isinstance(msg, dict) else None
+
+
+def redact_line(line: str, extra: tuple[str, ...] = ()) -> str:
+    """line with every Spotify client ID shown as <redacted>, wherever the owl prints one (the
+    "client_id" field of hello, client_id= in an authorize URL), and each text in extra too."""
+    line = CLIENT_ID.sub(r"\1<redacted>", line)
+    for text in extra:
+        if text:
+            line = line.replace(text, "<redacted>")
+    return line
 
 
 def find_port(explicit: str | None = None, pattern: str = PORT_GLOB) -> str:
@@ -68,8 +81,8 @@ class Board:
 
     def __init__(self, port: str, log: pathlib.Path | None = None, open_timeout: float = 20.0,
                  redact: tuple[str, ...] = ()):
-        """redact: text such as a client ID that the log file shows as <redacted>. The lines kept in
-        memory are unchanged, so waits still see them."""
+        """The log file shows every client ID as <redacted> (redact_line), and also each text in
+        redact. The lines kept in memory are unchanged, so waits still see them."""
         import serial  # only the hardware scripts need pyserial
 
         self._serial = serial
@@ -114,14 +127,9 @@ class Board:
                 raw, pending = pending.split(b"\n", 1)
                 line = raw.decode("utf-8", "replace").rstrip("\r")
                 if self._log is not None:
-                    self._log.write(self._redacted(line) + "\n")
+                    self._log.write(redact_line(line, self._redact) + "\n")
                     self._log.flush()
                 self._fresh.put(line)
-
-    def _redacted(self, line: str) -> str:
-        for text in self._redact:
-            line = line.replace(text, "<redacted>")
-        return line
 
     def close(self) -> None:
         if self._ser is not None:

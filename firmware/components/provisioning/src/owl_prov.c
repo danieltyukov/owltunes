@@ -318,8 +318,9 @@ static void cmd_spotify_begin(owl_prov_t *p, int id, int64_t now_ms, char *out, 
 {
     char url[768];
     /* Offline, the login could not finish and the state would carry no address for the LAN route.
-     * Refusing also means the verifier is only made while the radio runs, which esp_fill_random
-     * needs to give truly random bytes (an online owl has its radio on). An open login stays open. */
+     * Refusing also means the verifier is only made while Wi-Fi is enabled, the condition ESP-IDF
+     * documents for its hardware RNG (see hw_random in provisioning_task.c). An open login stays
+     * open. */
     if (!p->network_up) {
         respond_error(id, "offline", out, cap);
         return;

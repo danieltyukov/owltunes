@@ -272,8 +272,8 @@ void net_start(net_change_fn on_change, net_failed_fn on_failed)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, on_wifi_event, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, on_ip_event, NULL));
-    /* The radio starts even with no network saved. That also makes esp_fill_random a true random
-     * source for the PKCE verifier made during setup. */
+    /* The radio starts even with no network saved, so Wi-Fi is enabled before any PKCE verifier is
+     * made: the condition ESP-IDF documents for esp_fill_random to give true random numbers. */
     ESP_ERROR_CHECK(esp_wifi_start());
     portENTER_CRITICAL(&s_lock);
     s_saved_changed = true; /* whatever provisioning loaded at boot, even nothing */

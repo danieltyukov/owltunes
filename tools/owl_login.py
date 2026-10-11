@@ -79,9 +79,12 @@ def read_callback(path: str) -> dict[str, str]:
 
 
 def serve_callback(port: int, answers: queue.Queue[dict[str, str]]) -> http.server.HTTPServer:
-    """Listen on 127.0.0.1 only. The page never repeats anything from the request."""
+    """Listen on 127.0.0.1 only. The page never repeats anything from the request. Each connection
+    gets its own thread and at most 10 s, so a stray one cannot hold up Spotify's redirect."""
 
     class Handler(http.server.BaseHTTPRequestHandler):
+        timeout = 10  # seconds a connection may stay silent
+
         def do_GET(self) -> None:  # noqa: N802 (the http.server API)
             answer = read_callback(self.path)
             if answer:
@@ -95,7 +98,7 @@ def serve_callback(port: int, answers: queue.Queue[dict[str, str]]) -> http.serv
         def log_message(self, format: str, *args: object) -> None:  # noqa: A002
             pass  # the query holds the login code: keep it out of the terminal
 
-    server = http.server.HTTPServer(("127.0.0.1", port), Handler)
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
 

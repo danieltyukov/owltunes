@@ -5,13 +5,17 @@
 
 #include "esp_http_server.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "spotify_auth.h"
 
 #define QUERY_MAX 1024
+#define STOP_LOG_EVERY_US (30 * 1000 * 1000) /* a stop that keeps failing is logged this often */
 
 static const char *TAG = "callback";
 static httpd_handle_t s_server;
 static callback_code_fn s_on_code;
+static unsigned s_stop_failures; /* httpd_stop calls in a row that failed */
+static int64_t s_stop_logged_us; /* when the last of them was logged */
 
 static const char PAGE_START[] =
     "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
@@ -100,15 +104,27 @@ esp_err_t callback_server_stop(void)
         return ESP_OK;
     }
     esp_err_t err = httpd_stop(s_server);
+    int64_t now_us = esp_timer_get_time();
     if (err != ESP_OK) {
         /* httpd_stop fails before it tears anything down, so the server may still be listening.
          * Keep the handle: callback_server_running() stays true and the protocol task stops it
-         * again on its next pass (spec 9.7: listen only while a login is open). */
-        ESP_LOGE(TAG, "could not stop the callback server (%s); trying again", esp_err_to_name(err));
+         * again on its next pass (spec 9.7: listen only while a login is open). The first failure
+         * is logged at once, then at most every 30 s. */
+        s_stop_failures++;
+        if (s_stop_failures == 1 || now_us - s_stop_logged_us >= STOP_LOG_EVERY_US) {
+            ESP_LOGE(TAG, "could not stop the callback server (%s, attempt %u); trying again",
+                     esp_err_to_name(err), s_stop_failures);
+            s_stop_logged_us = now_us;
+        }
         return err;
     }
     s_server = NULL;
-    ESP_LOGI(TAG, "callback server stopped");
+    if (s_stop_failures > 0) {
+        ESP_LOGW(TAG, "callback server stopped at attempt %u", s_stop_failures + 1);
+        s_stop_failures = 0;
+    } else {
+        ESP_LOGI(TAG, "callback server stopped");
+    }
     return ESP_OK;
 }
 

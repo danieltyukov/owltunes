@@ -3,12 +3,15 @@
  * is open, so a failed stop must leave the handle for another try, never forget the server. */
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "callback_server.h"
 #include "esp_http_server.h"
+#include "esp_timer.h"
 #include "unity.h"
 
-#define MAX_SCRIPTED 4
+#define MAX_SCRIPTED 16
+#define S(seconds) ((int64_t)(seconds) * 1000 * 1000)
 
 static int s_server; /* its address is the handle the stand-in hands out */
 static esp_err_t s_start_result;
@@ -19,6 +22,15 @@ static int s_starts;
 static int s_stops;
 static httpd_handle_t s_stopped[MAX_SCRIPTED]; /* the handle each httpd_stop call got */
 static int s_errors_logged;
+static int s_warnings_logged;
+static char s_last_error[160];
+static char s_last_warning[160];
+static int64_t s_now_us;
+
+int64_t esp_timer_get_time(void)
+{
+    return s_now_us;
+}
 
 const char *esp_err_to_name(esp_err_t code)
 {
@@ -35,6 +47,10 @@ void stub_log(char level, const char *tag, const char *fmt, ...)
     va_end(args);
     if (level == 'E') {
         s_errors_logged++;
+        memcpy(s_last_error, line, sizeof line);
+    } else if (level == 'W') {
+        s_warnings_logged++;
+        memcpy(s_last_warning, line, sizeof line);
     }
 }
 
@@ -138,6 +154,8 @@ static void begin(void)
     s_starts = 0;
     s_stops = 0;
     s_errors_logged = 0;
+    s_warnings_logged = 0;
+    s_now_us = 0;
 }
 
 static void fail_next_stop(void)
@@ -179,6 +197,34 @@ static void test_a_failed_stop_keeps_the_server_and_is_retried(void)
     TEST_ASSERT_EQUAL_INT(2, s_stops);
     TEST_ASSERT_EQUAL_PTR(&s_server, s_stopped[0]);
     TEST_ASSERT_EQUAL_PTR(&s_server, s_stopped[1]); /* the same server, not a forgotten one */
+    TEST_ASSERT_EQUAL_INT(1, s_warnings_logged);    /* and it says when it finally stopped */
+    TEST_ASSERT_NOT_NULL(strstr(s_last_warning, "attempt 2"));
+}
+
+/* Retried on every pass, but a stop that keeps failing must not fill the log. */
+static void test_a_stop_that_keeps_failing_is_logged_every_30_s(void)
+{
+    static const int failures_at_s[] = {0, 1, 10, 29, 30, 31, 59, 61};
+    begin();
+    callback_server_start(accept_code);
+    for (size_t i = 0; i < sizeof failures_at_s / sizeof failures_at_s[0]; i++) {
+        s_now_us = S(failures_at_s[i]);
+        fail_next_stop();
+        TEST_ASSERT_EQUAL_INT(ESP_FAIL, callback_server_stop());
+    }
+    TEST_ASSERT_TRUE(callback_server_running());
+    TEST_ASSERT_EQUAL_INT(3, s_errors_logged); /* at 0 s, 30 s and 61 s */
+    TEST_ASSERT_NOT_NULL(strstr(s_last_error, "attempt 8"));
+    s_now_us = S(62);
+    TEST_ASSERT_EQUAL_INT(ESP_OK, callback_server_stop());
+    TEST_ASSERT_EQUAL_INT(1, s_warnings_logged);
+    TEST_ASSERT_NOT_NULL(strstr(s_last_warning, "attempt 9"));
+    callback_server_start(accept_code); /* a later failure is news again */
+    s_now_us = S(63);
+    fail_next_stop();
+    callback_server_stop();
+    TEST_ASSERT_EQUAL_INT(4, s_errors_logged);
+    TEST_ASSERT_NOT_NULL(strstr(s_last_error, "attempt 1"));
 }
 
 static void test_a_failed_start_leaves_nothing_running(void)
@@ -217,6 +263,7 @@ int main(void)
     RUN_TEST(test_start_then_stop);
     RUN_TEST(test_stop_without_a_server_does_nothing);
     RUN_TEST(test_a_failed_stop_keeps_the_server_and_is_retried);
+    RUN_TEST(test_a_stop_that_keeps_failing_is_logged_every_30_s);
     RUN_TEST(test_a_failed_start_leaves_nothing_running);
     RUN_TEST(test_a_server_without_its_route_is_stopped);
     RUN_TEST(test_a_server_without_its_route_that_will_not_stop_is_kept);

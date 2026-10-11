@@ -2,6 +2,7 @@ import json
 import os
 import pathlib
 import queue
+import socket
 import sys
 import tempfile
 import threading
@@ -59,6 +60,31 @@ class CallbackTest(unittest.TestCase):
             self.assertEqual(missing.exception.code, 404)
             self.assertTrue(answers.empty())
         finally:
+            server.shutdown()
+            server.server_close()
+
+
+    def test_the_server_listens_on_the_loopback_address_only(self):
+        server = serve_callback(0, queue.Queue())
+        try:
+            self.assertEqual(server.server_address[0], "127.0.0.1")
+            self.assertEqual(server.RequestHandlerClass.timeout, 10)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_an_idle_connection_does_not_hold_up_the_callback(self):
+        answers = queue.Queue()
+        server = serve_callback(0, answers)
+        port = server.server_address[1]
+        stray = socket.create_connection(("127.0.0.1", port))
+        try:
+            stray.sendall(b"GET /callback?code=")  # a request that never finishes
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/callback?code=AQD&state=s1", timeout=5) as page:
+                page.read()
+            self.assertEqual(answers.get(timeout=2), {"code": "AQD", "state": "s1"})
+        finally:
+            stray.close()
             server.shutdown()
             server.server_close()
 

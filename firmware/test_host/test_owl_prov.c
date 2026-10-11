@@ -175,8 +175,8 @@ static void test_begin_requires_client(void)
     expect_error("no_client_id");
 }
 
-/* esp_fill_random is truly random only while the radio runs, and an owl that is online has its
- * radio on. Offline, the login could not finish anyway and the state would carry no address. */
+/* ESP-IDF documents its hardware RNG as truly random while Wi-Fi is enabled, as it is on an owl
+ * that is online. Offline, the login could not finish anyway and the state would carry no address. */
 static void test_begin_needs_the_network(void)
 {
     linkable();
