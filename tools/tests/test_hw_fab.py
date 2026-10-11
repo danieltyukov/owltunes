@@ -10,7 +10,7 @@ try:
 except ImportError:
     pcbnew = None
 if pcbnew is not None:
-    from hw_fab import LAYERS, verify
+    from hw_fab import LAYERS, symbol_errors, verify
 
 BOM = "﻿Designator,Footprint,Quantity,Value,LCSC Part #\n"
 CPL = "﻿Designator,Mid X,Mid Y,Rotation,Layer\n"
@@ -74,6 +74,22 @@ class FabVerifyTest(unittest.TestCase):
         out = self.write('U1,QFN,1,BQ,C15220\nSW1,SW,1,Beak,C720477\nC9,0402,1,1u,C1\n',
                          "U1,0,0,90,bottom\nSW1,0,-35,0,top\nC9,0,0,0,top\n")
         self.assertIn("C9: assembled part has no lcsc in design.toml", verify(out, "b", design, 4))
+
+
+@unittest.skipIf(pcbnew is None, "needs KiCad's pcbnew module")
+class SymbolExclusionTest(unittest.TestCase):
+    SCH = (
+        "(kicad_sch\n\t(symbol\n\t\t(lib_id \"Connector:TestPoint\")\n\t\t(in_bom %s)\n\t\t(on_board yes)\n"
+        "\t\t(property \"Reference\" \"%s\"\n\t\t)\n\t)\n)\n"
+    )
+
+    def test_symbol_without_in_bom_no_is_named(self):
+        texts = [self.SCH % ("no", "TP1"), self.SCH % ("yes", "TP2")]
+        errors = symbol_errors(texts, ["TP1", "TP2", "TP3"])
+        self.assertEqual(errors, [
+            "TP2: schematic symbol is in the BOM, set (in_bom no) (Exclude from BOM)",
+            "TP3: no schematic symbol found",
+        ])
 
 
 if __name__ == "__main__":

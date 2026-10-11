@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Generate and verify the JLCPCB files for a board.
 
-1. Marks every part with assembled = false in design.toml as excluded from the BOM and the
-   position file (test points, holes, dock pads), on the board and on the schematic symbols
-   (so the DRC schematic parity check stays quiet), and saves both.
+1. Marks every footprint with assembled = false in design.toml (test points, holes, dock pads)
+   as excluded from the BOM and the position file, and saves the board. This tool never edits
+   schematics: it reports as a fabrication error every such part whose schematic symbol is not
+   excluded from the BOM ((in_bom no) in the board's .kicad_sch files, set "Exclude from BOM"
+   on the symbol) or whose footprint lacks either exclusion. The symbol exclusion is also what
+   keeps the DRC schematic parity check quiet.
 2. Runs the Fabrication Toolkit CLI (~/tools/Fabrication-Toolkit or $FT_DIR) with automatic
    rotation fixes; it writes hardware/<board>/production/ (not tracked).
 3. Checks the outputs: every gerber layer present, BOM designators and LCSC numbers equal to the
@@ -18,6 +21,7 @@ from __future__ import annotations
 
 import csv
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -44,6 +48,42 @@ def mark_unassembled(pcb: Path, design: dict) -> int:
             fp.SetAttributes(fp.GetAttributes() | flags)
     pcbnew.SaveBoard(str(pcb), board)
     return board.GetCopperLayerCount()
+
+
+def symbol_errors(sheets: list[str], refs: list[str]) -> list[str]:
+    """Name each ref whose schematic symbol is missing or not excluded from the BOM."""
+    in_bom: dict[str, bool] = {}
+    for text in sheets:
+        for chunk in text.split("\n\t(symbol\n")[1:]:
+            ref = re.search(r'\(property "Reference" "([^"]+)"', chunk)
+            flag = re.search(r"\(in_bom (yes|no)\)", chunk)
+            if ref and flag:
+                in_bom[ref.group(1)] = flag.group(1) == "yes"
+    errors = []
+    for ref in refs:
+        if ref not in in_bom:
+            errors.append(f"{ref}: no schematic symbol found")
+        elif in_bom[ref]:
+            errors.append(f"{ref}: schematic symbol is in the BOM, set (in_bom no) (Exclude from BOM)")
+    return errors
+
+
+def exclusion_errors(pcb: Path, design: dict) -> list[str]:
+    skip = [p["ref"] for p in design["part"] if not p.get("assembled", True)]
+    sheets = [f.read_text(encoding="utf-8") for f in sorted(pcb.parent.glob("*.kicad_sch"))]
+    errors = symbol_errors(sheets, skip)
+    board = pcbnew.LoadBoard(str(pcb))
+    for ref in skip:
+        fp = board.FindFootprintByReference(ref)
+        if fp is None:
+            errors.append(f"{ref}: no footprint on the board")
+            continue
+        attrs = fp.GetAttributes()
+        if not attrs & pcbnew.FP_EXCLUDE_FROM_BOM:
+            errors.append(f"{ref}: footprint is in the BOM, set Exclude from bill of materials")
+        if not attrs & pcbnew.FP_EXCLUDE_FROM_POS_FILES:
+            errors.append(f"{ref}: footprint is in the position files, set Exclude from position files")
+    return errors
 
 
 def run_toolkit(pcb: Path) -> None:
@@ -117,7 +157,7 @@ def main(argv: list[str]) -> int:
     finally:
         project.write_bytes(before)  # saving the board reorders the DRC exclusions in the project file
     out = pcb.parent / "production"
-    errors = verify(out, board, design, copper)
+    errors = exclusion_errors(pcb, design) + verify(out, board, design, copper)
     for e in errors:
         print(e)
     sides = {"top": 0, "bottom": 0}
