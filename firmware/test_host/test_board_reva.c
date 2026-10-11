@@ -34,6 +34,11 @@ static void test_wake_pins(void)
         }
     }
     TEST_ASSERT_EQUAL(7, __builtin_popcountll(OWL_WAKE_PINS_MASK));
+    TEST_ASSERT_EQUAL_HEX64((1ULL << OWL_PIN_DOCK_DET) | (1ULL << OWL_PIN_BTN_EAR_L) |
+                                (1ULL << OWL_PIN_BTN_EAR_R) | (1ULL << OWL_PIN_BTN_BEAK) |
+                                (1ULL << OWL_PIN_HALL_INT) | (1ULL << OWL_PIN_IMU_INT1) |
+                                (1ULL << OWL_PIN_CHG_PGOOD),
+                            OWL_WAKE_PINS_MASK);
     TEST_ASSERT_TRUE(OWL_PIN_DOCK_DET >= 1 && OWL_PIN_DOCK_DET <= 10); /* ADC1, usable with Wi-Fi on */
 }
 
