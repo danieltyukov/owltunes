@@ -12,6 +12,7 @@ owl_status_t status_now(const provisioning_view_t *view)
         .log_in_again = view->mode == OWL_UI_SETUP_RELINK,
         .link = OWL_LINK_API, /* nothing talks to the Web API yet, so nothing can block it */
         .rate_limited = false,
+        .backoff = false,
         .player = OWL_PLAYER_UNKNOWN,
     };
     return owl_status_of(&in);

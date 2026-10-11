@@ -64,6 +64,25 @@ static void test_quota_wins_over_playback(void)
     TEST_ASSERT_EQUAL(OWL_STATUS_RATE_LIMITED, owl_status_of(&in));
 }
 
+static void test_backoff_shows_after_quota_and_rate_limits(void)
+{
+    owl_status_inputs_t in = playing();
+    in.backoff = true;
+    TEST_ASSERT_EQUAL(OWL_STATUS_BACKOFF, owl_status_of(&in));
+    in.rate_limited = true;
+    TEST_ASSERT_EQUAL(OWL_STATUS_RATE_LIMITED, owl_status_of(&in));
+    in.link = OWL_LINK_BLE;
+    TEST_ASSERT_EQUAL(OWL_STATUS_QUOTA, owl_status_of(&in));
+}
+
+static void test_backoff_blinks_white_slowly(void)
+{
+    /* White, so it is not mistaken for the magenta of rate_limited. */
+    assert_rgb(24, 24, 24, owl_status_led(OWL_STATUS_BACKOFF, 10));
+    assert_rgb(0, 0, 0, owl_status_led(OWL_STATUS_BACKOFF, 1500));
+    TEST_ASSERT_EQUAL_STRING("backoff", owl_status_name(OWL_STATUS_BACKOFF));
+}
+
 static void test_playback_states(void)
 {
     owl_status_inputs_t in = playing();
@@ -125,6 +144,8 @@ int main(void)
     RUN_TEST(test_online_without_login_needs_login);
     RUN_TEST(test_linking_wins_over_everything);
     RUN_TEST(test_quota_wins_over_playback);
+    RUN_TEST(test_backoff_shows_after_quota_and_rate_limits);
+    RUN_TEST(test_backoff_blinks_white_slowly);
     RUN_TEST(test_playback_states);
     RUN_TEST(test_steady_states_are_solid);
     RUN_TEST(test_waiting_for_the_person_blinks_slowly);

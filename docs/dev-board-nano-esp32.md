@@ -71,6 +71,7 @@ online owl shows until playback support arrives).
 | Dim green | `paused` | Playback is paused |
 | Amber | `no_device` | No Spotify device is active: start Spotify on a phone or computer |
 | Magenta, slow blink | `rate_limited` | Spotify asked the owl to slow down for a moment |
+| White, slow blink | `backoff` | The network or Spotify's servers failed: the owl retries after a pause that grows from 2 s to 60 s |
 | Magenta | `quota` | Spotify's quota for the app is used up until its Retry-After time |
 
 ## Hardware test

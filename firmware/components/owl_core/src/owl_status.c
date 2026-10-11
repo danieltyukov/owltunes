@@ -20,6 +20,9 @@ owl_status_t owl_status_of(const owl_status_inputs_t *in)
     if (in->rate_limited) {
         return OWL_STATUS_RATE_LIMITED;
     }
+    if (in->backoff) {
+        return OWL_STATUS_BACKOFF;
+    }
     switch (in->player) {
     case OWL_PLAYER_NO_DEVICE:
         return OWL_STATUS_NO_DEVICE;
@@ -52,6 +55,8 @@ const char *owl_status_name(owl_status_t s)
         return "quota";
     case OWL_STATUS_RATE_LIMITED:
         return "rate_limited";
+    case OWL_STATUS_BACKOFF:
+        return "backoff";
     case OWL_STATUS_NO_DEVICE:
         return "no_device";
     case OWL_STATUS_PAUSED:
@@ -73,6 +78,7 @@ static const owl_rgb_t RED = {64, 0, 0};
 static const owl_rgb_t GREEN = {0, 48, 0};
 static const owl_rgb_t DIM_GREEN = {0, 8, 0};
 static const owl_rgb_t MAGENTA = {40, 0, 40};
+static const owl_rgb_t WHITE = {24, 24, 24};
 
 owl_rgb_t owl_status_led(owl_status_t s, int64_t now_ms)
 {
@@ -108,6 +114,10 @@ owl_rgb_t owl_status_led(owl_status_t s, int64_t now_ms)
         break;
     case OWL_STATUS_RATE_LIMITED:
         colour = MAGENTA;
+        pattern = SLOW;
+        break;
+    case OWL_STATUS_BACKOFF:
+        colour = WHITE;
         pattern = SLOW;
         break;
     case OWL_STATUS_NO_DEVICE:

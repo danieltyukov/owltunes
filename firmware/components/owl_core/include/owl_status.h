@@ -20,7 +20,8 @@ typedef enum {
     OWL_STATUS_LOG_IN_AGAIN, /* Spotify refused the saved login */
     OWL_STATUS_STARTING,     /* linked and online, no playback state yet */
     OWL_STATUS_QUOTA,        /* QUOTA_EXCEEDED: the Web API is off until Retry-After passes */
-    OWL_STATUS_RATE_LIMITED, /* waiting for Retry-After or after server errors */
+    OWL_STATUS_RATE_LIMITED, /* a 429: waiting for Retry-After */
+    OWL_STATUS_BACKOFF,      /* the network or Spotify failed: retrying after a growing pause */
     OWL_STATUS_NO_DEVICE,    /* no active Spotify device */
     OWL_STATUS_PAUSED,
     OWL_STATUS_PLAYING,
@@ -34,14 +35,15 @@ typedef struct {
     bool linking;      /* a login code is being exchanged */
     bool log_in_again; /* Spotify refused the saved login */
     owl_link_t link;   /* the Spotify runtime's link: OWL_LINK_BLE during a quota lockout */
-    bool rate_limited; /* the runtime may not call the Web API yet */
+    bool rate_limited; /* a 429 Retry-After is running */
+    bool backoff;      /* a server error or lost connection is being waited out */
     owl_player_status_t player;
 } owl_status_inputs_t;
 
 owl_status_t owl_status_of(const owl_status_inputs_t *in);
 
 /* "needs_wifi", "joining", "needs_login", "linking", "log_in_again", "starting", "quota",
- * "rate_limited", "no_device", "paused" or "playing"; "unknown" for a value outside the enum. */
+ * "rate_limited", "backoff", "no_device", "paused" or "playing"; "unknown" for a value outside the enum. */
 const char *owl_status_name(owl_status_t s);
 
 typedef struct {
