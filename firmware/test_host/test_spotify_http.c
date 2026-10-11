@@ -502,6 +502,19 @@ static void test_a_connection_the_client_closed_is_fresh_again(void)
     TEST_ASSERT_EQUAL_INT(1, s_inits); /* esp_http_client reconnected, the handle stayed */
 }
 
+static void test_a_connection_we_closed_is_fresh_again(void)
+{
+    static spotify_request_t req;
+    spotify_http_response_t resp;
+    post("/v1/me/player/next", &req);
+    first_request_ok(&req);
+    spotify_http_close(); /* as at a logout or when the network goes down */
+    script((scripted_t){.result = ESP_ERR_HTTP_FETCH_HEADER});
+    script(OK_204);
+    TEST_ASSERT_EQUAL(ESP_ERR_HTTP_FETCH_HEADER, spotify_http_call(&req, "tok", &resp));
+    TEST_ASSERT_EQUAL_INT(2, s_performs); /* the first request on the new connection is not resent */
+}
+
 #define RUN(test)                                                                                            \
     do {                                                                                                     \
         start();                                                                                             \
@@ -526,5 +539,6 @@ int main(void)
     RUN(test_a_fetch_header_error_on_a_kept_alive_connection_is_sent_again);
     RUN(test_a_fetch_header_error_is_not_sent_again_on_a_fresh_connection_or_after_an_answer);
     RUN(test_a_connection_the_client_closed_is_fresh_again);
+    RUN(test_a_connection_we_closed_is_fresh_again);
     return UNITY_END();
 }
