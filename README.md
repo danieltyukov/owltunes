@@ -11,8 +11,11 @@ on its perch and it becomes a desk display that charges while it shows what is p
 **Status:** early development. The design is complete and the firmware, simulator, PCB and
 enclosure are being built in the open. Read the
 [system design](docs/design/2026-10-04-owltunes-system-design.md) for the full picture.
-A physical owl cannot be set up yet: only the QEMU build exists until the dev-kit board support
-lands. The setup site and its protocol are ready.
+The firmware runs on an Arduino Nano ESP32 as a headless dev board, and the setup page sets it up
+over USB ([dev board guide](docs/dev-board-nano-esp32.md)). Joining Wi-Fi, linking to Spotify and
+controlling playback from its USB console are written and tested on the host and in QEMU; their
+first run on the board against a real network and Spotify account is still to come. The
+round-screen dev kit is next.
 
 ## How it works
 
@@ -37,7 +40,7 @@ The album art is a generated placeholder; the device shows the real cover.
 | Path | Contents |
 |---|---|
 | `docs/` | Design documents and guides |
-| `firmware/` | ESP-IDF firmware; `firmware/components/` holds the shared C code |
+| `firmware/` | ESP-IDF firmware; `firmware/components/` holds the shared C code and `firmware/boards/` the support for each board |
 | `sim/` | Desktop simulator and golden screenshots |
 | `web/` | The setup site (TypeScript and Vite), published on GitHub Pages |
 | `tools/` | Build, test, style and font scripts |
@@ -52,6 +55,8 @@ Linux with CMake 3.22+, Ninja and a C compiler.
 | Simulator screenshot tests | `tools/sim.sh` |
 | Interactive simulator (needs `libsdl2-dev`) | `cmake -S sim -B build/sim-sdl -G Ninja -DOWL_SIM_SDL=ON && cmake --build build/sim-sdl && build/sim-sdl/owl_sim sdl` |
 | Firmware (ESP-IDF v6.1 activated) | `tools/firmware.sh build` |
+| Firmware for the Arduino Nano ESP32, and flashing it | `tools/firmware.sh build nano_esp32`, then `tools/firmware.sh flash nano_esp32` |
+| Hardware tests on the Nano ESP32 (board on USB) | `tools/hil_nano.py --wifi`; with a linked board and your consent, `tools/hil_spotify.py --real-account` |
 | Firmware in the QEMU emulator | `tools/qemu_smoke.sh` |
 | Setup protocol in QEMU, including a real HTTPS call to Spotify | `tools/qemu_prov_test.py` |
 | Setup site: unit and browser tests (Node.js 22) | `cd web && npm ci && npm test && npm run e2e` |

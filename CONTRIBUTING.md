@@ -18,6 +18,7 @@ how the parts fit together should start as an issue so the design can be discuss
 | C formatting | `tools/format.sh --check` (`tools/format.sh` fixes it) |
 | Setup protocol in QEMU | `tools/qemu_prov_test.py` (after the firmware build) |
 | Hardware smoke test (Arduino Nano ESP32 on USB, optional) | `tools/hil_nano.py` (after `tools/firmware.sh build nano_esp32`) |
+| Real-account test (linked board on USB, opt-in, controls your Spotify playback) | `tools/hil_spotify.py --real-account` |
 | Setup site | `cd web && npm ci && npm test && npx playwright install chromium && npm run e2e` |
 
 ## Writing style

@@ -146,3 +146,23 @@ To try the setup page against the board without publishing it, run
 `cd web && npm run build && npx vite preview --port 4173 --host 127.0.0.1 --base /owltunes/` and
 open `http://127.0.0.1:4173/owltunes/setup/`. Use `127.0.0.1`, not `localhost`: Spotify accepts
 plain HTTP only for the loopback address.
+
+## Spotify from the console
+
+With the board linked, the console takes playback commands: run
+`tools/firmware.sh monitor nano_esp32` and type `status`, `devices`, `next`, `vol 40` or `help`.
+[The console page](console.md) lists every command and the JSON lines the owl answers with.
+
+`tools/hil_spotify.py --real-account` tests the board against your own Spotify account. Start
+playing something first. It pauses and resumes, skips forward and back, and changes the volume and
+puts it back. On the track it went back to, it checks the like command: a track that is not in
+Liked Songs is liked and unliked again, and a track that is already there is only liked again, so
+it keeps its place in the list. `--transfer` also moves playback to another device and back.
+`--idle` pauses and then leaves the owl alone for 16 minutes: it polls for the first five, then
+sends nothing for eleven, longer than the ten minutes after which `api.spotify.com` closed an idle
+connection when this was written. The check passes when the next command goes through and the
+console log shows `spotify_http: the kept-alive connection was closed; reconnecting`, the line the
+owl prints when it sends a request again on a new connection. Without `--real-account` the script
+does nothing. A run sends under a hundred requests to the Web API. At the end the script counts
+the `player` and `cmd` lines, checks that no `api` line said `rate_limited` or `quota`, and checks
+that nothing in `build/hil-spotify/console.log` looks like a token.
