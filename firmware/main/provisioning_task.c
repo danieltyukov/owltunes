@@ -26,6 +26,14 @@ static const char *TAG = "provisioning";
 
 typedef enum { MSG_LINE, MSG_CODE, MSG_NETWORK } msg_kind_t;
 
+/* Overwrite a string that held a secret before it is freed. */
+static void wipe(char *s)
+{
+    for (volatile char *p = s; p != NULL && *p != '\0'; p++) {
+        *p = '\0';
+    }
+}
+
 typedef struct {
     msg_kind_t kind;
     bool up;
@@ -214,6 +222,7 @@ static void handle(msg_t *msg)
         if (s_prov.session_expires_ms != 0 && s_prov.session_expires_ms != before) {
             s_error[0] = '\0'; /* a new login started: the old failure no longer applies */
         }
+        wipe(msg->text); /* the line may hold a Wi-Fi password */
         break;
     }
     case MSG_CODE: {
@@ -275,10 +284,11 @@ static void protocol_task(void *arg)
     }
 }
 
-static void post_line(const char *line)
+void provisioning_line(const char *line)
 {
     msg_t msg = {.kind = MSG_LINE, .text = strdup(line)};
     if (msg.text == NULL || xQueueSend(s_queue, &msg, pdMS_TO_TICKS(1000)) != pdTRUE) {
+        wipe(msg.text);
         free(msg.text);
         ESP_LOGW(TAG, "dropped a console line");
     }
@@ -314,7 +324,6 @@ void provisioning_start(const char *name, const char *fw)
     s_view_lock = xSemaphoreCreateMutex();
     publish_view();
     xTaskCreate(protocol_task, "provisioning", 10240, NULL, 4, NULL);
-    owl_console_start(post_line);
     ESP_LOGI(TAG, "%s %s, setup state %s", name, fw,
              owl_prov_setup_state_name(owl_prov_setup_state(&s_prov)));
 }

@@ -13,8 +13,10 @@ typedef struct {
     char error[64];     /* sentence for the setup screen, "" when there is none */
 } provisioning_view_t;
 
-/* Load the saved settings, take over the console and start the protocol task. */
+/* Load the saved settings and start the protocol task. */
 void provisioning_start(const char *name, const char *fw);
+/* One console line that starts with OWL_PROV_PREFIX (console task). */
+void provisioning_line(const char *line);
 /* A network change from the board's network code (any task). */
 void provisioning_network(bool up, const char *ip);
 /* What the setup screen shows now (any task). */

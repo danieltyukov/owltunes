@@ -18,6 +18,7 @@
 #include "owl_ui.h"
 #include "provisioning_task.h"
 #include "settings_store.h"
+#include "shell.h"
 #include "status.h"
 
 static const char *TAG = "owltunes";
@@ -49,6 +50,7 @@ void app_main(void)
     snprintf(setup_url, sizeof setup_url, "%s?owl=%s", CONFIG_OWL_SETUP_URL, name);
     provisioning_start(name, esp_app_get_description()->version);
     net_start(provisioning_network);
+    shell_start(name);
 
     lv_init();
     lv_tick_set_cb(tick_ms);

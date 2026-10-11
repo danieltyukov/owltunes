@@ -159,6 +159,14 @@ class Owl:
             return msg if msg and msg.get("id") == req_id and "ok" in msg else None
         return self._wait(match, timeout, f"a reply to {cmd}")
 
+    def type(self, text: str) -> int:
+        """Send a developer console line (no @owl prefix). Returns the mark to wait for answers from."""
+        since = self.mark()
+        assert self.proc.stdin is not None
+        self.proc.stdin.write((text + "\n").encode())
+        self.proc.stdin.flush()
+        return since
+
     def stop(self) -> None:
         if self.proc.poll() is None:
             os.killpg(self.proc.pid, signal.SIGTERM)
@@ -178,6 +186,23 @@ def authorize_params(owl: Owl) -> dict[str, str]:
     return dict(urllib.parse.parse_qsl(url.query))
 
 
+def shell_checks(owl: Owl) -> None:
+    """The developer console that shares the port with the setup protocol (docs/console.md)."""
+    info = owl.wait_event("info", since=owl.type("info"))
+    check(info.get("board") == "qemu" and info.get("wifi") == "ethernet" and info.get("ip") == QEMU_IP,
+          "info reports the board and its network")
+    check(info.get("partition") == "ota_0" and info.get("flash_kb") == 16384,
+          "the app runs from the first OTA slot of a 16 MB flash")
+    check(info.get("status") == "needs_login", "an owl that is online but not linked needs a login")
+    check("info" in owl.wait_event("help", since=owl.type("help")).get("commands", ""), "help lists the commands")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("frobnicate"))
+    check(refused.get("error") == "unknown_cmd" and "cmd" not in refused,
+          "an unknown command is refused without echoing it")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("info please"))
+    check(refused.get("cmd") == "info" and refused.get("error") == "bad_arg", "an unexpected argument is refused")
+    check(owl.send("hello").get("ok") is True, "the setup protocol still answers next to the console")
+
+
 def run_checks(flash: pathlib.Path) -> None:
     owl = Owl(flash, free_port(), WORK / "run1.log")
     try:
@@ -189,6 +214,7 @@ def run_checks(flash: pathlib.Path) -> None:
         up = owl.wait_event("network", "up")
         check(up.get("ip") == QEMU_IP, "QEMU Ethernet comes up with the slirp address")
         check(owl.send("hello").get("setup") == "needs_spotify", "with a network the owl needs Spotify")
+        shell_checks(owl)
 
         check(owl.send("wifi_add", ssid="Home", password="short").get("error") == "bad_password",
               "a short Wi-Fi password is refused")

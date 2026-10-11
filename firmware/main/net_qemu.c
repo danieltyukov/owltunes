@@ -1,14 +1,19 @@
-/* QEMU board: Ethernet through the OpenCores MAC that QEMU emulates. The dev kits join the saved
- * Wi-Fi networks instead (P3); here the list is only stored. */
+/* QEMU board: Ethernet through the OpenCores MAC that QEMU emulates. Saved Wi-Fi networks are only
+ * stored here; the real boards join them (net_wifi.c). */
+#include <string.h>
+
 #include "esp_eth.h"
 #include "esp_eth_mac_openeth.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "freertos/FreeRTOS.h"
 #include "net.h"
 
 static const char *TAG = "net";
 static net_change_fn s_on_change;
+static portMUX_TYPE s_lock = portMUX_INITIALIZER_UNLOCKED;
+static char s_ip[16]; /* under s_lock; "" while down */
 
 static void on_ip_event(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
@@ -19,9 +24,15 @@ static void on_ip_event(void *arg, esp_event_base_t base, int32_t id, void *data
         char ip[16];
         esp_ip4addr_ntoa(&event->ip_info.ip, ip, sizeof ip);
         ESP_LOGI(TAG, "network up, address %s", ip);
+        portENTER_CRITICAL(&s_lock);
+        memcpy(s_ip, ip, sizeof s_ip);
+        portEXIT_CRITICAL(&s_lock);
         s_on_change(true, ip);
     } else if (id == IP_EVENT_ETH_LOST_IP) {
         ESP_LOGW(TAG, "network down");
+        portENTER_CRITICAL(&s_lock);
+        s_ip[0] = '\0';
+        portEXIT_CRITICAL(&s_lock);
         s_on_change(false, NULL);
     }
 }
@@ -48,4 +59,13 @@ void net_networks_changed(const owl_settings_t *settings)
 {
     ESP_LOGI(TAG, "%u Wi-Fi network(s) saved; the QEMU board stays on Ethernet",
              (unsigned)settings->n_networks);
+}
+
+void net_info(net_info_t *out)
+{
+    memset(out, 0, sizeof *out);
+    portENTER_CRITICAL(&s_lock);
+    memcpy(out->ip, s_ip, sizeof out->ip);
+    portEXIT_CRITICAL(&s_lock);
+    out->state = out->ip[0] != '\0' ? "ethernet" : "down";
 }

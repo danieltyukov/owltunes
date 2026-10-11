@@ -6,10 +6,12 @@ now and are meant to travel over Bluetooth later, so the console can also be use
 ## Framing
 
 - One message per line: the prefix `@owl ` (with its space), compact JSON, then a newline. A
-  carriage return before the newline is ignored.
+  line also ends at a carriage return, so CR LF and a bare CR work too.
 - A line is at most 1024 bytes, prefix and newline included. Longer lines are dropped whole.
-- Lines without the prefix are not protocol messages. The console also carries the firmware's
-  log, so both sides skip them.
+- Lines the owl prints without the prefix are the firmware's log; the setup page skips them. Lines
+  the computer sends without the prefix are not ignored: the owl treats them as developer
+  commands ([console.md](console.md)) and answers with `@owl` events this page does not list, which
+  the setup page ignores. Before the developer console existed, the owl dropped such lines.
 - Requests carry a number `id` that the reply repeats. Events have no `id`.
 
 ```text

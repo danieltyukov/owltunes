@@ -49,9 +49,7 @@ static int read_chunk(char *buf, size_t cap)
 static void deliver(const char *line, void *ctx)
 {
     (void)ctx;
-    if (strncmp(line, OWL_PROV_PREFIX, strlen(OWL_PROV_PREFIX)) == 0) {
-        s_on_line(line);
-    }
+    s_on_line(line);
 }
 
 static void reader_task(void *arg)
@@ -62,6 +60,11 @@ static void reader_task(void *arg)
         int n = read_chunk(chunk, sizeof chunk);
         if (n > 0) {
             owl_line_feed(&s_lines, chunk, (size_t)n, deliver, NULL);
+            /* The chunk may hold a password or a login code: do not leave it in memory. */
+            volatile char *p = chunk;
+            for (int i = 0; i < n; i++) {
+                p[i] = '\0';
+            }
         }
     }
 }
@@ -71,7 +74,7 @@ void owl_console_start(console_line_fn on_line)
     s_on_line = on_line;
     owl_line_init(&s_lines);
     install_driver();
-    BaseType_t created = xTaskCreate(reader_task, "console", 4096, NULL, 5, NULL);
+    BaseType_t created = xTaskCreate(reader_task, "console", 6144, NULL, 5, NULL);
     configASSERT(created == pdPASS);
 }
 

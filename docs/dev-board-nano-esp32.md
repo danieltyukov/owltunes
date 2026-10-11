@@ -43,8 +43,8 @@ To go back to Arduino's firmware, write the full-flash backup you made before th
 
 ## The console
 
-The USB port carries the firmware's log and the setup protocol (`@owl` lines, see
-[the protocol](provisioning-protocol.md)). The setup page connects to the same port over Web
+The USB port carries the firmware's log, the setup protocol (`@owl` lines, see
+[the protocol](provisioning-protocol.md)) and developer commands such as `info` ([console](console.md)). The setup page connects to the same port over Web
 Serial, so close the monitor before you connect the page: only one program can hold the port.
 
 Console output is dropped when nobody is reading the port, so the firmware never stalls waiting
@@ -53,8 +53,8 @@ port as busy, close the monitor (or any other program holding it) and connect ag
 
 ## Status LED
 
-The RGB LED shows the one thing the owl most needs you to know. The console's `info` command will
-report the same status by name once the developer console arrives (a later task). The Wi-Fi, login and
+The RGB LED shows the one thing the owl most needs you to know. The console's `info` command
+reports the same status by name ([console](console.md)). The Wi-Fi, login and
 playback statuses appear as those features arrive: until then only `needs_wifi`, `joining`,
 `needs_login`, `linking`, `log_in_again` and `starting` can show (`starting` is what a linked,
 online owl shows until playback support arrives).

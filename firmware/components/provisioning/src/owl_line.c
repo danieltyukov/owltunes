@@ -10,13 +10,15 @@ void owl_line_feed(owl_line_t *l, const char *data, size_t len, owl_line_fn on_l
 {
     for (size_t i = 0; i < len; i++) {
         char c = data[i];
-        if (c == '\n') {
-            if (l->len > 0 && l->buf[l->len - 1] == '\r') {
-                l->len--;
-            }
+        if (c == '\n' || c == '\r') { /* CR LF, LF, or a bare CR from terminals such as idf.py monitor */
             if (!l->discard && l->len > 0) {
                 l->buf[l->len] = '\0';
                 on_line(l->buf, ctx);
+                /* A line can carry a password or a login code: leave none of it behind. */
+                volatile char *p = l->buf;
+                for (size_t k = 0; k <= l->len; k++) {
+                    p[k] = '\0';
+                }
             }
             l->len = 0;
             l->discard = false;

@@ -119,17 +119,20 @@ bool owl_prov_apply_refresh(owl_prov_t *p, spotify_token_result_t result, const 
 
 /* ---- output -------------------------------------------------------------------------------- */
 
-/* Print obj as one protocol line. False when it does not fit. Takes ownership of obj. */
-static bool emit(cJSON *obj, char *out, size_t cap)
+bool owl_prov_emit(struct cJSON *obj, char *out, size_t cap)
 {
     char *json = obj ? cJSON_PrintUnformatted(obj) : NULL;
     cJSON_Delete(obj);
-    if (json == NULL) {
-        return false;
+    bool ok = false;
+    if (json != NULL) {
+        int n = snprintf(out, cap, OWL_PROV_PREFIX "%s\n", json);
+        ok = n > 0 && (size_t)n < cap && (size_t)n <= OWL_PROV_LINE_MAX;
+        cJSON_free(json);
     }
-    int n = snprintf(out, cap, OWL_PROV_PREFIX "%s\n", json);
-    cJSON_free(json);
-    return n > 0 && (size_t)n < cap && (size_t)n <= OWL_PROV_LINE_MAX;
+    if (!ok && cap > 0) {
+        out[0] = '\0';
+    }
+    return ok;
 }
 
 static cJSON *reply(int id, bool ok)
@@ -142,7 +145,7 @@ static cJSON *reply(int id, bool ok)
 
 static void respond(cJSON *obj, int id, char *out, size_t cap)
 {
-    if (!emit(obj, out, cap)) {
+    if (!owl_prov_emit(obj, out, cap)) {
         snprintf(out, cap, OWL_PROV_PREFIX "{\"id\":%d,\"ok\":false,\"error\":\"too_long\"}\n", id);
     }
 }
@@ -163,7 +166,7 @@ bool owl_prov_event(char *out, size_t cap, const char *event, const char *state,
     if (key != NULL && value != NULL) {
         cJSON_AddStringToObject(obj, key, value);
     }
-    return emit(obj, out, cap);
+    return owl_prov_emit(obj, out, cap);
 }
 
 /* ---- commands ------------------------------------------------------------------------------ */

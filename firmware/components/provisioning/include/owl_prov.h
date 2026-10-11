@@ -87,6 +87,13 @@ void owl_prov_finish_exchange(owl_prov_t *p, bool ok, const char *refresh_token)
  * LOG_IN_AGAIN and BAD_CLIENT forget it. True when the login was forgotten. */
 bool owl_prov_apply_refresh(owl_prov_t *p, spotify_token_result_t result, const char *refresh_token);
 
+struct cJSON;
+
+/* Print obj as one protocol line ("@owl {...}\n", at most OWL_PROV_LINE_MAX bytes) and take
+ * ownership of it. On failure (NULL obj, or it does not fit) out is "" and the result is false.
+ * Shared with owl_shell, so every line on the console is framed the same way. */
+bool owl_prov_emit(struct cJSON *obj, char *out, size_t cap);
+
 /* Format an event line such as {"event":"spotify","state":"failed","error":"invalid_client"}. */
 bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
                     const char *value);

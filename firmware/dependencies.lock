@@ -59,6 +59,6 @@ direct_dependencies:
 - espressif/esp_lcd_qemu_rgb
 - idf
 - lvgl/lvgl
-manifest_hash: be9218161363b7ae9bba3be8bf4b7caa6170ca11b803665016c3d444653d882a
+manifest_hash: d88e8baf42535c3b87518cf39cf83a28d83f4c2d593546bb67f6a6cd78017ab2
 target: esp32s3
 version: 3.0.0
