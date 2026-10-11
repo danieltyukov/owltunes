@@ -292,7 +292,7 @@ static void update_callback_server(void)
             ESP_LOGE(TAG, "callback server failed to start: %s", esp_err_to_name(err));
         }
     } else if (!want && callback_server_running()) {
-        callback_server_stop();
+        callback_server_stop(); /* a failure is logged and the server kept: the next pass tries again */
     }
 }
 

@@ -47,3 +47,9 @@ owl_add_test(test_owl_line provisioning spotify owl_core cjson)
 owl_add_test(test_owl_status owl_core)
 owl_add_test(test_owl_shell owl_shell owl_core cjson)
 owl_add_test(test_owl_wifi owl_core)
+
+# The LAN callback server from firmware/main, built against stand-ins for ESP-IDF (stubs/).
+owl_add_test(test_callback_server spotify owl_core)
+target_sources(test_callback_server PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/callback_server.c)
+target_include_directories(test_callback_server PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
+                           ${CMAKE_CURRENT_LIST_DIR}/../main)

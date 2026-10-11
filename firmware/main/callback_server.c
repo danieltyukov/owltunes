@@ -81,13 +81,12 @@ esp_err_t callback_server_start(callback_code_fn on_code)
     config.lru_purge_enable = true;
     config.stack_size = 6144;
     const httpd_uri_t route = {.uri = "/callback", .method = HTTP_GET, .handler = callback_get};
-    esp_err_t err = httpd_start(&s_server, &config);
+    esp_err_t err = httpd_start(&s_server, &config); /* sets s_server only when it works */
     if (err == ESP_OK) {
         err = httpd_register_uri_handler(s_server, &route);
-    }
-    if (err != ESP_OK && s_server != NULL) {
-        httpd_stop(s_server);
-        s_server = NULL;
+        if (err != ESP_OK) {
+            callback_server_stop(); /* if that fails too, the handle stays for the next stop */
+        }
     }
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "listening on port 80 for the login callback");
@@ -95,13 +94,22 @@ esp_err_t callback_server_start(callback_code_fn on_code)
     return err;
 }
 
-void callback_server_stop(void)
+esp_err_t callback_server_stop(void)
 {
-    if (s_server != NULL) {
-        httpd_stop(s_server);
-        s_server = NULL;
-        ESP_LOGI(TAG, "callback server stopped");
+    if (s_server == NULL) {
+        return ESP_OK;
     }
+    esp_err_t err = httpd_stop(s_server);
+    if (err != ESP_OK) {
+        /* httpd_stop fails before it tears anything down, so the server may still be listening.
+         * Keep the handle: callback_server_running() stays true and the protocol task stops it
+         * again on its next pass (spec 9.7: listen only while a login is open). */
+        ESP_LOGE(TAG, "could not stop the callback server (%s); trying again", esp_err_to_name(err));
+        return err;
+    }
+    s_server = NULL;
+    ESP_LOGI(TAG, "callback server stopped");
+    return ESP_OK;
 }
 
 bool callback_server_running(void)
