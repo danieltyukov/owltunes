@@ -84,8 +84,8 @@
 #define OWL_DOCK_MV_PERCH_MAX 600
 #define OWL_DOCK_MV_OPEN_MIN 2500
 
-/* USB: the charger input limit (R102 3.3k, about 0.46 A) stays inside USB 2.0 default power, so
- * any USB configuration descriptor the firmware sends declares at most 500 mA. */
+/* USB: the charger input limit (R102 3.3k) is 0.46 A typical and 0.52 A worst case, sized for USB
+ * 2.0 default power, so any USB configuration descriptor the firmware sends declares 500 mA. */
 #define OWL_USB_MAX_POWER_MA 500
 
 /* Panel power order. Nothing may hold DISP_3V3 up through an I/O pin while it is off.
