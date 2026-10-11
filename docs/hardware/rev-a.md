@@ -61,21 +61,26 @@ Charger (BQ24073, TI SLUS810N section 8.5):
 - EN2 is tied high through R103, so firmware chooses between the ILIM limit (CHG_SUSPEND low)
   and input suspend (CHG_SUSPEND high).
 - Precharge 88 / 2000 = 44 mA; termination 10 % of ICHG = 45 mA; timers 30 min and 5 h (TMR open).
-- NTC: TS sources 75 uA (72 to 78 uA) into RT101, a 10k 1 % NTC on the board (Murata
-  NCP15XH103F03RC: B25/50 3380 K, B25/85 3434 K, the 103AT-2 curve the TS thresholds are set
-  for), so TS reads 0.75 V at 25 C. On Murata's R-T table charging stops above 51.2 C (VHOT
-  0.30 V, 4.0k) and resumes below 48.3 C; it stops below -0.5 C (VCOLD 2.1 V, 28.0k) and resumes
-  above 3.1 C. TI gives 51 C and -0.6 C for the 103AT-2. With the VHOT, VCOLD and bias
-  tolerances the hot cut-off lies between 47.1 and 55.7 C and the cold one between -2.5 and
-  1.6 C; RT101's own 1 % tolerances add about 0.4 C. An open TS reads above VCOLD, so it counts
-  as cold.
+- NTC: TS sources 75 uA (72 to 78 uA) into RT101, a 10k NTC on the board (Sunlord
+  SDNT1005X103F3950FTF: B25/50 3950 K, 1 % on R25 and on B), so TS reads 0.75 V at 25 C. The TS
+  thresholds are set for the 103AT-2 curve (0 to 50 C, SLUS810N 9.3.6); the steeper B 3950 curve
+  narrows the window, which resistors on TS cannot do (same section). On the B25/50 model
+  charging stops above 47.2 C (VHOT 0.30 V, 4.0k) and resumes below 44.7 C; it stops below
+  +3.5 C (VCOLD 2.1 V, 28.0k) and resumes above 6.5 C. With the VHOT, VCOLD and bias tolerances
+  the hot cut-off lies between 43.7 and 51.0 C and the cold one between +1.8 and +5.2 C; RT101's
+  own 1 % tolerances widen that to 43.2 to 51.5 C and +1.4 to +5.6 C. The alternate's published
+  R-T table (KUU KNTC0402/10KF3950, also B25/50 3950 K) gives the same hot points and puts the
+  cold ones about 0.4 C lower (cut-off +3.1 C, release 6.2 C). An open TS reads above VCOLD, so
+  it counts as cold.
 - RT101 reads the board, not the cell: it sits on the back under the middle of the cell, which
   is 1.2 mm behind the board, 30 mm from U101 and 19 mm from U103. In fast charge U101's heat
   reaches it through the planes, so it reads warmer than the cell: charging stops while the cell
   is still a few degrees below the hot cut-off, and a cell a few degrees below the cold cut-off
   still charges. The charge temperature window is approximate.
-- Cells are often rated for charging from 0 to 45 C, below the 51 C cut-off. Resistors on TS can
-  only widen the window, not narrow it (SLUS810N 9.3.6). Check the bought cell's limit.
+- Charging may pause in a warm room (the hot cut-off can be as low as 43.2 C and RT101 reads
+  warm); it resumes about 2.5 C lower, and the safety timers pause with it (SLUS810N 9.3.6).
+- Cells are often rated for charging from 0 to 45 C. The cold cut-off stays above 0 C at its
+  worst case; the hot one is 47.2 C nominal and up to 51.5 C. Check the bought cell's limit.
 - Dissipation in fast charge: (VIN - VOUT) x IIN + (VOUT - VBAT) x ICHG with OUT at 4.4 V and
   about 4.6 V at IN. At the typical limit (charge current 0.424 A): 0.2 x 0.424 + 0.9 x 0.424 =
   0.47 W at VBAT 3.5 V, about 0.68 W at VBAT 3.0 V where fast charge starts; up to about 0.77 W
@@ -200,10 +205,11 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 - Touch I2C at 3.3 V: the VIEWE drawing notes touch I2C at 1.8 V; the Waveshare kit runs it at
   3.3 V.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
-- RT101 against the cell: during a 0.45 A charge from about 3.5 V, compare RT101's temperature
-  (from the TS voltage, 75 uA x R) with a thermocouple taped to the cell. If it reads more than a
-  few degrees off, a piece of thermal gap pad between the cell and RT101's copper patch couples
-  them better. Check the hot cut-off (51 C) against the bought cell's charge temperature limit.
+- RT101 against the cell: during a USB charge (about 0.42 A less the system load) from about
+  3.5 V, compare RT101's temperature (from the TS voltage, 75 uA x R) with a thermocouple taped
+  to the cell. If it reads more than a few degrees off, a piece of thermal gap pad between the
+  cell and RT101's copper patch couples them better. Check the hot cut-off (47.2 C nominal, 43.2
+  to 51.5 C worst case) against the bought cell's charge temperature limit.
 - RTC crystal drift (18 pF load capacitors).
 - Deep-sleep current against the 44 uA estimate, and DISP_3V3 near 0 V with the panel off (no
   back-powering through an I/O pin).

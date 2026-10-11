@@ -9165,7 +9165,7 @@
 				(justify left mirror)
 			)
 		)
-		(property "Value" "10k NTC B3380"
+		(property "Value" "10k NTC B3950"
 			(at 0 -1.17 0)
 			(layer "B.Fab")
 			(uuid "cf2b0da5-b483-4eab-9808-7d41da4899c3")
@@ -9214,7 +9214,7 @@
 				(justify mirror)
 			)
 		)
-		(property "LCSC Part #" "C77131"
+		(property "LCSC Part #" "C95939"
 			(at 0 0 0)
 			(layer "B.SilkS")
 			(hide yes)
@@ -9227,7 +9227,7 @@
 				(justify mirror)
 			)
 		)
-		(property "MPN" "NCP15XH103F03RC"
+		(property "MPN" "SDNT1005X103F3950FTF"
 			(at 0 0 0)
 			(layer "B.SilkS")
 			(hide yes)
@@ -9240,7 +9240,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Manufacturer" "Murata Electronics"
+		(property "Manufacturer" "Sunlord"
 			(at 0 0 0)
 			(layer "B.SilkS")
 			(hide yes)

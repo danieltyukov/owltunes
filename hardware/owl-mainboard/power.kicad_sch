@@ -2932,7 +2932,7 @@
 		)
 		(uuid "f8943b88-9313-4cc6-a761-745aea9ea3fe")
 	)
-	(text_box "Values and why (datasheets: BQ24073 SLUS810N section 8.5; TPS63802 SLVSEU9D section 10; TPS22917 SLVSDW8B section 6)\n- Inputs: VBUS_USB and VBUS_DOCK each reach VIN_CHG through a PMEG2020EH Schottky (under 0.38 V at the input limit),\n  so neither input, nor a shorted dock pad, can back-feed the other or the USB host. TVS diodes sit at the connectors.\n  C101 4.7 uF (IN takes 1 to 10 uF) keeps the capacitance a USB host sees through D101 within USB's 10 uF.\n- ISET 2.0k: ICHG = KISET / RISET = 890 / 2000 = 0.445 A (KISET 797 to 975: 0.40 to 0.49 A), 0.45 C for the\n  1000 mAh pack. Precharge 88 / 2000 = 44 mA.\n- ILIM 3.6k: IIN = KILIM / RILIM = 1525 / 3600 = 0.42 A (KILIM 1330 to 1720 for 200 to 500 mA: 0.37 to 0.48 A),\n  inside USB 2.0 default power (500 mA): the board has plain 5.1k Rd and does not read CC, and VIN-DPM is off in ILIM mode.\n  When the system load and ICHG together exceed the limit, the charger cuts ICHG (DPPM). Faster charging needs CC sensing.\n- EN2 100k to VIN_CHG, EN1 from GPIO45 with 100k to GND: (EN2, EN1) = (1, 0) selects the ILIM resistor on any input;\n  GPIO45 high gives (1, 1), USB suspend. The pull-up only draws current while input power is present\n  (EN pins have 285k internal pull-downs).\n- CE and TD to GND (charging enabled, termination on), TMR open (30 min precharge and 5 h fast-charge timers).\n- TS to RT101, a 10k NTC on the board under the cell (the pack is 2-wire): 75 uA bias, charging stops below\n  -0.6 C (VCOLD 2.1 V, 28k) and above 51 C (VHOT 0.30 V, 4.0k) on the NCP15XH103 curve (B25/85 3434 K).\n- TPS63802: VOUT = 0.5 x (1 + 560k / 100k) = 3.300 V; R2 = 100k is the datasheet maximum; MODE low (power save);\n  EN to VSYS (always on); L = 0.47 uH; 10 uF + 100 nF in, 2 x 22 uF + 100 nF out.\n  PG (open drain, sinks up to 1 mA) is TPS_PG: through R212 4.7k (mcu_usb) it sinks 0.70 mA at most and holds ESP_EN\n  at 0.30 V or less, so the module runs only in regulation (EN: 47k to +3V3, 220 nF).\n- TPS22917: CT 1 nF from CT to VIN, QOD tied to VOUT (fast discharge when the panel is switched off),\n  ON pulled down by 100k (GPIO46 strap must be low at reset).\n- MAX17048: CELL and VDD to VBAT, CTG and QSTRT to GND, ALRT only to TP107; I2C pull-ups are on the periph sheet."
+	(text_box "Values and why (datasheets: BQ24073 SLUS810N section 8.5; TPS63802 SLVSEU9D section 10; TPS22917 SLVSDW8B section 6)\n- Inputs: VBUS_USB and VBUS_DOCK each reach VIN_CHG through a PMEG2020EH Schottky (under 0.38 V at the input limit),\n  so neither input, nor a shorted dock pad, can back-feed the other or the USB host. TVS diodes sit at the connectors.\n  C101 4.7 uF (IN takes 1 to 10 uF) keeps the capacitance a USB host sees through D101 within USB's 10 uF.\n- ISET 2.0k: ICHG = KISET / RISET = 890 / 2000 = 0.445 A (KISET 797 to 975: 0.40 to 0.49 A), 0.45 C for the\n  1000 mAh pack. Precharge 88 / 2000 = 44 mA.\n- ILIM 3.6k: IIN = KILIM / RILIM = 1525 / 3600 = 0.42 A (KILIM 1330 to 1720 for 200 to 500 mA: 0.37 to 0.48 A),\n  inside USB 2.0 default power (500 mA): the board has plain 5.1k Rd and does not read CC, and VIN-DPM is off in ILIM mode.\n  When the system load and ICHG together exceed the limit, the charger cuts ICHG (DPPM). Faster charging needs CC sensing.\n- EN2 100k to VIN_CHG, EN1 from GPIO45 with 100k to GND: (EN2, EN1) = (1, 0) selects the ILIM resistor on any input;\n  GPIO45 high gives (1, 1), USB suspend. The pull-up only draws current while input power is present\n  (EN pins have 285k internal pull-downs).\n- CE and TD to GND (charging enabled, termination on), TMR open (30 min precharge and 5 h fast-charge timers).\n- TS to RT101, a 10k 1 % NTC on the board under the cell (the pack is 2-wire), B25/50 3950 K: 75 uA bias, charging\n  stops below +3.5 C (VCOLD 2.1 V, 28k) and above 47.2 C (VHOT 0.30 V, 4.0k); docs/hardware/rev-a.md has the tolerances.\n- TPS63802: VOUT = 0.5 x (1 + 560k / 100k) = 3.300 V; R2 = 100k is the datasheet maximum; MODE low (power save);\n  EN to VSYS (always on); L = 0.47 uH; 10 uF + 100 nF in, 2 x 22 uF + 100 nF out.\n  PG (open drain, sinks up to 1 mA) is TPS_PG: through R212 4.7k (mcu_usb) it sinks 0.70 mA at most and holds ESP_EN\n  at 0.30 V or less, so the module runs only in regulation (EN: 47k to +3V3, 220 nF).\n- TPS22917: CT 1 nF from CT to VIN, QOD tied to VOUT (fast discharge when the panel is switched off),\n  ON pulled down by 100k (GPIO46 strap must be low at reset).\n- MAX17048: CELL and VDD to VBAT, CTG and QSTRT to GND, ALRT only to TP107; I2C pull-ups are on the periph sheet."
 		(exclude_from_sim no)
 		(at 20.32 223.52 0)
 		(size 130.81 49.53)
@@ -9350,7 +9350,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "10k NTC B3380"
+		(property "Value" "10k NTC B3950"
 			(at 209.55 96.52 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9394,7 +9394,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C77131"
+		(property "LCSC Part #" "C95939"
 			(at 213.36 95.25 0)
 			(hide yes)
 			(show_name no)
@@ -9405,7 +9405,7 @@
 				)
 			)
 		)
-		(property "MPN" "NCP15XH103F03RC"
+		(property "MPN" "SDNT1005X103F3950FTF"
 			(at 213.36 95.25 0)
 			(hide yes)
 			(show_name no)
@@ -9416,7 +9416,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Murata Electronics"
+		(property "Manufacturer" "Sunlord"
 			(at 213.36 95.25 0)
 			(hide yes)
 			(show_name no)

@@ -171,10 +171,13 @@ pins = { 1 = "VIN_CHG", 2 = "VBUS_DOCK" }
 # Battery (controller ruling, 11 October 2026): any 2-wire 803040 LiPo with a protection circuit and
 # a JST PH 2.0 plug. The BQ24073 does not charge with TS open, so the board carries its own NTC,
 # RT101, on the back under the cell; a pack's own NTC wire, if it has one, is not used.
-# NCP15XH103F03RC follows the 103AT-2 curve that the TS thresholds assume (B25/85 3434 K against
-# 3435 K; 27.4k at 0 C and 4.16k at 50 C on Murata's table against 27.3k and 4.16k). No 10k NTC is
-# Basic or Preferred at JLC (checked 2026-10-11); this Murata part is Extended, stock 299792 on
-# 2026-10-11.
+# RT101 is a 10k NTC with B25/50 3950 K, 1 % on R25 and on B (controller ruling, 11 October 2026).
+# It is steeper than the 103AT-2 curve the TS thresholds assume, so the charge window narrows from
+# about -0.6 to 51 C to +3.5 to 47.2 C on the B25/50 model (VCOLD 2.1 V and VHOT 0.30 V at 75 uA:
+# 28.0k and 4.0k; docs/hardware/rev-a.md has the tolerances). Resistors on TS can only widen the
+# window. Keep 1 % B: a 3 % B, 5 % R part spreads the hot cut-off by +-2 C, not +-0.5 C. No 10k
+# NTC is Basic or Preferred at JLC (checked 2026-10-11); this Sunlord part is Extended, stock 184396
+# on 2026-10-11. Height: 0.5 +- 0.15 mm (Sunlord SDNT1005).
 [[part]]
 ref = "J101"
 sheet = "power"
@@ -194,13 +197,13 @@ ref = "RT101"
 sheet = "power"
 symbol = "Device:Thermistor_NTC"
 footprint = "Resistor_SMD:R_0402_1005Metric"
-value = "10k NTC B3380"
-lcsc = "C77131"
-mpn = "NCP15XH103F03RC"
-manufacturer = "Murata Electronics"
-alt = "C5121989 TDK NTCG103JF103FT1S (B25/85 3435 K), same 0402 footprint"
+value = "10k NTC B3950"
+lcsc = "C95939"
+mpn = "SDNT1005X103F3950FTF"
+manufacturer = "Sunlord"
+alt = "C41366926 KUU KNTC0402/10KF3950 (B25/50 3950 K, 1 % R25 and B), same 0402 footprint"
 side = "back"
-height = 0.55
+height = 0.65
 pins = { 1 = "BAT_NTC", 2 = "GND" }
 
 [[part]]

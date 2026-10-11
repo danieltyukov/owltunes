@@ -38,10 +38,11 @@ steps that drive pins need a test build that takes its pins from
    sensible state of charge, and the charge current measured in the battery lead is about 0.42 A
    less the system load (on USB the input limit, typically 0.424 A, is below the 0.445 A ICHG
    setting). CHG_STAT low with no charge current means a TS fault: RT101 open (a lifted or
-   tombstoned pad), or the board at RT101 outside -0.5 to 51 C (TS outside 0.30 to 2.1 V). Then
+   tombstoned pad), or the board at RT101 outside +3.5 to 47.2 C (TS outside 0.30 to 2.1 V). Then
    charge a cell from about 3.5 V with a thermocouple taped to it and compare it with RT101's
-   temperature (from the TS voltage and the NCP15XH103 table) after 30 minutes: RT101 reads the
-   board under the cell, so expect it a few degrees warmer (see `rev-a.md`, open items).
+   temperature after 30 minutes (R = V(TS) / 75 uA; T in kelvin is
+   `1 / (1 / 298.15 + ln(R / 10k) / 3950)`). RT101 reads the board under the cell, so expect it a
+   few degrees warmer (see `rev-a.md`, open items).
 10. **Perch.** Dock on a powered perch: DOCK_DET (GPIO1) about 330 mV, CHG_PGOOD low, LED on
     the perch lit.
 11. **Power.** Measure deep-sleep current from the pack (target about 44 uA, see `rev-a.md`),
