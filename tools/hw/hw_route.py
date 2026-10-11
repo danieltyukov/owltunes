@@ -4,8 +4,10 @@
 Each group is a list of (net, width mm, [owl points]) polylines on B.Cu, with "F" as a fourth
 item for F.Cu, or (net, "via", [owl points]) for through vias; owl coordinates are x right as
 seen from the front, y up, origin at the display centre (KiCad x = 100 + x, y = 100 - y). Widths
-neck down to 0.25 or 0.3 mm only where a track leaves a 0.5 mm pitch pin. Running a group again
-first removes the tracks it drew before, so a group can be re-routed after a placement change.
+neck down to 0.25 or 0.3 mm only where a track leaves a 0.5 mm pitch pin. Each group's tracks and
+vias go into a KiCad group named "hw_route <group>". Running a group again first removes
+everything in that KiCad group, so a group can be re-routed with new coordinates after a
+placement change.
 GND vias, pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard tps63802 [charger gauge usb usb_fanout crystal dock]
@@ -115,6 +117,32 @@ def pt(xy) -> pcbnew.VECTOR2I:
     return pcbnew.VECTOR2I(pcbnew.FromMM(100 + xy[0]), pcbnew.FromMM(100 - xy[1]))
 
 
+def tag(name: str) -> str:
+    """Name of the KiCad group that holds a route group's tracks and vias."""
+    return f"hw_route {name}"
+
+
+def remove_old(board: pcbnew.BOARD, name: str) -> None:
+    """Delete what a route group drew before: every item in its KiCad group, so edited coordinates
+    leave nothing behind, plus untagged tracks and vias at the group's exact coordinates (copper
+    drawn before the tagging, or brought back untagged by a Specctra session import).
+    Delete, not Remove: Remove hands the C++ item to its Python wrapper, and once that wrapper is
+    freed the board's track list comes back as an untyped SwigPyObject (KiCad 10.0.6)."""
+    for group in [g for g in board.Groups() if g.GetName() == tag(name)]:
+        for item in list(group.GetItems()):
+            board.Delete(item)
+        board.Delete(group)
+    segs = set()
+    for _, width, pts, *_ in GROUPS[name]:
+        if width == "via":
+            segs |= {(pt(a).x, pt(a).y, pt(a).x, pt(a).y) for a in pts}
+        for a, b in zip(pts, pts[1:]):
+            segs |= {(pt(a).x, pt(a).y, pt(b).x, pt(b).y), (pt(b).x, pt(b).y, pt(a).x, pt(a).y)}
+    for t in [t for t in board.GetTracks() if t.GetParentGroup() is None
+              and (t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y) in segs]:
+        board.Delete(t)
+
+
 def route(board_name: str, groups: list[str]) -> int:
     path = ROOT / "hardware" / board_name / f"{board_name}.kicad_pcb"
     board = pcbnew.LoadBoard(str(path))
@@ -122,16 +150,10 @@ def route(board_name: str, groups: list[str]) -> int:
         if name not in GROUPS:
             print(f"unknown group {name}")
             return 1
-        segs = set()
-        for _, width, pts, *_ in GROUPS[name]:
-            if width == "via":
-                segs |= {(pt(a).x, pt(a).y, pt(a).x, pt(a).y) for a in pts}
-            for a, b in zip(pts, pts[1:]):
-                segs |= {(pt(a).x, pt(a).y, pt(b).x, pt(b).y), (pt(b).x, pt(b).y, pt(a).x, pt(a).y)}
-        old = [t for t in board.GetTracks()
-               if (t.GetStart().x, t.GetStart().y, t.GetEnd().x, t.GetEnd().y) in segs]
-        for t in old:
-            board.Remove(t)
+        remove_old(board, name)
+        group = pcbnew.PCB_GROUP(board)
+        group.SetName(tag(name))
+        board.Add(group)
         length = {}
         for net, width, pts, *layer in GROUPS[name]:
             info = board.FindNet(net)
@@ -147,6 +169,7 @@ def route(board_name: str, groups: list[str]) -> int:
                     v.SetNet(info)
                     v.SetLocked(True)
                     board.Add(v)
+                    group.AddItem(v)
                 continue
             for a, b in zip(pts, pts[1:]):
                 t = pcbnew.PCB_TRACK(board)
@@ -157,6 +180,7 @@ def route(board_name: str, groups: list[str]) -> int:
                 t.SetNet(info)
                 t.SetLocked(True)
                 board.Add(t)
+                group.AddItem(t)
                 length[net] = length.get(net, 0.0) + pcbnew.ToMM(t.GetLength())
         print(f"{name}: " + ", ".join(f"{n} {v:.1f} mm" for n, v in sorted(length.items())))
     pcbnew.SaveBoard(str(path), board)
