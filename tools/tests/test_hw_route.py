@@ -126,6 +126,43 @@ class RouteTest(unittest.TestCase):
         ])
         self.assertEqual(self.copper(board), [("PCB_TRACK", "N1", 100.0, 100.0, 101.0, 100.0)])
 
+    def pours(self, board):
+        """Every copper zone as (net, layer, priority, clearance, min width, thermal gap, spoke,
+        locked, filled, group name, outline in owl mm)."""
+        out = []
+        for z in board.Zones():
+            self.assertFalse(z.GetIsRuleArea())
+            outline = z.Outline().Outline(0)
+            pts = [(round(pcbnew.ToMM(outline.CPoint(i).x) - 100, 4), round(100 - pcbnew.ToMM(outline.CPoint(i).y), 4))
+                   for i in range(outline.PointCount())]
+            group = z.GetParentGroup()
+            out.append((z.GetNetname(), board.GetLayerName(z.GetFirstLayer()), z.GetAssignedPriority(),
+                        mm(z.GetLocalClearance()), mm(z.GetMinThickness()), mm(z.GetThermalReliefGap()),
+                        mm(z.GetThermalReliefSpokeWidth()), z.IsLocked(), z.IsFilled(),
+                        group.GetName() if group else None, pts))
+        return sorted(out)
+
+    def test_pours_are_drawn_filled_and_replaced(self):
+        board = pcbnew.LoadBoard(str(self.path))
+        board.SetCopperLayerCount(4)
+        for a, b in [((40, -40), (60, -40)), ((60, -40), (60, -60)), ((60, -60), (40, -60)), ((40, -60), (40, -40))]:
+            edge = pcbnew.PCB_SHAPE(board)
+            edge.SetShape(pcbnew.SHAPE_T_SEGMENT)
+            edge.SetLayer(pcbnew.Edge_Cuts)
+            edge.SetStart(hw_route.pt(a))
+            edge.SetEnd(hw_route.pt(b))
+            board.Add(edge)
+        pcbnew.SaveBoard(str(self.path), board)
+        big = [(39, -39), (61, -39), (61, -61), (39, -61)]
+        self.route({"g": [("N1", "pour", big, "In1", 0)]}, "g")
+        small = [(45, -45), (55, -45), (55, -55), (45, -55)]
+        board = self.route({"g": [("N1", "pour", small, "In1", 0), ("N2", "pour", big, "In2", 1)]}, "g")
+        self.assertEqual(self.pours(board), [
+            ("N1", "In1.Cu", 0, 0.2, 0.2, 0.3, 0.3, True, True, "hw_route g", small),
+            ("N2", "In2.Cu", 1, 0.2, 0.2, 0.3, 0.3, True, True, "hw_route g", big),
+        ])
+        self.assertEqual(self.copper(board), [])
+
     def test_rerun_in_a_fresh_interpreter(self):
         # Board.Remove leaves a removed item to its Python wrapper, and once the wrapper is freed
         # the board's track list stops being iterable. The fault shows in a fresh interpreter but

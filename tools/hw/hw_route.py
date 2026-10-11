@@ -2,19 +2,22 @@
 """Hand-route the main board's critical nets (Task 10 Step 1) and lock them.
 
 Each group is a list of (net, width mm, [owl points]) polylines on B.Cu, with "F" as a fourth
-item for F.Cu, (net, "via", [owl points]) for through vias, or ("", "no pour", [owl polygon],
+item for F.Cu, (net, "via", [owl points]) for through vias, ("", "no pour", [owl polygon],
 layer) for a rule area that keeps copper pours out but allows tracks, vias, pads and footprints
-(layer "F", "B" or "In2"); owl coordinates are x right as seen from the front, y up, origin at
-the display centre (KiCad x = 100 + x, y = 100 - y). Widths neck down to 0.25 or 0.3 mm only
-where a track leaves a 0.5 mm pitch pin. Each group's tracks, vias and rule areas go into a KiCad
-group named "hw_route <group>". Running a group again first removes everything in that KiCad
-group, so a group can be re-routed with new coordinates after a placement change.
-GND vias that the planes will tie in are placed here and show as via_dangling in DRC until the
-pours exist; the pours and the rest of the nets are Steps 2 and 3 (Freerouting and planes).
+(layer "F", "B" or "In2"), or (net, "pour", [owl polygon], layer, priority) for a copper pour
+(layer "F", "In1", "In2" or "B"; the fill is clipped to the board outline, so a pour may run
+past it); owl coordinates are x right as seen from the front, y up, origin at the display centre
+(KiCad x = 100 + x, y = 100 - y). Widths neck down to 0.25 or 0.3 mm only where a track leaves a
+0.5 mm pitch pin. Each group's tracks, vias, rule areas and pours go into a KiCad group named
+"hw_route <group>". Running a group again first removes everything in that KiCad group, so a
+group can be re-routed with new coordinates after a placement change. A run that draws a pour
+refills every zone before saving.
+The planes group is drawn before Freerouting (the Specctra export hands In1 and In2 to it as
+planes); the outer GND pours and the stitching vias come after the session import.
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
 Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
-qspi bat_ntc vsys_link v3v3_feed vbus_usb.
+qspi bat_ntc vsys_link v3v3_feed vbus_usb planes.
 Needs KiCad's pcbnew Python module.
 """
 
@@ -313,10 +316,32 @@ GROUPS = {
         ("GND", 0.3, [(-9.4, -26.25), (-9.4, -26.95)]),
         ("GND", "via", [(-9.4, -26.25), (-9.4, -26.95)]),
     ],
+    # Inner planes. In1 is solid GND. In2 is GND too (the reference for the B.Cu parts: U101,
+    # U103 and their caps, the crystal, the QSPI block and the USB corridor) except for a +3V3
+    # pour under the module, inside its pin ring: x -8.4 to 8.4, from y 18.8 (above the bottom pin
+    # row, so the QSPI and USB stubs leaving the pins stay over GND) up to the antenna rule area at
+    # y 36.6. Y201 (x 11 to 15) keeps GND under it. The GND pour on In2 is notched round the +3V3
+    # pour rather than under it, so the Specctra export gives Freerouting two planes that do not
+    # overlap. The module's antenna rule area, RT101's In2 rule area and the board outline clip
+    # the fills.
+    "planes": [
+        ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (-32.0, 44.0)], "In1", 0),
+        ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (8.4, 44.0), (8.4, 18.8), (-8.4, 18.8),
+                         (-8.4, 44.0), (-32.0, 44.0)], "In2", 0),
+        ("+3V3", "pour", [(-8.4, 18.8), (8.4, 18.8), (8.4, 37.0), (-8.4, 37.0)], "In2", 1),
+    ],
 }
 
 
-LAYERS = {"F": pcbnew.F_Cu, "B": pcbnew.B_Cu, "In2": pcbnew.In2_Cu}
+LAYERS = {"F": pcbnew.F_Cu, "In1": pcbnew.In1_Cu, "In2": pcbnew.In2_Cu, "B": pcbnew.B_Cu}
+
+# Copper pours (Task 10 Step 3): 0.2 mm clearance (net classes may ask for more), solid fill no
+# thinner than 0.2 mm, thermal reliefs with a 0.3 mm gap and 0.3 mm spokes unless a pad says
+# otherwise, and islands that reach no pad of their net removed.
+POUR_CLEARANCE = 0.2
+POUR_MIN_WIDTH = 0.2
+POUR_THERMAL_GAP = 0.3
+POUR_SPOKE = 0.3
 
 
 def pt(xy) -> pcbnew.VECTOR2I:
@@ -340,7 +365,7 @@ def remove_old(board: pcbnew.BOARD, name: str) -> None:
         board.Delete(group)
     segs = set()
     for _, width, pts, *_ in GROUPS[name]:
-        if width == "no pour":
+        if width in ("no pour", "pour"):
             continue
         if width == "via":
             segs |= {(pt(a).x, pt(a).y, pt(a).x, pt(a).y) for a in pts}
@@ -354,6 +379,7 @@ def remove_old(board: pcbnew.BOARD, name: str) -> None:
 def route(board_name: str, groups: list[str]) -> int:
     path = ROOT / "hardware" / board_name / f"{board_name}.kicad_pcb"
     board = pcbnew.LoadBoard(str(path))
+    poured = False
     for name in groups:
         if name not in GROUPS:
             print(f"unknown group {name}")
@@ -385,6 +411,27 @@ def route(board_name: str, groups: list[str]) -> int:
             if info is None:
                 print(f"no net {net}")
                 return 1
+            if width == "pour":
+                zone = pcbnew.ZONE(board)
+                zone.SetLayer(LAYERS[layer[0]])
+                zone.SetNet(info)
+                zone.SetAssignedPriority(layer[1])
+                zone.SetZoneName(f"{tag(name)} {net} {layer[0]}")
+                zone.SetLocalClearance(pcbnew.FromMM(POUR_CLEARANCE))
+                zone.SetMinThickness(pcbnew.FromMM(POUR_MIN_WIDTH))
+                zone.SetPadConnection(pcbnew.ZONE_CONNECTION_THERMAL)
+                zone.SetThermalReliefGap(pcbnew.FromMM(POUR_THERMAL_GAP))
+                zone.SetThermalReliefSpokeWidth(pcbnew.FromMM(POUR_SPOKE))
+                zone.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)
+                outline = zone.Outline()
+                outline.NewOutline()
+                for a in pts:
+                    outline.Append(pt(a))
+                zone.SetLocked(True)
+                board.Add(zone)
+                group.AddItem(zone)
+                poured = True
+                continue
             if width == "via":
                 for a in pts:  # JLC no-fee via: 0.3 mm drill, 0.5 mm pad, through
                     v = pcbnew.PCB_VIA(board)
@@ -408,6 +455,8 @@ def route(board_name: str, groups: list[str]) -> int:
                 group.AddItem(t)
                 length[net] = length.get(net, 0.0) + pcbnew.ToMM(t.GetLength())
         print(f"{name}: " + ", ".join(f"{n} {v:.1f} mm" for n, v in sorted(length.items())))
+    if poured:
+        pcbnew.ZONE_FILLER(board).Fill(board.Zones())
     pcbnew.SaveBoard(str(path), board)
     return 0
 
