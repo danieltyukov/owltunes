@@ -86,7 +86,7 @@ class Board:
             ser.port = self.port
             ser.baudrate = 115200
             ser.timeout = 0.2
-            ser.dtr = False  # on USB-Serial/JTAG, DTR and RTS low keep the chip running
+            ser.dtr = False  # held low; the Nano ESP32 still resets when the port opens
             ser.rts = False
             try:
                 ser.open()
@@ -135,7 +135,7 @@ class Board:
 
     def wait_boot(self, timeout: float = 20.0, since: int = 0) -> int:
         """Wait for the firmware's boot line. Opening the port resets the Nano ESP32 (USB-Serial/JTAG
-        resets the chip when a program opens it, whatever DTR and RTS are set to), so call this right
+        restarted the chip on every open, 3 of 3 times, with DTR and RTS held low), so call this right
         after open() or reset(). Returns the position after the boot line."""
         self.wait(lambda line: True if BOOT_MARKER in line else None, timeout, "the boot line", since)
         return self.mark()

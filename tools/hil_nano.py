@@ -47,8 +47,12 @@ def check(condition: bool, what: str) -> None:
     print(f"ok - {what}", flush=True)
 
 
-def esptool(args: list[str], cwd: pathlib.Path = ROOT, may_fail: bool = False) -> bool:
-    result = subprocess.run([sys.executable, "-m", "esptool", "--chip", "esp32s3", *args], cwd=cwd)
+def esptool(args: list[str], cwd: pathlib.Path = ROOT, may_fail: bool = False, timeout: float = 120.0) -> bool:
+    try:
+        result = subprocess.run([sys.executable, "-m", "esptool", "--chip", "esp32s3", *args], cwd=cwd,
+                                timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise Failure(f"esptool {' '.join(args)} did not finish within {timeout:.0f} s") from None
     if result.returncode != 0 and not may_fail:
         raise Failure(f"esptool {' '.join(args)} failed")
     return result.returncode == 0
@@ -69,7 +73,7 @@ def flash(port: str, rom: bool, fresh: bool) -> None:
         blank = WORK / "blank_nvs.bin"
         blank.write_bytes(b"\xff" * NVS_SIZE)
         args += [hex(NVS_OFFSET), str(blank)]
-    esptool(args, cwd=BUILD)
+    esptool(args, cwd=BUILD, timeout=120.0)
 
 
 def connect(port: str, log: pathlib.Path) -> tuple[Board, dict]:
@@ -77,15 +81,20 @@ def connect(port: str, log: pathlib.Path) -> tuple[Board, dict]:
     time.sleep(1.5)  # after esptool's reset the board leaves USB and comes back as a new device
     board = Board(port, log)  # opening the port resets this board (reset reason "usb")
     try:
-        board.wait_boot(timeout=20)
-        return board, board.hello(timeout=25)
-    except BoardError:
-        print("no answer: trying a watchdog reset in case the board is still in download mode", flush=True)
+        try:
+            board.wait_boot(timeout=20)
+            return board, board.hello(timeout=25)
+        except BoardError:
+            print("no answer: trying a watchdog reset in case the board is still in download mode", flush=True)
+            board.close()
+            esptool(["--port", port, "--before", "no-reset", "--after", "watchdog-reset", "chip-id"],
+                    may_fail=True, timeout=30.0)
+            board.open()
+            board.wait_boot(timeout=20, since=board.mark())
+            return board, board.hello(timeout=25)
+    except BaseException:
         board.close()
-        esptool(["--port", port, "--before", "no-reset", "--after", "watchdog-reset", "chip-id"], may_fail=True)
-        board.open()
-        board.wait_boot(timeout=20)
-        return board, board.hello(timeout=25)
+        raise
 
 
 def boot_checks(board: Board, hello: dict, fresh: bool) -> dict:

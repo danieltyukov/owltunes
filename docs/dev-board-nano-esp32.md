@@ -34,7 +34,7 @@ the bootloader by itself. Put it into ROM download mode by hand:
 2. Press and release RST. The LED turns purple: the board waits in download mode.
 3. Remove the wire and flash from `build/firmware-nano_esp32` with
    `python -m esptool --chip esp32s3 --before no-reset --after watchdog-reset write-flash @flash_args`
-   (or `tools/hil_nano.py --rom`, added in a later task). Only a watchdog reset starts the new firmware from this state.
+   (or `tools/hil_nano.py --rom`). Only a watchdog reset starts the new firmware from this state.
 
 Once the OwlTunes firmware runs, `tools/firmware.sh flash` works without the wire.
 
@@ -82,6 +82,7 @@ resets the board, and `--rom` flashes a board that waits in ROM download mode. T
 the run is in `build/hil-nano/console.log`.
 
 Opening the serial port resets the board: the USB-Serial/JTAG controller restarts the chip
-whenever a program opens the port (reset reason `usb` in `info`), whatever DTR and RTS are set to.
+when a program opens the port (reset reason `usb` in `info`); opening it reset the board 3 of 3 times
+with DTR and RTS held low.
 Every open therefore starts the firmware again, and the scripts wait for its `OWL_BOOT_OK` line
 before they send anything. A terminal opened while a test runs restarts the board too.
