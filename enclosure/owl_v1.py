@@ -47,7 +47,14 @@ RING_CLEAR_BACK_Z = PCB_FRONT_Z  # the body is open around the ring down to the 
 BOSS_R = C.BOSS_R
 INSERT_D = 3.2  # M2 x 3 heat-set insert hole
 INSERT_DEPTH = 4.0
-SCREW_HEAD_D = 4.2
+# Back screws (P.SCREW_BACK): the button head sits in a counterbore through the whole 1.5 mm plate,
+# 0.2 below the back face. A collar on the inside of the plate around each of these bosses keeps
+# the counterbore's top edge 1.0 or more from any outside surface (the 2.8 mm boss alone would
+# leave 0.7).
+SCREW_HEAD_D = P.M2_BUTTON_DK + 0.7  # 0.35 radial clearance
+SCREW_HEAD_DEPTH = COVER_T
+SCREW_COLLAR_R = 3.4
+SCREW_COLLAR_H = 0.8
 
 # Glass retention (front insertion). The glass rests on the bezel ledge GLASS_GAP below the rim
 # plane; the gap takes the adhesive ring. The retainer is a 1.3 mm ring over the glass border,
@@ -177,8 +184,9 @@ def back_cover() -> Part:
         plate -= by_depth(x, y, INSERT_D / 2, PCB_BACK_Z - INSERT_DEPTH, PCB_BACK_Z + EPS)
     for x, y in C.BODY_HOLES:
         plate += by_depth(x, y, BOSS_R, BATTERY_BACK_Z - EPS, PCB_BACK_Z)
+        plate += by_depth(x, y, SCREW_COLLAR_R, BATTERY_BACK_Z - EPS, BATTERY_BACK_Z + SCREW_COLLAR_H)
         plate -= by_depth(x, y, P.M2_CLEAR_D / 2, BACK_Z - EPS, PCB_BACK_Z + EPS)
-        plate -= by_depth(x, y, SCREW_HEAD_D / 2, BACK_Z - EPS, BACK_Z + 1.0)
+        plate -= by_depth(x, y, SCREW_HEAD_D / 2, BACK_Z - EPS, BACK_Z + SCREW_HEAD_DEPTH)
     recess_z0 = BATTERY_BACK_Z - DOCK_BOARD[2]
     plate -= Pos(0, DOCK_BOARD_Y, (recess_z0 + BATTERY_BACK_Z + EPS) / 2) * Box(*DOCK_BOARD[:2], DOCK_BOARD[2] + EPS)
     for k in (-1, 0, 1):

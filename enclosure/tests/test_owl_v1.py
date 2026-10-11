@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from build123d import Edge, Pos, Vector
+from build123d import Cylinder, Edge, Pos, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import owl_params as P  # noqa: E402
@@ -121,13 +121,67 @@ def test_lra_cup_is_clear_of_the_battery_and_magnets():
     r = V.LRA_CUP_OD / 2
     assert x - r > C.BATTERY_ZONE[2]
     magnet_boss = V.DOCK_MAGNET_D / 2 + V.DOCK_MAGNET_WALL
-    for (mx, my), other in [(m, magnet_boss) for m in V.DOCK_MAGNETS] + [
-        (h, V.BOSS_R) for h in C.MOUNT_HOLES + C.BODY_HOLES
-    ]:
+    for (mx, my), other in (
+        [(m, magnet_boss) for m in V.DOCK_MAGNETS]
+        + [(h, V.BOSS_R) for h in C.MOUNT_HOLES]
+        + [(h, V.SCREW_COLLAR_R) for h in C.BODY_HOLES]
+    ):
         assert ((x - mx) ** 2 + (y - my) ** 2) ** 0.5 > r + other
     assert x + r < C.BODY_W / 2 - C.WALL_T
     hall = placement("U302")
     assert ((x - hall.x) ** 2 + (y - hall.y) ** 2) ** 0.5 > 40.0
+
+
+def button_head(x: float, y: float, seat: float, towards: int):
+    """ISO 7380 M2 head as a cylinder dk x k (it encloses the dome), its bearing face at z = seat
+    and the head on the side opposite to the shank direction `towards` (+1 or -1 in z)."""
+    z0 = seat - P.M2_BUTTON_K if towards > 0 else seat
+    return Pos(x, y, z0) * Cylinder(P.M2_BUTTON_DK / 2, P.M2_BUTTON_K, align=R.BOTTOM)
+
+
+def shank(x: float, y: float, seat: float, length: float, towards: int):
+    z0 = seat if towards > 0 else seat - length
+    return Pos(x, y, z0) * Cylinder(1.0, length, align=R.BOTTOM)
+
+
+@pytest.mark.parametrize("hole", C.BODY_HOLES)
+def test_back_screw_heads_sit_inside_the_cover(parts, hole):
+    # P.SCREW_BACK from the back: head in the counterbore, through the cover standoff and the
+    # board into the insert in the body boss.
+    x, y = hole
+    seat = V.BACK_Z + V.SCREW_HEAD_DEPTH
+    head, body_of_screw = button_head(x, y, seat, +1), shank(x, y, seat, P.SCREW_BACK_L, +1)
+    assert head.bounding_box().min.Z >= V.BACK_Z - 1e-9  # flush or recessed: the owl stays 23.5 deep
+    assert V.FRONT_Z - head.bounding_box().min.Z <= 23.5 + 1e-9
+    for name in ("back_cover", "body"):
+        assert overlap_volume(head, parts[name]) < 1e-3, name
+        assert overlap_volume(body_of_screw, parts[name]) < 1e-3, name
+    tip = seat + P.SCREW_BACK_L
+    assert V.PCB_FRONT_Z + P.M2_INSERT_L - 1e-6 <= tip <= V.PCB_FRONT_Z + V.INSERT_DEPTH + 1e-6
+
+
+@pytest.mark.parametrize("hole", C.MOUNT_HOLES)
+def test_front_screws_clear_the_ring_parts_and_reach_the_inserts(parts, hole):
+    # P.SCREW_FRONT from the front: head on the bezel lug, through the board into the insert in
+    # the cover standoff.
+    x, y = hole
+    seat = V.PCB_FRONT_Z + P.LUG_T
+    head, body_of_screw = button_head(x, y, seat, -1), shank(x, y, seat, P.SCREW_FRONT_L, -1)
+    for name in ("bezel", "back_cover", "magnet_carrier_24", "ring_a_bearing", "bushing_sleeve"):
+        assert overlap_volume(head, parts[name]) < 1e-3, name
+        assert overlap_volume(body_of_screw, parts[name]) < 1e-3, name
+    tip = seat - P.SCREW_FRONT_L
+    assert V.PCB_BACK_Z - V.INSERT_DEPTH - 1e-6 <= tip <= V.PCB_BACK_Z - P.M2_INSERT_L + 1e-6
+
+
+def test_counterbore_edge_keeps_a_structural_wall():
+    # from the counterbore's top edge to the nearest outside surface: the boss above the collar
+    # and the collar's rim
+    edge = (V.SCREW_HEAD_D / 2, V.SCREW_HEAD_DEPTH)
+    boss = (V.BOSS_R, V.COVER_T + V.SCREW_COLLAR_H)
+    rim = (V.SCREW_COLLAR_R, V.COVER_T)
+    assert min(math.dist(edge, boss), math.dist(edge, rim)) >= P.MJF_STRUCT_WALL
+    assert V.SCREW_HEAD_D / 2 - P.M2_BUTTON_DK / 2 >= 0.3
 
 
 def test_dock_magnets_stay_away_from_the_ring_sensor():
