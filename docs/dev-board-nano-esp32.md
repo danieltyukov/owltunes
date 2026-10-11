@@ -54,11 +54,10 @@ port as busy, close the monitor (or any other program holding it) and connect ag
 ## Status LED
 
 The RGB LED shows the one thing the owl most needs you to know. The console's `info` command
-reports the same status by name ([console](console.md)). The Wi-Fi, login and
-playback statuses appear as those features arrive: until then only `needs_wifi`, `joining`,
-`needs_login`, `linking`, `log_in_again` and `starting` can show (`starting` is what a linked,
-online owl shows until playback support arrives), and `backoff`, `rate_limited` or `quota` while a
-refresh of the Spotify login waits to be tried again.
+reports the same status by name ([console](console.md)). Once the owl is linked and online it reads
+the playback state from Spotify, so `starting` lasts until the first answer and `playing`, `paused`
+or `no_device` follow; `backoff`, `rate_limited` or `quota` show while nothing may be sent to
+Spotify (Web API or token requests).
 
 | LED | Status | Meaning |
 |---|---|---|
@@ -139,7 +138,7 @@ script then resets the owl and waits until the saved login passes its check with
 login address it prints carries your client ID, so keep it to yourself. The console log in
 `build/owl-login/console.log` shows the client ID as `<redacted>`, and the script fails if
 anything in that log looks like a token. While the owl exchanges the code its LED blinks cyan
-quickly; once linked it blinks green quickly (`starting`) until playback support arrives.
+quickly; once linked it blinks green quickly (`starting`) until the first playback state arrives.
 
 The owl starts a login only while it is online; otherwise `spotify_begin` answers `offline`.
 
