@@ -117,6 +117,17 @@ def answer(board: Board, text: str, events: tuple[str, ...], timeout: float = 15
                       timeout, f"an answer to {text}", since)
 
 
+def wait_online(board: Board, timeout: float = 90.0) -> Message:
+    """hello once the owl has an address. Opening the port restarts the Nano ESP32, so the first
+    answers come while it is still joining Wi-Fi."""
+    deadline = time.monotonic() + timeout
+    while True:
+        hello = board.hello()
+        if hello.get("ip", "") != "" or not hello.get("networks") or time.monotonic() > deadline:
+            return hello
+        time.sleep(2)
+
+
 def wait_active(board: Board, timeout: float = 90.0) -> Message:
     """Ask auth until the runtime is active (linked, online, clock checked) and holds a token. Right
     after the start the runtime refuses (offline) or has no token yet (the api line waits for one)."""
@@ -241,7 +252,7 @@ def idle_check(board: Board) -> None:
 
 
 def playback_checks(board: Board, args: argparse.Namespace, account: Account) -> None:
-    hello = board.hello()
+    hello = wait_online(board)
     check(hello.get("linked") is True and hello.get("ip", "") != "", "the owl is linked and online")
     auth = wait_active(board)
     check(60 < auth.get("expires_in_s", 0) <= 3600,

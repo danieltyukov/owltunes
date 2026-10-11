@@ -20,7 +20,7 @@ class FakeOwl(Board):
     """Answers console lines the way the runtime does, against a pretend Spotify account."""
 
     def __init__(self, liked=False, reconnects=True, fail=(), fail_once=(), prev_restarts=0, status="playing",
-                 interrupt=False):
+                 interrupt=False, offline_hellos=0):
         self.lines = []
         self._fresh = queue.Queue()
         self.next_id = 1
@@ -36,6 +36,7 @@ class FakeOwl(Board):
         self.device = "dev1"
         self.idle = False
         self.reconnects = reconnects
+        self.offline_hellos = offline_hellos  # hellos answered before Wi-Fi gave the owl an address
 
     def emit(self, **msg):
         self._fresh.put(PREFIX + json.dumps(msg, separators=(",", ":")))
@@ -49,7 +50,9 @@ class FakeOwl(Board):
     def write_line(self, text):
         if text.startswith(PREFIX):
             req = json.loads(text[len(PREFIX):])
-            self.emit(id=req["id"], ok=True, linked=True, ip="192.168.1.5")
+            ip = "" if self.offline_hellos > 0 else "192.168.1.5"
+            self.offline_hellos = max(0, self.offline_hellos - 1)
+            self.emit(id=req["id"], ok=True, linked=True, ip=ip, networks=["Home"])
             return
         self.typed.append(text)
         verb, _, arg = text.partition(" ")
@@ -201,6 +204,12 @@ class PlaybackTest(unittest.TestCase):
         owl = FakeOwl(reconnects=False)
         self.checks(owl, hil_spotify.Failure, idle=True)
         self.assertEqual(owl.status, "playing")
+
+    def test_an_owl_still_joining_wifi_is_waited_for(self):
+        # Opening the port restarts the Nano ESP32, so its first answers come before it has an address.
+        owl = FakeOwl(offline_hellos=2)
+        out = self.checks(owl)
+        self.assertIn("ok - the owl is linked and online", out)
 
     def test_a_paused_start_is_left_paused(self):
         owl = FakeOwl(status="paused")
