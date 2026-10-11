@@ -31,11 +31,29 @@ typedef enum {
     SPOTIFY_OUTCOME_FAILED,  /* any other error: report it; sending it again will not help */
 } spotify_outcome_t;
 
+/* Why nothing may be sent right now. */
+typedef enum {
+    SPOTIFY_BLOCK_NONE,
+    SPOTIFY_BLOCK_QUOTA,        /* QUOTA_EXCEEDED lockout: media keys only */
+    SPOTIFY_BLOCK_RATE_LIMITED, /* 429 */
+    SPOTIFY_BLOCK_BACKOFF,      /* server error or lost connection */
+} spotify_block_t;
+
+/* Counters of one endpoint. The Web API and the token endpoint keep their own, so an answer from
+ * one never resets the other's streaks. */
 typedef struct {
-    int64_t blocked_until_ms; /* nothing is sent before this; 0 when open */
-    bool quota;               /* the block is a QUOTA_EXCEEDED lockout */
-    uint8_t failures;         /* server errors or lost connections in a row */
-    uint8_t quota_hits;       /* QUOTA_EXCEEDED answers in a row */
+    uint8_t failures;   /* server errors or lost connections in a row; reset by a success only */
+    uint8_t quota_hits; /* QUOTA_EXCEEDED answers; reset by a success only */
+    uint8_t rate_hits;  /* 429 answers; reset by a success only */
+    bool refresh_asked; /* a REFRESH was returned for the current 401 streak */
+} spotify_gate_endpoint_t;
+
+typedef struct {
+    int64_t blocked_until_ms;      /* nothing is sent before this, whichever endpoint; 0 when open */
+    bool quota;                    /* the current block is a QUOTA_EXCEEDED lockout */
+    spotify_block_t block;         /* kind of the current block (see spotify_gate_block) */
+    spotify_gate_endpoint_t web;   /* api.spotify.com */
+    spotify_gate_endpoint_t token; /* accounts.spotify.com */
 } spotify_gate_t;
 
 void spotify_gate_init(spotify_gate_t *g);
@@ -48,9 +66,18 @@ owl_link_t spotify_gate_link(const spotify_gate_t *g, int64_t now_ms);
 /* Whole seconds until the gate opens, rounded up; 0 when it is open. */
 int32_t spotify_gate_wait_s(const spotify_gate_t *g, int64_t now_ms);
 
-/* Record one answer. err is spotify_classify_error's verdict, or NULL when no answer arrived
- * (no connection, TLS failure, timeout). */
+/* Why the gate is closed at now_ms; SPOTIFY_BLOCK_NONE when it is open. */
+spotify_block_t spotify_gate_block(const spotify_gate_t *g, int64_t now_ms);
+
+/* Record one Web API answer. err is spotify_classify_error's verdict, or NULL when no answer arrived
+ * (no connection, TLS failure, timeout). REFRESH is returned once per 401 streak: a 401 after the
+ * refreshed request is FAILED, until a success or a successful token refresh. */
 spotify_outcome_t spotify_gate_record(spotify_gate_t *g, const spotify_error_t *err, int64_t now_ms);
+
+/* Record one answer from the token endpoint. Same blocking rules (Retry-After, backoff), but its
+ * own counters, no quota lockout, and never REFRESH: a 401 there is an invalid client (FAILED).
+ * A success re-arms REFRESH for the Web API. */
+spotify_outcome_t spotify_gate_record_token(spotify_gate_t *g, const spotify_error_t *err, int64_t now_ms);
 
 /* The error code the console reports for an error: "auth", "forbidden", "premium_required",
  * "not_found", "no_active_device", "rate_limited", "quota", "server_error" or "rejected";

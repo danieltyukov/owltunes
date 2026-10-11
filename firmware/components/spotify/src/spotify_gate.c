@@ -25,44 +25,51 @@ int32_t spotify_gate_wait_s(const spotify_gate_t *g, int64_t now_ms)
     return (int32_t)((g->blocked_until_ms - now_ms + 999) / 1000);
 }
 
-/* Never shorten a block that is already longer. */
-static void block_until(spotify_gate_t *g, int64_t until_ms)
+spotify_block_t spotify_gate_block(const spotify_gate_t *g, int64_t now_ms)
+{
+    return spotify_gate_open(g, now_ms) ? SPOTIFY_BLOCK_NONE : g->block;
+}
+
+/* Block until until_ms of the given kind. A block never shortens a longer one, and the kind stays
+ * that of the block that is actually in force. */
+static void block_until(spotify_gate_t *g, int64_t until_ms, spotify_block_t kind)
 {
     if (until_ms > g->blocked_until_ms) {
         g->blocked_until_ms = until_ms;
+        g->block = kind;
+        g->quota = kind == SPOTIFY_BLOCK_QUOTA;
     }
 }
 
-static int64_t backoff_ms(uint8_t failures)
+static int64_t doubled(int64_t first, int64_t max, uint8_t hits)
 {
-    int64_t delay = SPOTIFY_GATE_BACKOFF_FIRST_MS;
-    for (uint8_t i = 1; i < failures && delay < SPOTIFY_GATE_BACKOFF_MAX_MS; i++) {
-        delay *= 2;
+    int64_t value = first;
+    for (uint8_t i = 1; i < hits && value < max; i++) {
+        value *= 2;
     }
-    return delay < SPOTIFY_GATE_BACKOFF_MAX_MS ? delay : SPOTIFY_GATE_BACKOFF_MAX_MS;
+    return value < max ? value : max;
 }
 
-static int64_t quota_floor_s(uint8_t hits)
+static void bump(uint8_t *counter)
 {
-    int64_t floor_s = SPOTIFY_GATE_QUOTA_FIRST_S;
-    for (uint8_t i = 1; i < hits && floor_s < SPOTIFY_GATE_QUOTA_MAX_S; i++) {
-        floor_s *= 2;
-    }
-    return floor_s < SPOTIFY_GATE_QUOTA_MAX_S ? floor_s : SPOTIFY_GATE_QUOTA_MAX_S;
-}
-
-static void count_failure(spotify_gate_t *g)
-{
-    if (g->failures < UINT8_MAX) {
-        g->failures++;
+    if (*counter < UINT8_MAX) {
+        (*counter)++;
     }
 }
 
-spotify_outcome_t spotify_gate_record(spotify_gate_t *g, const spotify_error_t *err, int64_t now_ms)
+static spotify_outcome_t record(spotify_gate_t *g, bool token, const spotify_error_t *err, int64_t now_ms)
 {
+    spotify_gate_endpoint_t *ep = token ? &g->token : &g->web;
+    if (spotify_gate_open(g, now_ms)) {
+        /* A lockout that has run out no longer describes the link. */
+        g->block = SPOTIFY_BLOCK_NONE;
+        g->quota = false;
+    }
     if (err == NULL || err->http_status == 0) {
-        count_failure(g);
-        block_until(g, now_ms + backoff_ms(g->failures));
+        bump(&ep->failures);
+        block_until(
+            g, now_ms + doubled(SPOTIFY_GATE_BACKOFF_FIRST_MS, SPOTIFY_GATE_BACKOFF_MAX_MS, ep->failures),
+            SPOTIFY_BLOCK_BACKOFF);
         return SPOTIFY_OUTCOME_WAIT;
     }
     int64_t retry_after_s = err->retry_after_s;
@@ -71,43 +78,65 @@ spotify_outcome_t spotify_gate_record(spotify_gate_t *g, const spotify_error_t *
     }
     switch (err->kind) {
     case SPOTIFY_ERROR_NONE:
-        g->failures = 0;
-        g->quota_hits = 0;
-        g->quota = false;
+        memset(ep, 0, sizeof *ep);
+        if (token) {
+            g->web.refresh_asked = false;
+        }
         return SPOTIFY_OUTCOME_OK;
     case SPOTIFY_ERROR_AUTH_EXPIRED:
-        g->failures = 0;
+        if (token || ep->refresh_asked) {
+            return SPOTIFY_OUTCOME_FAILED;
+        }
+        ep->refresh_asked = true;
         return SPOTIFY_OUTCOME_REFRESH;
-    case SPOTIFY_ERROR_RATE_LIMITED:
-        g->failures = 0;
-        block_until(g, now_ms + (retry_after_s > 0 ? retry_after_s : 1) * 1000);
+    case SPOTIFY_ERROR_RATE_LIMITED: {
+        bump(&ep->rate_hits);
+        /* Retries of a 429 that names no wait (classified as 5 s) get longer instead of staying at 5 s. */
+        int64_t wait_s = retry_after_s > 0 ? retry_after_s : 1;
+        if (ep->rate_hits > 1) {
+            int64_t floor_s = doubled(5, SPOTIFY_GATE_BACKOFF_MAX_MS / 1000, ep->rate_hits);
+            wait_s = wait_s > floor_s ? wait_s : floor_s;
+        }
+        block_until(g, now_ms + wait_s * 1000, SPOTIFY_BLOCK_RATE_LIMITED);
         return SPOTIFY_OUTCOME_WAIT;
+    }
     case SPOTIFY_ERROR_QUOTA_EXCEEDED: {
-        g->failures = 0;
-        if (g->quota_hits < UINT8_MAX) {
-            g->quota_hits++;
+        if (token) { /* the token endpoint has no quota lockout; treat it as a plain 429 */
+            bump(&ep->rate_hits);
+            block_until(g, now_ms + (retry_after_s > 0 ? retry_after_s : 1) * 1000,
+                        SPOTIFY_BLOCK_RATE_LIMITED);
+            return SPOTIFY_OUTCOME_WAIT;
         }
-        int64_t wait_s = quota_floor_s(g->quota_hits);
-        if (retry_after_s > wait_s) {
-            wait_s = retry_after_s;
+        bump(&ep->quota_hits);
+        int64_t quota_s = doubled(SPOTIFY_GATE_QUOTA_FIRST_S, SPOTIFY_GATE_QUOTA_MAX_S, ep->quota_hits);
+        if (retry_after_s > quota_s) {
+            quota_s = retry_after_s;
         }
-        g->quota = true;
-        block_until(g, now_ms + wait_s * 1000);
+        block_until(g, now_ms + quota_s * 1000, SPOTIFY_BLOCK_QUOTA);
         return SPOTIFY_OUTCOME_WAIT;
     }
     case SPOTIFY_ERROR_SERVER: {
-        count_failure(g);
-        int64_t wait_ms = backoff_ms(g->failures);
+        bump(&ep->failures);
+        int64_t wait_ms = doubled(SPOTIFY_GATE_BACKOFF_FIRST_MS, SPOTIFY_GATE_BACKOFF_MAX_MS, ep->failures);
         if (retry_after_s * 1000 > wait_ms) {
             wait_ms = retry_after_s * 1000;
         }
-        block_until(g, now_ms + wait_ms);
+        block_until(g, now_ms + wait_ms, SPOTIFY_BLOCK_BACKOFF);
         return SPOTIFY_OUTCOME_WAIT;
     }
     default:
-        g->failures = 0;
         return SPOTIFY_OUTCOME_FAILED;
     }
+}
+
+spotify_outcome_t spotify_gate_record(spotify_gate_t *g, const spotify_error_t *err, int64_t now_ms)
+{
+    return record(g, false, err, now_ms);
+}
+
+spotify_outcome_t spotify_gate_record_token(spotify_gate_t *g, const spotify_error_t *err, int64_t now_ms)
+{
+    return record(g, true, err, now_ms);
 }
 
 const char *spotify_error_name(spotify_error_kind_t kind)
