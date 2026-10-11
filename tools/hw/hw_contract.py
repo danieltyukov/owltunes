@@ -6,7 +6,8 @@ apply: replaces Edge.Cuts with the contract outline, moves the fixed parts and m
        and the keep-outs on Cmts.User.
 check: fails if the outline, a fixed part, a hole or the battery-zone height rule differs from
        the contract, a magnetic part sits within the sensor keep-out of U302, a courtyard
-       covers a keep-out on its side (screw bosses, bezel lugs, the ring annulus), or a fixed
+       covers a keep-out on its side (screw bosses, bezel lugs, the ring annulus, the strips
+       beside the antenna notch; the part a keep-out names is exempt from it), or a fixed
        part's library body (F.Fab) is larger than the box the enclosure reserves for it
        (w, h, cu, cv and the knob, all in the footprint frame).
 
@@ -233,7 +234,7 @@ def check(board_name: str) -> int:
         area = keepout_poly(k)
         for fp in board.GetFootprints():
             ref = fp.GetReference()
-            if ref in holes or fp.IsFlipped() != (k["side"] == "back"):
+            if ref in holes or ref == k.get("ref") or fp.IsFlipped() != (k["side"] == "back"):
                 continue
             if overlap_mm2(courtyard(fp), area) > 0:
                 errors.append(f"{ref} covers the {k['name']} keep-out ({k['side']})")

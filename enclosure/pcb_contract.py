@@ -39,6 +39,10 @@ PCB_INSET = WALL_T + PCB_CLEAR  # 2.1
 # 5 mm either side of the 18 mm module (Espressif PCB layout guide, module placement).
 ANT_NOTCH_HALF_W = P.MODULE_W / 2 + 5.0  # 14.0
 ANT_BOARD_EDGE_Y = P.ANT_Y_BOTTOM  # 36.6
+# No parts within 3 mm either side of the notch edges above y 33, on both sides (GND pour may run
+# there; the contract only governs parts).
+ANT_STRIP_HALF_W = 3.0
+ANT_STRIP_Y0 = 33.0
 
 # Back-side keep-low zone under the battery (803040: 8 x 30 x 40 mm, 0.5 mm margin all round).
 BATTERY_W = 30.0
@@ -233,7 +237,8 @@ def lug_polygon(x: float, y: float, margin: float = BOSS_CLEAR) -> list[tuple[fl
 def keepouts() -> list[dict]:
     """Board areas no part may cover, in owl coordinates. Back: the cover boss behind every hole.
     Front: the body bosses at H5 to H8, the bezel lugs at H1 to H4, and the annulus under the bezel
-    tube, magnet carrier and ring (the carrier flange runs 0.3 mm in front of the board)."""
+    tube, magnet carrier and ring (the carrier flange runs 0.3 mm in front of the board). Both
+    sides: the strips beside the antenna notch edges (U201 itself is exempt)."""
     out = []
     holes = [(f"H{i + 1}", xy) for i, xy in enumerate(MOUNT_HOLES + BODY_HOLES)]
     for ref, (x, y) in holes:
@@ -248,6 +253,12 @@ def keepouts() -> list[dict]:
                         "points": lug_polygon(x, y)})
     out.append({"name": "bezel tube, magnet carrier and ring", "side": "front", "kind": "annulus",
                 "x": 0.0, "y": 0.0, "r_in": P.PANEL_POCKET_D / 2 - BOSS_CLEAR, "r_out": RING_CLEAR_R})
+    top = BODY_CY + BODY_H / 2 - PCB_INSET
+    for side in ("front", "back"):
+        for sign, where in ((-1, "left"), (1, "right")):
+            x0, x1 = sorted((sign * (ANT_NOTCH_HALF_W - ANT_STRIP_HALF_W), sign * (ANT_NOTCH_HALF_W + ANT_STRIP_HALF_W)))
+            out.append({"name": f"antenna notch strip {where}", "ref": "U201", "side": side, "kind": "polygon",
+                        "points": [(x0, ANT_STRIP_Y0), (x1, ANT_STRIP_Y0), (x1, top), (x0, top)]})
     return out
 
 

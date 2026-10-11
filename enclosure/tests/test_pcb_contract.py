@@ -181,10 +181,21 @@ def test_keepouts_surround_every_hole_on_the_sides_with_a_boss():
     assert ring["r_in"] < P.PANEL_POCKET_D / 2 and ring["r_out"] >= P.RING_OD / 2 + 0.2
 
 
+def test_antenna_notch_strips_cover_3_mm_either_side_of_both_notch_edges_on_both_sides():
+    strips = [k for k in C.keepouts() if k["name"].startswith("antenna notch strip")]
+    assert sorted((k["side"], k["name"]) for k in strips) == [
+        (side, f"antenna notch strip {where}") for side in ("back", "front") for where in ("left", "right")]
+    for k in strips:
+        xs = sorted({x for x, _ in k["points"]})
+        assert sorted(abs(x) for x in (xs[0], xs[-1])) == [11.0, 17.0]
+        assert min(y for _, y in k["points"]) == 33.0
+        assert k["ref"] == "U201"
+
+
 @pytest.mark.parametrize("p", C.PLACEMENTS, ids=lambda p: p.ref)
 def test_fixed_parts_stay_out_of_the_keepouts(p):
     for k in C.keepouts():
-        if k["side"] == p.side:
+        if k["side"] == p.side and k.get("ref") != p.ref:
             assert not rect_hits_keepout(C.footprint_box(p), k), (p.ref, k["name"])
 
 

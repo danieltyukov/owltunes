@@ -117,6 +117,18 @@ class ContractTest(unittest.TestCase):
         self.move("C1", 100.0, 104.5, back=False)
         self.assertEqual(hw_contract.check("b"), 1)
 
+    def test_a_keepout_spares_the_part_it_names(self):
+        strip = copy.deepcopy(CONTRACT)
+        strip["keepouts"].append({"kind": "polygon", "name": "U1 strip", "ref": "U1", "side": "back",
+                                  "points": [[93.0, 98.0], [97.0, 98.0], [97.0, 102.0], [93.0, 102.0]]})
+        self.write_contract(strip)
+        hw_contract.apply("b")
+        self.assertEqual(hw_contract.check("b"), 0)
+        self.move("C1", 95.0, 92.0, back=True)
+        self.assertEqual(hw_contract.check("b"), 0)
+        self.move("C1", 94.0, 99.5, back=True)  # beside U1, clear of the battery zone
+        self.assertEqual(hw_contract.check("b"), 1)
+
     def test_body_larger_than_its_contract_box_fails(self):
         small = copy.deepcopy(CONTRACT)
         small["placements"][0]["h"] = 2.0  # SOT-23-6 body is 2.9 long along v

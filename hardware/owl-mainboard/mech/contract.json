@@ -222,6 +222,102 @@
       "side": "front",
       "x": 100.0,
       "y": 100.0
+    },
+    {
+      "kind": "polygon",
+      "name": "antenna notch strip left",
+      "points": [
+        [
+          83.0,
+          67.0
+        ],
+        [
+          89.0,
+          67.0
+        ],
+        [
+          89.0,
+          57.1
+        ],
+        [
+          83.0,
+          57.1
+        ]
+      ],
+      "ref": "U201",
+      "side": "front"
+    },
+    {
+      "kind": "polygon",
+      "name": "antenna notch strip right",
+      "points": [
+        [
+          111.0,
+          67.0
+        ],
+        [
+          117.0,
+          67.0
+        ],
+        [
+          117.0,
+          57.1
+        ],
+        [
+          111.0,
+          57.1
+        ]
+      ],
+      "ref": "U201",
+      "side": "front"
+    },
+    {
+      "kind": "polygon",
+      "name": "antenna notch strip left",
+      "points": [
+        [
+          83.0,
+          67.0
+        ],
+        [
+          89.0,
+          67.0
+        ],
+        [
+          89.0,
+          57.1
+        ],
+        [
+          83.0,
+          57.1
+        ]
+      ],
+      "ref": "U201",
+      "side": "back"
+    },
+    {
+      "kind": "polygon",
+      "name": "antenna notch strip right",
+      "points": [
+        [
+          111.0,
+          67.0
+        ],
+        [
+          117.0,
+          67.0
+        ],
+        [
+          117.0,
+          57.1
+        ],
+        [
+          111.0,
+          57.1
+        ]
+      ],
+      "ref": "U201",
+      "side": "back"
     }
   ],
   "kicad_origin": [
