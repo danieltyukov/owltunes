@@ -210,6 +210,16 @@ J303_RELIEF_W = 7.0 + 1.0
 J303_RELIEF_H = 4.0
 J303_RELIEF_WALL = MJF_STRUCT_WALL  # the owl stands on this wall on the perch seat
 
+# USB-C opening in the body's bottom wall for J201 (HRO TYPE-C-31-M-12, LCSC C165948 drawing: 7.35 long,
+# 3.26 high, plug axis 1.63 behind the board's back face). The receptacle's mouth is 0.075 outside the wall's
+# inner face, so a plug overmold that stopped on the wall's outer face would leave the plug about 1 mm short
+# of full mating. The wall is cut through to the Type-C specification's largest plug overmold with the
+# perch's clearance (R48), so a plug's overmold can come to within USB_MATE_GAP of the mouth.
+USB_PLUG_CENTRE_H = 1.63
+USB_OVERMOLD = (12.35, 6.5)  # width by height
+USB_OPENING = (13.0, 7.0)  # width by height, centred on the plug axis
+USB_MATE_GAP = 0.3
+
 # Owner mark, debossed into the owl back cover's outer face and the perch's underside. MJF PA12 detail
 # limits (JLC3DP): 0.5 mm deep, strokes and the gaps between them at least 0.6 mm, cap height at least
 # 4 mm. Font: Inter Bold 4.0 from the fonts-inter package (SIL Open Font Licence); its capitals are 1490

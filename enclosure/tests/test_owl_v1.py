@@ -188,6 +188,38 @@ def test_j303_cable_relief_leaves_a_structural_wall(parts):
     assert P.J303_RELIEF_WALL >= P.MJF_STRUCT_WALL
 
 
+def test_usb_opening_takes_the_largest_type_c_overmold(parts):
+    # as R48 on the perch: a 12.35 x 6.5 overmold on J201's axis, swept from outside the bottom wall
+    # to USB_MATE_GAP from the receptacle's mouth, meets neither the enclosure nor the board
+    x0, mouth, x1, _ = C.body_box(placement("J201"))
+    near, far = mouth - P.USB_MATE_GAP, C.BODY_CY - C.BODY_H / 2 - 2.0
+    w, h = P.USB_OVERMOLD
+    plug = Pos((x0 + x1) / 2, (near + far) / 2, V.PCB_BACK_Z - P.USB_PLUG_CENTRE_H) * Box(w, near - far, h)
+    for name in ("body", "back_cover"):
+        assert overlap_volume(plug, parts[name]) < 1e-3, name
+    assert overlap_volume(plug, V.pcb_envelope()) < 1e-3
+    assert P.USB_OPENING[0] >= 13.0 and P.USB_OPENING[1] >= 7.0
+
+
+def test_usb_opening_leaves_whole_walls_round_it(parts):
+    # measured on the body: open through the bottom wall across the opening, the full wall 0.3 past
+    # each edge (towards the H7 boss, the beak and the face, and towards the back)
+    body = parts["body"]
+    x, z = placement("J201").x, V.PCB_BACK_Z - P.USB_PLUG_CENTRE_H
+    w, h = P.USB_OPENING
+    bottom = C.BODY_CY - C.BODY_H / 2
+
+    def wall(wx, wz):
+        return chords(body, (wx, bottom + 3.0, wz), (wx, bottom - 1.0, wz))
+
+    for wx in (x - w / 2 + 0.05, x, x + w / 2 - 0.05):
+        for wz in (z - h / 2 + 0.05, z, z + h / 2 - 0.05):
+            assert wall(wx, wz) == [], (wx, wz)
+    for wx, wz in ((x - w / 2 - 0.3, z), (x + w / 2 + 0.3, z), (x, z - h / 2 - 0.3), (x, z + h / 2 + 0.3)):
+        left = wall(wx, wz)
+        assert len(left) == 1 and left[0] >= C.WALL_T - 1e-6, (wx, wz, left)
+
+
 def button_head(x: float, y: float, seat: float, towards: int):
     """ISO 7380 M2 head as a cylinder dk x k (it encloses the dome), its bearing face at z = seat
     and the head on the side opposite to the shank direction `towards` (+1 or -1 in z)."""

@@ -96,9 +96,6 @@ EAR_KEY_GAP = 0.2  # key end above the knob tip; the knob travels 0.2 more
 EAR_RETAINER_W = 1.0  # retainer reaches this far past the plunger on each side
 EAR_RETAINER_T = 1.0
 
-USB_SLOT = (9.6, 3.6)  # width by height of the USB-C opening
-USB_PLUG_CENTRE_H = 1.63  # receptacle centre above the board (HRO TYPE-C-31-M-12)
-
 DOCK_PAD_PITCH = P.DOCK_PAD_PITCH
 DOCK_PAD_Y = P.DOCK_PAD_Y
 DOCK_PAD_ORDER = P.DOCK_PAD_ORDER
@@ -183,9 +180,12 @@ def body() -> Part:
     shell -= Pos(*BEAK_XY, FRONT_Z - FACE_T / 2) * Box(*BEAK_SLOT, FACE_T + 2 * EPS)
     als = placement("U304")
     shell -= by_depth(als.x, als.y, ALS_WINDOW_D / 2, FRONT_Z - FACE_T - EPS, FRONT_Z + EPS)
+    # USB-C: through the bottom wall round J201's plug axis, wide enough for a plug overmold (owl_params)
     usb = placement("J201")
-    usb_z = PCB_BACK_Z - USB_PLUG_CENTRE_H
-    shell -= Pos(usb.x, C.BODY_CY - C.BODY_H / 2 + C.WALL_T / 2, usb_z) * Box(USB_SLOT[0], C.WALL_T + 1.0, USB_SLOT[1])
+    usb_z = PCB_BACK_Z - P.USB_PLUG_CENTRE_H
+    shell -= Pos(usb.x, C.BODY_CY - C.BODY_H / 2 + C.WALL_T / 2, usb_z) * Box(
+        P.USB_OPENING[0], C.WALL_T + 1.0, P.USB_OPENING[1]
+    )
     for ref in ("SW201", "SW202"):
         sw = placement(ref)
         slot = (EAR_KEY[0] + 2 * EAR_SLOT_CLEAR, 12.0, EAR_KEY[1] + 2 * EAR_SLOT_CLEAR)
