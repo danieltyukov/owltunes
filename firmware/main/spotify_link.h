@@ -6,6 +6,11 @@
 #include "owl_prov.h"
 #include "spotify_auth.h"
 
+/* Both calls record what the token endpoint answered (or that no answer came) in the shared gate
+ * (api_gate.h), so its Retry-After and the backoff hold back the next token request. They do not
+ * check the gate themselves: the provisioning task does that before a refresh, and a code exchange,
+ * which the person starts with a code that expires within minutes, is not held back. */
+
 /* Exchange a login code for tokens at Spotify's token endpoint. Blocks for up to 15 seconds.
  * error receives Spotify's error code, "network" when Spotify could not be reached, or "". */
 spotify_token_result_t spotify_link_exchange(const owl_settings_t *s, const char *code, const char *verifier,

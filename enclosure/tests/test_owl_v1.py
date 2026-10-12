@@ -1,0 +1,492 @@
+"""Enclosure v1: every part builds, the assembly has no interference, key dimensions hold."""
+
+from __future__ import annotations
+
+import itertools
+import math
+import sys
+from pathlib import Path
+
+import pytest
+from build123d import Box, Compound, Cylinder, Edge, Pos, Rot, Vector, Vertex, import_step
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import owl_params as P  # noqa: E402
+import owl_v1 as V  # noqa: E402
+import pcb_contract as C  # noqa: E402
+import ring_test as R  # noqa: E402
+
+
+@pytest.fixture(scope="module")
+def parts():
+    return V.parts()
+
+
+def overlap_volume(a, b) -> float:
+    common = a & b
+    return common.volume if common is not None else 0.0
+
+
+def chords(part, p0, p1) -> list[float]:
+    """Lengths of the solid chords of the line p0 to p1 through the part."""
+    hit = part & Edge.make_line(Vector(*p0), Vector(*p1))
+    return [e.length for e in hit.edges()] if hit else []
+
+
+def placement(ref):
+    return next(q for q in C.PLACEMENTS if q.ref == ref)
+
+
+def test_every_part_is_one_valid_solid(parts):
+    assert len(parts) == 12
+    for name, part in parts.items():
+        assert part.is_valid, name
+        assert len(part.solids()) == 1, name
+
+
+def test_outside_size(parts):
+    size = parts["body"].bounding_box().size
+    assert size.X == pytest.approx(C.BODY_W)
+    assert size.Y == pytest.approx(C.BODY_H)
+    assert size.Z == pytest.approx(V.FRONT_Z - V.BACK_Z)  # 23.5 mm front lip to back
+    assert V.FRONT_Z - V.BACK_Z <= 23.5 + 1e-9
+
+
+@pytest.mark.parametrize("ring", ["ring_a_bearing", "ring_b_bushing"])
+def test_assembly_has_no_interference(parts, ring):
+    middle = R.bearing_dummy() if ring == "ring_a_bearing" else parts["bushing_sleeve"]
+    stack = {
+        "body": parts["body"],
+        "back_cover": parts["back_cover"],
+        "bezel": parts["bezel"],
+        "glass_retainer": parts["glass_retainer"],
+        "glass": V.glass_envelope(),
+        "middle": middle,
+        "ring": parts[ring],
+        "carrier": parts["magnet_carrier_24"],
+        "beak_key": parts["beak_key"],
+        "ear_key_left": parts["ear_key_left"],
+        "ear_key_right": parts["ear_key_right"],
+        "pcb": V.pcb_envelope(),
+        "battery": V.battery_envelope(),
+    }
+    clashes = []
+    for (na, a), (nb, b) in itertools.combinations(stack.items(), 2):
+        v = overlap_volume(a, b)
+        if v > 1e-3:
+            clashes.append((na, nb, round(v, 3)))
+    assert clashes == []
+
+
+def test_ring_sides_are_exposed_for_the_thumb(parts):
+    body = parts["body"]
+    for z in (0.0, -4.0, -8.0):
+        assert not body.is_inside(Vector(-P.RING_OD / 2 - 0.1, 0.0, z))
+        assert not body.is_inside(Vector(P.RING_OD / 2 + 0.1, 0.0, z))
+
+
+def test_glass_drops_in_from_the_front_and_the_retainer_holds_it(parts):
+    bezel, retainer = parts["bezel"], parts["glass_retainer"]
+    seated = V.glass_envelope()
+    # with the retainer off, the glass drops in from the front without touching the bezel
+    for dz in (6.0, 3.0, 1.5, 0.5, 0.0):
+        assert overlap_volume(Pos(0, 0, dz) * seated, bezel) < 1e-3, dz
+    # the retainer follows it into the lip opening, over the glass border
+    for dz in (4.0, 2.0, 0.5, 0.0):
+        assert overlap_volume(Pos(0, 0, dz) * retainer, bezel) < 1e-3, dz
+    assert overlap_volume(retainer, seated) < 1e-3
+    assert not retainer.is_inside(Vector(0.0, -(P.BEZEL_LIP_ID / 2 - 0.02), 0.5))  # glue gap
+    # the glass cannot leave without moving the retainer: it covers the glass edge all round
+    assert overlap_volume(Pos(0, 0, V.GLASS_GAP + 0.05) * seated, retainer) > 0.01
+    assert V.RETAINER_ID < P.GLASS_D - 2.0
+    # the retainer stays out of the viewing area, is flush with the lip and meets the wall rule
+    for angle in range(0, 360, 15):
+        x, y = R.polar(P.VIEW_D / 2 + 0.05, angle)
+        assert not retainer.is_inside(Vector(x, y, 0.5))
+    assert V.RETAINER_ID / 2 - P.VIEW_D / 2 >= 0.2
+    assert retainer.bounding_box().max.Z == pytest.approx(P.LIP_T)
+    assert (V.RETAINER_OD - V.RETAINER_ID) / 2 >= P.MJF_STRUCT_WALL
+    assert P.LIP_T >= P.MJF_STRUCT_WALL
+
+
+def test_back_cover_windows_line_up_with_the_dock_pads(parts):
+    cover = parts["back_cover"]
+    for k in (-1, 0, 1):
+        assert not cover.is_inside(Vector(k * V.DOCK_PAD_PITCH, V.DOCK_PAD_Y, V.BACK_Z + 0.5))
+    assert cover.is_inside(Vector(2.25, V.DOCK_PAD_Y, V.BACK_Z + 0.5))
+
+
+def test_lra_cup_is_clear_of_the_battery_and_magnets():
+    x, y = V.LRA_XY
+    r = V.LRA_CUP_OD / 2
+    assert x - r > C.BATTERY_ZONE[2]
+    magnet_boss = V.DOCK_MAGNET_D / 2 + V.DOCK_MAGNET_WALL
+    for (mx, my), other in (
+        [(m, magnet_boss) for m in V.DOCK_MAGNETS]
+        + [(h, V.BOSS_R) for h in C.MOUNT_HOLES]
+        + [(h, V.SCREW_COLLAR_R) for h in C.BODY_HOLES]
+    ):
+        assert ((x - mx) ** 2 + (y - my) ** 2) ** 0.5 > r + other
+    assert x + r < C.BODY_W / 2 - C.WALL_T
+    hall = placement("U302")
+    assert ((x - hall.x) ** 2 + (y - hall.y) ** 2) ** 0.5 > 40.0
+
+
+def test_lra_cup_has_a_slot_for_the_lead_tab(parts):
+    cover = parts["back_cover"]
+    x0, y0 = V.LRA_XY
+    a = math.radians(P.LRA_SLOT_ANGLE_DEG)
+    along, across = Vector(math.cos(a), math.sin(a), 0), Vector(-math.sin(a), math.cos(a), 0)
+    wall = Vector(x0, y0, 0) + along * ((V.LRA_POCKET_D + V.LRA_CUP_OD) / 4)  # middle of the cup wall
+    # the slot cuts the whole wall height at the stated angle and is LRA_SLOT_W wide
+    assert P.LRA_SLOT_W >= P.LRA_TAB_W + 0.5
+    for z in (V.BATTERY_BACK_Z + 0.05, V.BATTERY_BACK_Z + V.LRA_CUP_H - 0.05):
+        for side in (-1, 1):
+            assert not cover.is_inside(wall + across * side * (P.LRA_SLOT_W / 2 - 0.05) + Vector(0, 0, z))
+            assert cover.is_inside(wall + across * side * (P.LRA_SLOT_W / 2 + 0.05) + Vector(0, 0, z))
+    # the plate under the slot stays whole
+    assert chords(cover, (wall.X, wall.Y, V.BACK_Z - 1.0), (wall.X, wall.Y, V.BATTERY_BACK_Z + 2.0)) == [pytest.approx(V.COVER_T)]
+    # the tab and its glue fit, 1.0 or more from the dock magnet bosses and the board-mount bosses
+    r0 = P.LRA_D / 2
+    tab = Pos(x0, y0, V.BATTERY_BACK_Z + P.LRA_TAB_H / 2) * Rot(0, 0, P.LRA_SLOT_ANGLE_DEG) * Pos(
+        (r0 + P.LRA_TAB_R) / 2, 0, 0
+    ) * Box(P.LRA_TAB_R - r0, P.LRA_TAB_W, P.LRA_TAB_H)
+    assert overlap_volume(tab, cover) < 1e-3
+    mid_z = V.BATTERY_BACK_Z + P.LRA_TAB_H / 2
+    for (bx, by), r in [(m, V.DOCK_MAGNET_D / 2 + V.DOCK_MAGNET_WALL) for m in V.DOCK_MAGNETS] + [(h, V.BOSS_R) for h in C.MOUNT_HOLES]:
+        assert tab.distance_to(Vector(bx, by, mid_z)) - r >= 1.0 - 1e-6
+    # the rest of the wall still holds the motor: seated it is free, pushed 0.5 towards the slot it
+    # meets the wall, and the slot is far narrower than the motor
+    motor = Pos(x0, y0, V.BATTERY_BACK_Z) * Cylinder(P.LRA_D / 2, P.LRA_T, align=R.BOTTOM)
+    assert overlap_volume(motor, cover) < 1e-3
+    assert overlap_volume(Pos(*(along * 0.5)) * motor, cover) > 0.01
+    assert 360 - 2 * math.degrees(math.asin(P.LRA_SLOT_W / V.LRA_POCKET_D)) >= 270
+
+
+def test_j303_cable_relief_leaves_a_structural_wall(parts):
+    # measured on the body: chords through the bottom wall behind J303, along y
+    body = parts["body"]
+    x = placement("J303").x
+    z1 = V.PCB_BACK_Z
+    z0 = z1 - P.J303_RELIEF_H
+    bottom = C.BODY_CY - C.BODY_H / 2
+
+    def wall(wx, wz):
+        return chords(body, (wx, bottom + 3.0, wz), (wx, bottom - 1.0, wz))
+
+    # outside the relief (below it and beside it) the wall is whole
+    full = wall(x, z0 - 0.5)
+    assert full == [pytest.approx(C.WALL_T)]
+    assert wall(x - P.J303_RELIEF_W / 2 - 0.5, (z0 + z1) / 2) == [pytest.approx(C.WALL_T)]
+    # across the relief's width and height the inner face is set back and 1.0 is left
+    for wx in (x - P.J303_RELIEF_W / 2 + 0.05, x, x + P.J303_RELIEF_W / 2 - 0.05):
+        for wz in (z0 + 0.05, (z0 + z1) / 2, z1 - 0.05):
+            left = wall(wx, wz)
+            assert len(left) == 1 and P.MJF_STRUCT_WALL - 1e-6 <= left[0] <= P.MJF_STRUCT_WALL + 0.01, (wx, wz)
+    depth = full[0] - wall(x, (z0 + z1) / 2)[0]
+    assert depth == pytest.approx(0.6)
+    assert P.J303_RELIEF_WALL >= P.MJF_STRUCT_WALL
+
+
+def test_usb_opening_takes_the_largest_type_c_overmold(parts):
+    # as R48 on the perch: a 12.35 x 6.5 overmold on J201's axis, swept from outside the bottom wall
+    # to USB_MATE_GAP from the receptacle's mouth, meets neither the enclosure nor the board
+    x0, mouth, x1, _ = C.body_box(placement("J201"))
+    near, far = mouth - P.USB_MATE_GAP, C.BODY_CY - C.BODY_H / 2 - 2.0
+    w, h = P.USB_OVERMOLD
+    plug = Pos((x0 + x1) / 2, (near + far) / 2, V.PCB_BACK_Z - P.USB_PLUG_CENTRE_H) * Box(w, near - far, h)
+    for name in ("body", "back_cover"):
+        assert overlap_volume(plug, parts[name]) < 1e-3, name
+    assert overlap_volume(plug, V.pcb_envelope()) < 1e-3
+    assert P.USB_OPENING[0] >= 13.0 and P.USB_OPENING[1] >= 7.0
+
+
+def test_usb_opening_leaves_whole_walls_round_it(parts):
+    # measured on the body: open through the bottom wall across the opening, the full wall 0.3 past
+    # each edge (towards the H7 boss, the beak and the face, and towards the back)
+    body = parts["body"]
+    x, z = placement("J201").x, V.PCB_BACK_Z - P.USB_PLUG_CENTRE_H
+    w, h = P.USB_OPENING
+    bottom = C.BODY_CY - C.BODY_H / 2
+
+    def wall(wx, wz):
+        return chords(body, (wx, bottom + 3.0, wz), (wx, bottom - 1.0, wz))
+
+    for wx in (x - w / 2 + 0.05, x, x + w / 2 - 0.05):
+        for wz in (z - h / 2 + 0.05, z, z + h / 2 - 0.05):
+            assert wall(wx, wz) == [], (wx, wz)
+    for wx, wz in ((x - w / 2 - 0.3, z), (x + w / 2 + 0.3, z), (x, z - h / 2 - 0.3), (x, z + h / 2 + 0.3)):
+        left = wall(wx, wz)
+        assert len(left) == 1 and left[0] >= C.WALL_T - 1e-6, (wx, wz, left)
+
+
+def button_head(x: float, y: float, seat: float, towards: int):
+    """ISO 7380 M2 head as a cylinder dk x k (it encloses the dome), its bearing face at z = seat
+    and the head on the side opposite to the shank direction `towards` (+1 or -1 in z)."""
+    z0 = seat - P.M2_BUTTON_K if towards > 0 else seat
+    return Pos(x, y, z0) * Cylinder(P.M2_BUTTON_DK / 2, P.M2_BUTTON_K, align=R.BOTTOM)
+
+
+def shank(x: float, y: float, seat: float, length: float, towards: int):
+    z0 = seat if towards > 0 else seat - length
+    return Pos(x, y, z0) * Cylinder(1.0, length, align=R.BOTTOM)
+
+
+@pytest.mark.parametrize("hole", C.BODY_HOLES)
+def test_back_screw_heads_sit_inside_the_cover(parts, hole):
+    # P.SCREW_BACK from the back: head in the counterbore, through the cover standoff and the
+    # board into the insert in the body boss.
+    x, y = hole
+    seat = V.BACK_Z + V.SCREW_HEAD_DEPTH
+    head, body_of_screw = button_head(x, y, seat, +1), shank(x, y, seat, P.SCREW_BACK_L, +1)
+    assert head.bounding_box().min.Z >= V.BACK_Z - 1e-9  # flush or recessed: the owl stays 23.5 deep
+    assert V.FRONT_Z - head.bounding_box().min.Z <= 23.5 + 1e-9
+    for name in ("back_cover", "body"):
+        assert overlap_volume(head, parts[name]) < 1e-3, name
+        assert overlap_volume(body_of_screw, parts[name]) < 1e-3, name
+    tip = seat + P.SCREW_BACK_L
+    assert V.PCB_FRONT_Z + P.M2_INSERT_L - 1e-6 <= tip <= V.PCB_FRONT_Z + V.INSERT_DEPTH + 1e-6
+
+
+@pytest.mark.parametrize("hole", C.MOUNT_HOLES)
+def test_front_screws_clear_the_ring_parts_and_reach_the_inserts(parts, hole):
+    # P.SCREW_FRONT from the front: head on the bezel lug, through the board into the insert in
+    # the cover standoff.
+    x, y = hole
+    seat = V.PCB_FRONT_Z + P.LUG_T
+    head, body_of_screw = button_head(x, y, seat, -1), shank(x, y, seat, P.SCREW_FRONT_L, -1)
+    for name in ("bezel", "back_cover", "magnet_carrier_24", "ring_a_bearing", "bushing_sleeve"):
+        assert overlap_volume(head, parts[name]) < 1e-3, name
+        assert overlap_volume(body_of_screw, parts[name]) < 1e-3, name
+    tip = seat - P.SCREW_FRONT_L
+    assert V.PCB_BACK_Z - V.INSERT_DEPTH - 1e-6 <= tip <= V.PCB_BACK_Z - P.M2_INSERT_L + 1e-6
+
+
+def test_counterbore_edge_keeps_a_structural_wall():
+    # from the counterbore's top edge to the nearest outside surface: the boss above the collar
+    # and the collar's rim
+    edge = (V.SCREW_HEAD_D / 2, V.SCREW_HEAD_DEPTH)
+    boss = (V.BOSS_R, V.COVER_T + V.SCREW_COLLAR_H)
+    rim = (V.SCREW_COLLAR_R, V.COVER_T)
+    assert min(math.dist(edge, boss), math.dist(edge, rim)) >= P.MJF_STRUCT_WALL
+    assert V.SCREW_HEAD_D / 2 - P.M2_BUTTON_DK / 2 >= 0.3
+
+
+def test_dock_magnets_stay_away_from_the_ring_sensor():
+    # Spec 7.3: as far from the TMAG5273 as the cover allows. At 20 mm a D6 x 2 N52 disc adds
+    # well under 1 mT at the sensor, against about 46 mT from the ring magnets at the 3.0 mm gap.
+    hall = placement("U302")
+    for mx, my in V.DOCK_MAGNETS:
+        assert math.dist((mx, my), (hall.x, hall.y)) >= 20.0
+
+
+def test_dock_pad_board_clears_the_battery_and_the_alignment_recesses():
+    w, h, _ = V.DOCK_BOARD  # recess size: the board is 0.4 mm smaller
+    board_top = V.DOCK_BOARD_Y + (h - 0.4) / 2
+    assert board_top <= C.BATTERY_CENTRE[1] - C.BATTERY_L / 2 - 0.4
+    for x, _y in V.ALIGN_RECESSES:
+        assert abs(x) - V.ALIGN_D / 2 >= w / 2 + 1.0
+    for k in (-1, 1):
+        assert abs(V.DOCK_BOARD_Y - V.DOCK_PAD_Y) + V.DOCK_PAD_WINDOW_D / 2 < h / 2
+        assert k * V.DOCK_PAD_PITCH + V.DOCK_PAD_WINDOW_D / 2 < w / 2
+
+
+def dock_pad_board(turned: bool = False):
+    """The dock-pad board on its recess floor, its key notch in the DET end (-x), or turned round by
+    180 degrees about the recess centre."""
+    w, h, t = P.DOCK_PAD_BOARD
+    z0 = V.BATTERY_BACK_Z - V.DOCK_BOARD[2]
+    cx = -w / 2 + P.DOCK_KEY_DEPTH - P.DOCK_KEY_R
+    board = Pos(0, 0, z0) * Box(w, h, t, align=R.BOTTOM)
+    board -= Pos((cx - w / 2 - 1.0) / 2, 0, z0 - 1.0) * Box(cx + w / 2 + 1.0, 2 * P.DOCK_KEY_R, t + 2.0, align=R.BOTTOM)
+    board -= Pos(cx, 0, z0 - 1.0) * Cylinder(P.DOCK_KEY_R, t + 2.0, align=R.BOTTOM)
+    return Pos(0, V.DOCK_BOARD_Y) * (Rot(0, 0, 180) * board if turned else board)
+
+
+def test_dock_pad_board_seats_only_with_j2_towards_j303(parts):
+    # the key sits at the DET end; J2 is beyond PAD_VBUS, at the other end
+    assert P.DOCK_PAD_ORDER[0] == "PAD_DET"
+    for recess, board in zip(V.DOCK_BOARD[:2], P.DOCK_PAD_BOARD[:2]):
+        assert recess == pytest.approx(board + 2 * P.DOCK_KEY_CLEAR)
+    cover = parts["back_cover"]
+    assert overlap_volume(dock_pad_board(), cover) < 1e-3
+    assert overlap_volume(dock_pad_board(turned=True), cover) > 1.0
+    # the tongue is a structural wall across, and stands to the board's back face
+    w, _h, t = P.DOCK_PAD_BOARD
+    cx = -w / 2 + P.DOCK_KEY_DEPTH - P.DOCK_KEY_R
+    z = V.BATTERY_BACK_Z - V.DOCK_BOARD[2] + t - 0.05
+    across = chords(cover, (cx, V.DOCK_BOARD_Y - 3.0, z), (cx, V.DOCK_BOARD_Y + 3.0, z))
+    assert across == [pytest.approx(2 * (P.DOCK_KEY_R - P.DOCK_KEY_CLEAR))]
+    assert across[0] >= P.MJF_STRUCT_WALL
+
+
+def test_battery_fits_between_board_and_cover():
+    assert V.BATTERY_FRONT_Z - V.BATTERY_BACK_Z == pytest.approx(C.BATTERY_T)
+    assert V.PCB_BACK_Z - V.BATTERY_FRONT_Z == pytest.approx(C.BATTERY_FOAM)
+    assert V.PCB_FRONT_Z == pytest.approx(-P.pcb_front_depth())
+
+
+@pytest.mark.parametrize("ref, name", [("SW201", "ear_key_left"), ("SW202", "ear_key_right")])
+def test_ear_key_meets_the_knob_and_the_wall_stops_it(parts, ref, name):
+    key, body = parts[name], parts["body"]
+    sw = placement(ref)
+    kx0, _ky0, kx1, tip = C.knob_box(sw)
+    box = key.bounding_box()
+    # the key's end face sits 0.2 mm above the knob tip and covers the knob in x and in height
+    assert box.min.Y == pytest.approx(tip + V.EAR_KEY_GAP)
+    assert box.min.X < kx0 and box.max.X > kx1
+    assert V.ear_key_z() - V.EAR_KEY[1] / 2 < V.PCB_BACK_Z - sw.knob[4]
+    # the retainer catches on the head wall before the key can leave, and pressing the key far
+    # enough to work the switch (gap plus 0.2 mm travel) keeps the tuft off the head
+    assert V.EAR_RETAINER_GAP >= 0.2
+    assert overlap_volume(Pos(0, V.EAR_RETAINER_GAP + 0.2, 0) * key, body) > 0.01
+    assert overlap_volume(Pos(0, -(V.EAR_KEY_GAP + 0.2), 0) * key, body) < 1e-3
+    assert V.EAR_RETAINER_T >= P.MJF_STRUCT_WALL
+
+
+def test_beak_key_meets_the_switch_and_the_face_stops_it(parts):
+    key, body = parts["beak_key"], parts["body"]
+    sw = placement("SW203")
+    assert key.bounding_box().min.Z == pytest.approx(V.PCB_FRONT_Z + sw.height + 0.2)
+    assert key.bounding_box().max.Z == pytest.approx(V.FRONT_Z + V.BEAK_PROUD)
+    assert overlap_volume(Pos(0, 0, 0.1) * key, body) > 0.01
+    assert V.BEAK_FLANGE_T >= P.MJF_STRUCT_WALL
+
+
+def test_thin_spots_meet_the_wall_classes(parts):
+    body, cover = parts["body"], parts["back_cover"]
+    face_z = V.FRONT_Z - V.FACE_T / 2
+    # face bar between the beak slot and the ring opening, and below the slot
+    top = V.BEAK_XY[1] + V.BEAK_SLOT[1] / 2
+    bottom = V.BEAK_XY[1] - V.BEAK_SLOT[1] / 2
+    assert chords(body, (0, top - 0.01, face_z), (0, -RING_Y, face_z)) == [pytest.approx(1.0)]
+    assert min(chords(body, (0, bottom + 0.01, face_z), (0, -45.0, face_z))) >= P.MJF_STRUCT_WALL
+    # the side walls end square where the ring opening cuts them, not in a knife edge
+    for z in (-1.0, -6.0):
+        for y in (V.SIDE_OPENING_Y + 0.05, -V.SIDE_OPENING_Y - 0.05):
+            assert chords(body, (29.0, y, z), (35.0, y, z)) == [pytest.approx(C.WALL_T)]
+    # bars between the dock pad windows and the cover floor under the dock magnets
+    z = V.BACK_Z + 0.5
+    lengths = chords(cover, (-V.DOCK_PAD_PITCH, V.DOCK_PAD_Y, z), (V.DOCK_PAD_PITCH, V.DOCK_PAD_Y, z))
+    assert min(lengths) >= P.MJF_MIN_WALL
+    for mx, my in V.DOCK_MAGNETS:
+        assert chords(cover, (mx, my, V.BACK_Z - 1.0), (mx, my, V.BACK_Z + 1.5))[0] >= P.MJF_STRUCT_WALL - 1e-6
+    # LRA cup wall, recess floors and the cover plate
+    x, y = V.LRA_XY
+    z = V.BATTERY_BACK_Z + V.LRA_CUP_H / 2
+    assert chords(cover, (x + V.LRA_POCKET_D / 2 - 0.5, y, z), (x + 6.0, y, z))[0] >= P.MJF_STRUCT_WALL - 1e-6
+    for ax, ay in V.ALIGN_RECESSES:
+        assert chords(cover, (ax, ay, V.BACK_Z - 1.0), (ax, ay, V.BATTERY_BACK_Z + 0.01))[0] >= P.MJF_STRUCT_WALL - 1e-6
+    for value in (C.WALL_T, V.FACE_T, V.COVER_T - V.DOCK_BOARD[2], (V.LRA_CUP_OD - V.LRA_POCKET_D) / 2):
+        assert value >= P.MJF_STRUCT_WALL
+
+
+def narrowest(glyph) -> tuple[float, float]:
+    """Narrowest stroke and narrowest notch of one glyph: the shortest chord between two of its edges
+    that do not meet, across solid (stroke) or across the outside (notch). A chord counts only when
+    its midpoint sits at least 0.4 chord lengths from the outline, so it crosses a stroke or a gap
+    rather than cutting a corner or running along one side."""
+    edges, wires = glyph.edges(), glyph.wires()
+    candidates = []
+    for a, b in itertools.combinations(edges, 2):
+        if any((p - q).length < 1e-6 for p in (a @ 0, a @ 1) for q in (b @ 0, b @ 1)):
+            continue  # neighbours meet at a corner
+        candidates.append(a.closest_points(b))
+        candidates += [Vertex(a @ t).closest_points(b) for t in (0.1, 0.3, 0.5, 0.7, 0.9)]
+    stroke = notch = math.inf
+    for p, q in sorted(candidates, key=lambda c: (c[0] - c[1]).length):
+        d = (p - q).length
+        if d >= stroke and d >= notch:
+            break
+        mid = Vertex((p + q) * 0.5)
+        if min(mid.distance_to(w) for w in wires) < 0.4 * d:
+            continue
+        if mid.distance_to(glyph) < 1e-6:
+            stroke = min(stroke, d)
+        else:
+            notch = min(notch, d)
+    return stroke, notch
+
+
+@pytest.fixture(scope="module")
+def mark():
+    return V.mark_faces()
+
+
+@pytest.fixture(scope="module")
+def plain_cover():
+    return V.back_cover(mark=False)
+
+
+def test_mark_meets_the_mjf_detail_limits(mark):
+    # JLC3DP MJF: 0.5 mm deep, cap height at least 4 mm, strokes and gaps at least 0.6 mm. The raw
+    # font fails here (0.33 mm at the n and u shoulders); the closing and tracking in mark_faces fix it.
+    assert P.MARK_DEPTH == pytest.approx(0.5) and P.MARK_MIN_DETAIL >= 0.6
+    assert len(mark) == 9  # T y u k o v I n c
+    assert mark[0].bounding_box().size.Y == pytest.approx(P.MARK_CAP_H)
+    assert P.MARK_CAP_H >= 4.0
+    for glyph in mark:
+        stroke, notch = narrowest(glyph)
+        assert stroke >= P.MARK_MIN_DETAIL and notch >= P.MARK_MIN_DETAIL
+    for a, b in zip(mark, mark[1:]):
+        assert a.distance_to(b) >= P.MARK_MIN_DETAIL
+
+
+def test_mark_is_debossed_into_the_back_face(parts, plain_cover, mark):
+    cover = parts["back_cover"]
+    area = sum(f.area for f in mark)
+    assert plain_cover.volume - cover.volume == pytest.approx(area * P.MARK_DEPTH, rel=1e-3)
+    cut = (plain_cover - cover).bounding_box()
+    assert cut.min.Z == pytest.approx(V.BACK_Z, abs=1e-3)
+    assert cut.max.Z == pytest.approx(V.BACK_Z + P.MARK_DEPTH, abs=1e-3)
+    assert cut.min.X == pytest.approx(-cut.max.X, abs=1e-3)  # centred left to right
+    # it reads from behind: the T comes first, at +X, with empty face under the end of its bar
+    x, top, z = cut.max.X - 0.3, cut.max.Y - 0.3, V.BACK_Z + P.MARK_DEPTH / 2
+    assert not cover.is_inside(Vector(x, top, z))
+    assert cover.is_inside(Vector(x, top - 2.0, z))
+
+
+def test_mark_clears_every_feature_and_keeps_a_structural_wall(parts, plain_cover, mark):
+    cover = parts["back_cover"]
+    size = Compound(mark).bounding_box().size
+    # the unmarked plate is solid through its thickness under the mark and 1.0 around it: no hole,
+    # counterbore, pad window, magnet pocket, alignment recess or dock-board recess there
+    w, h = size.X + 2 * P.MJF_STRUCT_WALL, size.Y + 2 * P.MJF_STRUCT_WALL
+    block = Pos(0, V.MARK_Y, (V.BACK_Z + V.BATTERY_BACK_Z) / 2) * Box(w, h, V.COVER_T)
+    assert overlap_volume(plain_cover, block) == pytest.approx(block.volume, rel=1e-6)
+    # and stays 1.0 or more from the bosses, collars, magnet bosses and LRA cup on the inside
+    features = (
+        [(hole, V.BOSS_R) for hole in C.MOUNT_HOLES]
+        + [(hole, V.SCREW_COLLAR_R) for hole in C.BODY_HOLES]
+        + [(m, V.DOCK_MAGNET_D / 2 + V.DOCK_MAGNET_WALL) for m in V.DOCK_MAGNETS]
+        + [(V.LRA_XY, V.LRA_CUP_OD / 2)]
+    )
+    for (fx, fy), r in features:
+        dx, dy = max(abs(fx) - size.X / 2, 0.0), max(abs(fy - V.MARK_Y) - size.Y / 2, 0.0)
+        assert math.hypot(dx, dy) - r >= P.MJF_STRUCT_WALL
+    # under each letter the plate keeps the structural wall: a chord through the I of Inc
+    i = mark[6].center()
+    x, y = -i.X, V.MARK_Y + i.Y  # the plane reads along -X
+    assert V.COVER_T - P.MARK_DEPTH >= P.MJF_STRUCT_WALL
+    assert chords(cover, (x, y, V.BACK_Z - 1.0), (x, y, V.BATTERY_BACK_Z + 0.01)) == [pytest.approx(V.COVER_T - P.MARK_DEPTH)]
+
+
+RING_Y = C.RING_CLEAR_R - 0.5  # just inside the ring opening at x = 0
+
+
+def test_export_writes_step_and_stl(parts, tmp_path):
+    written = V.export_all(tmp_path)
+    assert len(written) == 24
+    assert all(p.stat().st_size > 500 for p in written)
+    # every STEP reads back as the same single solid (the mark's outlines once came back empty)
+    for name, part in parts.items():
+        back = import_step(str(tmp_path / f"{name}.step"))
+        assert len(back.solids()) == 1, name
+        assert back.volume == pytest.approx(part.volume, rel=1e-6), name
+
+
+def test_glass_envelope_matches_the_panel_data():
+    glass = V.glass_envelope()
+    box = glass.bounding_box()
+    assert box.size.X == pytest.approx(P.GLASS_D)
+    assert box.max.Z == pytest.approx(-V.GLASS_GAP)

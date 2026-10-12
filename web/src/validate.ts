@@ -20,15 +20,20 @@ export function redirectUriValid(uri: string): boolean {
   return /^[!#-&(-;=?-[\]-~]+$/.test(uri);
 }
 
+/** Characters below U+0020 and U+007F, which the owl refuses in network names and passwords. */
+function hasControlCharacter(s: string): boolean {
+  return Array.from(s).some((c) => c.charCodeAt(0) < 0x20 || c.charCodeAt(0) === 0x7f);
+}
+
 export function ssidValid(ssid: string): boolean {
   const n = byteLength(ssid);
-  return n >= 1 && n <= 32;
+  return n >= 1 && n <= 32 && !hasControlCharacter(ssid);
 }
 
 /** Open networks have no password; WPA passwords are 8 to 64 bytes. */
 export function wifiPasswordValid(password: string): boolean {
   const n = byteLength(password);
-  return n === 0 || (n >= 8 && n <= 64);
+  return (n === 0 || (n >= 8 && n <= 64)) && !hasControlCharacter(password);
 }
 
 /** The callback page next to this one, so a fork's own site works without changes. */

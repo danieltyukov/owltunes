@@ -1,0 +1,68 @@
+(kicad_sch (version 20260101) (generator "eeschema") (generator_version "10.0")
+
+  (uuid fb846a48-d7cd-4e1f-898e-fc44b04beae7)
+
+  (paper "A4")
+	(title_block
+		(title "OwlTunes main board")
+		(date "2026-10-11")
+		(rev "A")
+		(company "OwlTunes")
+		(comment 1 "CERN-OHL-P-2.0")
+	)
+
+  (lib_symbols
+  )
+
+  (sheet (at 30.0 40.0) (size 60.0 30.0) (fields_autoplaced yes)
+    (stroke (width 0.0006) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "4af1d6fc-f0db-4f00-b9e9-54eaa77529fa")
+    (property "Sheetname" "power" (at 32.54 38.73 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "power.kicad_sch" (at 32.54 71.27 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "owl-mainboard"
+        (path "/fb846a48-d7cd-4e1f-898e-fc44b04beae7" (page "2"))
+      )
+    )
+  )
+  (sheet (at 100.0 40.0) (size 60.0 30.0) (fields_autoplaced yes)
+    (stroke (width 0.0006) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "a859415a-f165-4418-b711-7bb21928059d")
+    (property "Sheetname" "mcu_usb" (at 102.54 38.73 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "mcu_usb.kicad_sch" (at 102.54 71.27 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "owl-mainboard"
+        (path "/fb846a48-d7cd-4e1f-898e-fc44b04beae7" (page "3"))
+      )
+    )
+  )
+  (sheet (at 170.0 40.0) (size 60.0 30.0) (fields_autoplaced yes)
+    (stroke (width 0.0006) (type default))
+    (fill (color 0 0 0 0.0000))
+    (uuid "5058b045-1194-4265-add8-fc583b3842ce")
+    (property "Sheetname" "periph" (at 172.54 38.73 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "periph.kicad_sch" (at 172.54 71.27 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "owl-mainboard"
+        (path "/fb846a48-d7cd-4e1f-898e-fc44b04beae7" (page "4"))
+      )
+    )
+  )
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)

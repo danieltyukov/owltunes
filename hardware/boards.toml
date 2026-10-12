@@ -1,0 +1,13 @@
+# Boards the hardware checks run on. Flags switch on as the work progresses:
+# netlist after the schematic matches design.toml, contract after placement, drc after routing.
+[[board]]
+name = "owl-mainboard"
+netlist = true
+contract = true
+drc = true  # accepted: 3 silk_edge_clearance (J201 receptacle front and U201 pin 1 triangle overhang the edge), excluded in owl-mainboard.kicad_pro
+
+[[board]]
+name = "perch-dock"
+netlist = true
+contract = false  # no generated contract; tools/tests/test_hw_perch.py checks the geometry
+drc = true  # accepted library warnings: 2 silk_edge_clearance on J1 (shell overhangs the edge by 0.5 mm), excluded in perch-dock.kicad_pro

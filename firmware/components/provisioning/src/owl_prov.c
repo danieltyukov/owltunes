@@ -117,19 +117,36 @@ bool owl_prov_apply_refresh(owl_prov_t *p, spotify_token_result_t result, const 
     return false;
 }
 
+bool owl_prov_refresh_due(const owl_prov_t *p, const spotify_token_t *access, const owl_prov_refresh_t *r,
+                          int64_t now_ms)
+{
+    if (owl_prov_setup_state(p) != OWL_SETUP_STATE_READY || !p->network_up || !r->gate_open ||
+        r->save_pending) {
+        return false;
+    }
+    if (r->force) {
+        return true;
+    }
+    bool floor_passed = r->refreshed_at_ms == 0 || now_ms >= r->refreshed_at_ms + OWL_PROV_REFRESH_MIN_MS;
+    return spotify_token_needs_refresh(access, now_ms) && now_ms >= r->not_before_ms && floor_passed;
+}
+
 /* ---- output -------------------------------------------------------------------------------- */
 
-/* Print obj as one protocol line. False when it does not fit. Takes ownership of obj. */
-static bool emit(cJSON *obj, char *out, size_t cap)
+bool owl_prov_emit(struct cJSON *obj, char *out, size_t cap)
 {
     char *json = obj ? cJSON_PrintUnformatted(obj) : NULL;
     cJSON_Delete(obj);
-    if (json == NULL) {
-        return false;
+    bool ok = false;
+    if (json != NULL) {
+        int n = snprintf(out, cap, OWL_PROV_PREFIX "%s\n", json);
+        ok = n > 0 && (size_t)n < cap && (size_t)n <= OWL_PROV_LINE_MAX;
+        cJSON_free(json);
     }
-    int n = snprintf(out, cap, OWL_PROV_PREFIX "%s\n", json);
-    cJSON_free(json);
-    return n > 0 && (size_t)n < cap && (size_t)n <= OWL_PROV_LINE_MAX;
+    if (!ok && cap > 0) {
+        out[0] = '\0';
+    }
+    return ok;
 }
 
 static cJSON *reply(int id, bool ok)
@@ -142,7 +159,7 @@ static cJSON *reply(int id, bool ok)
 
 static void respond(cJSON *obj, int id, char *out, size_t cap)
 {
-    if (!emit(obj, out, cap)) {
+    if (!owl_prov_emit(obj, out, cap)) {
         snprintf(out, cap, OWL_PROV_PREFIX "{\"id\":%d,\"ok\":false,\"error\":\"too_long\"}\n", id);
     }
 }
@@ -154,16 +171,30 @@ static void respond_error(int id, const char *code, char *out, size_t cap)
     respond(obj, id, out, cap);
 }
 
-bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
-                    const char *value)
+static cJSON *event_object(const char *event, const char *state)
 {
     cJSON *obj = cJSON_CreateObject();
     cJSON_AddStringToObject(obj, "event", event);
     cJSON_AddStringToObject(obj, "state", state);
+    return obj;
+}
+
+bool owl_prov_event(char *out, size_t cap, const char *event, const char *state, const char *key,
+                    const char *value)
+{
+    cJSON *obj = event_object(event, state);
     if (key != NULL && value != NULL) {
         cJSON_AddStringToObject(obj, key, value);
     }
-    return emit(obj, out, cap);
+    return owl_prov_emit(obj, out, cap);
+}
+
+bool owl_prov_network_failed(char *out, size_t cap, const char *ssid, const char *error)
+{
+    cJSON *obj = event_object("network", "failed");
+    cJSON_AddStringToObject(obj, "ssid", ssid != NULL ? ssid : "");
+    cJSON_AddStringToObject(obj, "error", error != NULL ? error : "");
+    return owl_prov_emit(obj, out, cap);
 }
 
 /* ---- commands ------------------------------------------------------------------------------ */
@@ -202,16 +233,49 @@ static void cmd_hello(owl_prov_t *p, int id, char *out, size_t cap)
     respond(obj, id, out, cap);
 }
 
-static const char *cmd_wifi_add(owl_prov_t *p, const cJSON *req)
+/* Bytes below 0x20, and 0x7f. SSIDs and passwords may not contain them: a saved SSID comes back in
+ * hello and in network events, where each such byte takes six bytes once escaped, and no one types
+ * one into a Wi-Fi password. */
+static bool has_control_byte(const char *s)
 {
+    for (const unsigned char *c = (const unsigned char *)s; *c != '\0'; c++) {
+        if (*c < 0x20 || *c == 0x7f) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/* cJSON decodes the escape for U+0000 into a zero byte, which ends the C string early: "Home" plus
+ * that escape plus "evil" would be saved as "Home". Look for the escape in the raw request instead. */
+static bool has_nul_escape(const char *json, size_t len)
+{
+    for (size_t i = 0; i + 1 < len; i++) {
+        if (json[i] != '\\') {
+            continue;
+        }
+        if (json[i + 1] == 'u' && i + 6 <= len && strncmp(json + i + 2, "0000", 4) == 0) {
+            return true;
+        }
+        i++; /* skip the escaped character, so an escaped backslash does not start an escape */
+    }
+    return false;
+}
+
+static const char *cmd_wifi_add(owl_prov_t *p, const cJSON *req, bool nul_escape)
+{
+    if (nul_escape) {
+        return "bad_request";
+    }
     const char *ssid = str_param(req, "ssid");
     const char *password = str_param(req, "password");
     size_t ssid_len = ssid ? strlen(ssid) : 0;
     size_t pass_len = password ? strlen(password) : 0;
-    if (ssid_len == 0 || ssid_len >= OWL_SSID_LEN) {
+    if (ssid_len == 0 || ssid_len >= OWL_SSID_LEN || has_control_byte(ssid)) {
         return "bad_ssid";
     }
-    if (password == NULL || (pass_len != 0 && (pass_len < 8 || pass_len >= OWL_WIFI_PASSWORD_LEN))) {
+    if (password == NULL || (pass_len != 0 && (pass_len < 8 || pass_len >= OWL_WIFI_PASSWORD_LEN)) ||
+        has_control_byte(password)) {
         return "bad_password";
     }
     int index = find_network(p, ssid);
@@ -267,12 +331,20 @@ static const char *cmd_spotify_client(owl_prov_t *p, const cJSON *req)
 static void cmd_spotify_begin(owl_prov_t *p, int id, int64_t now_ms, char *out, size_t cap)
 {
     char url[768];
+    /* Offline, the login could not finish and the state would carry no address for the LAN route.
+     * Refusing also means the verifier is only made while Wi-Fi is enabled, the condition ESP-IDF
+     * documents for its hardware RNG (see hw_random in provisioning_task.c). An open login stays
+     * open. */
+    if (!p->network_up) {
+        respond_error(id, "offline", out, cap);
+        return;
+    }
     if (p->settings.client_id[0] == '\0' || p->settings.redirect_uri[0] == '\0') {
         respond_error(id, "no_client_id", out, cap);
         return;
     }
     end_session(p);
-    spotify_pkce_new(&p->session, p->random, p->network_up ? p->ip : NULL);
+    spotify_pkce_new(&p->session, p->random, p->ip);
     if (!spotify_authorize_url(p->settings.client_id, p->settings.redirect_uri, &p->session, url,
                                sizeof url)) {
         end_session(p);
@@ -311,7 +383,7 @@ bool owl_prov_handle_line(owl_prov_t *p, const char *line, int64_t now_ms, char 
         cmd_hello(p, id, out, cap);
         replied = true;
     } else if (strcmp(cmd, "wifi_add") == 0) {
-        error = cmd_wifi_add(p, req);
+        error = cmd_wifi_add(p, req, has_nul_escape(json, len));
     } else if (strcmp(cmd, "wifi_remove") == 0) {
         error = cmd_wifi_remove(p, req);
     } else if (strcmp(cmd, "spotify_client") == 0) {

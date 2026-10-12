@@ -1,0 +1,43 @@
+(version 1)
+(rule "JLC via drill without extra fee"
+	(condition "A.Type == 'Via'")
+	(constraint hole_size (min 0.3mm)))
+(rule "JLC via annular ring"
+	(condition "A.Type == 'Via'")
+	(constraint annular_width (min 0.1mm)))
+(rule "JLC copper to edge"
+	(constraint edge_clearance (min 0.3mm)))
+(rule "JLC silkscreen text"
+	(layer "F.Silkscreen")
+	(constraint text_height (min 0.8mm)))
+(rule "JLC silkscreen text back"
+	(layer "B.Silkscreen")
+	(constraint text_height (min 0.8mm)))
+# RT101 (board NTC, under the cell): this rule stops any pour connecting to RT101's two pads (no
+# spokes, a clearance gap instead). It does not keep a pour off the GND neck from pad 2 to its via:
+# a GND pour floods a GND track. The rule areas that tools/hw/hw_route.py bat_ntc draws do that
+# (B.Cu: no pour round RT101, along the pad 2 neck and round the patch; In2: no pour under the
+# patch), so pad 2 reaches GND only through its 1.5 mm neck and via.
+(rule "RT101 pads stay off the pours"
+	(condition "A.memberOfFootprint('RT101')")
+	(constraint zone_connection none))
+# No board-wide clearance or track width rule: an unconditioned rule overrides every net class and
+# zone clearance and the .kicad_pro minimums. The net classes set the clearances; the .kicad_pro
+# keeps 0.1 mm as the minimum track and clearance (JLC 4-layer: 0.09 mm).
+# U303 (LIS2DW12, LGA-12 2 x 2 mm, 0.5 mm pitch) has 0.375 x 0.35 mm pads 0.15 mm apart, below the
+# Power class's 0.2 mm next to its +3V3 and GND pads. The package sets that gap, so it holds only
+# between two of U303's own pads; tracks and pours keep the classes'.
+(rule "U303 pads keep the LGA's own 0.15 mm gaps"
+	(condition "A.memberOfFootprint('U303') && B.memberOfFootprint('U303')")
+	(constraint clearance (min 0.15mm)))
+# J201's four shell tabs (through-hole, the receptacle's shield) join the GND pours solid: the
+# USB lines, CC and VBUS round the receptacle leave room for one thermal spoke only.
+(rule "J201 shell joins the pours solid"
+	(condition "A.memberOfFootprint('J201') && A.Pad_Number == 'SH'")
+	(constraint zone_connection solid))
+# C202's GND pad (module 3V3 decoupling) reaches GND through its own track to module pin 1
+# (tools/hw/hw_route.py local_power); the tracks round it leave the B.Cu pour one spoke, so the
+# pour keeps off the pad.
+(rule "C202 GND pad joins by its track"
+	(condition "A.memberOfFootprint('C202') && A.Pad_Number == '2'")
+	(constraint zone_connection none))

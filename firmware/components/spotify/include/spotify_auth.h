@@ -22,10 +22,11 @@ extern "C" {
 #define SPOTIFY_VERIFIER_LEN 88  /* 86 characters from 64 random bytes */
 #define SPOTIFY_CHALLENGE_LEN 44 /* 43 characters */
 #define SPOTIFY_STATE_LEN 48     /* 22-character nonce, then "." and an IPv4 address */
-#define SPOTIFY_CODE_LEN 512
+#define SPOTIFY_CODE_LEN 1024    /* up to 1023 characters; Spotify sent 563 in October 2026 */
 #define SPOTIFY_ACCESS_TOKEN_LEN 512
 #define SPOTIFY_REFRESH_TOKEN_LEN 384
 #define SPOTIFY_REFRESH_MARGIN_MS 60000
+#define SPOTIFY_TOKEN_LIFETIME_MAX_S (24 * 3600) /* a longer expires_in is read as this */
 
 bool spotify_client_id_valid(const char *s);
 bool spotify_redirect_uri_valid(const char *s);

@@ -32,7 +32,10 @@ hardware/**/snapshots/
 hardware/**/production/
 hardware/**/jlcpcb/
 hardware/**/analysis/
+hardware/**/*-erc.rpt
+hardware/**/*-drc.rpt
 hardware/**/datasheets/*.pdf
+hardware/lib/3dmodels/
 
 # FreeCAD
 *.FCBak

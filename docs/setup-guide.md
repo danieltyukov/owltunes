@@ -1,7 +1,8 @@
 # Setting up your owl
 
-**Status:** the setup page and the owl's side of it work today over USB and in the QEMU emulator.
-Setup over Bluetooth and joining the saved Wi-Fi networks arrive with the dev-kit firmware.
+**Status:** the setup page and the owl's side of it work today over USB, on the Arduino Nano ESP32
+dev board ([its guide](dev-board-nano-esp32.md)) and in the QEMU emulator. The dev board joins the
+saved Wi-Fi networks; setup over Bluetooth arrives with the round-screen dev kit.
 
 You need the owl (or the emulator, see the end), a computer with Chrome or Edge and a USB cable,
 Spotify Premium, and a free Spotify developer account, which is your normal Spotify login.
@@ -16,6 +17,9 @@ port. The page shows the owl's name, which matches the one under the QR code.
 
 Add your home network. To use the owl away from home, add your phone's hotspot as well. The owl
 keeps up to four networks.
+
+The owl uses 2.4 GHz Wi-Fi only. It tries the networks in the order you saved them, and if it
+cannot join one, the setup page says which network failed and why.
 
 ## 3. Your Spotify app
 
@@ -42,10 +46,10 @@ log in again. If you host your own copy of the setup site, set `CONFIG_OWL_SETUP
 
 ## 4. Log in
 
-Press **Log in with Spotify**. Spotify opens in a new tab: check the permissions and agree. That
-tab hands the login to the setup page, the setup page passes it to the owl, and the owl finishes
-the login with Spotify by itself. The setup page then says "Linked" and the owl leaves its setup
-screen.
+Once the page shows the owl online, press **Log in with Spotify**. Spotify opens in a new tab:
+check the permissions and agree. That tab hands the login to the setup page, the setup page passes
+it to the owl, and the owl finishes the login with Spotify by itself. The setup page then says
+"Linked" and the owl leaves its setup screen.
 
 If the setup page was closed, the Spotify tab offers two other ways:
 
@@ -56,7 +60,11 @@ If the setup page was closed, the Spotify tab offers two other ways:
   default restarts the owl and wipes the open login. Press Enter after pasting.
 
 On Linux the browser needs permission to use the serial port: add your user to the `dialout`
-group (or the group that owns `/dev/ttyACM0`) or add a udev rule, then log in again.
+group (or the group that owns `/dev/ttyACM0`) or add a udev rule, then log in again. If the setup
+page says the owl was disconnected right after it connected, and a serial terminal used the port
+before: some Chrome versions before 156 take an empty read on a port that a serial tool left in
+a non-blocking mode (VMIN 0) for a lost device. Update Chrome, or run `stty -F /dev/ttyACM0 min 1`
+once.
 
 Finish the login within 10 minutes of pressing **Log in with Spotify**.
 

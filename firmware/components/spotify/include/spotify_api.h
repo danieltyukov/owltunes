@@ -31,6 +31,9 @@ bool spotify_request_for_fetch(const owl_fetch_t *fetch, spotify_request_t *out)
 /* GET /v1/me/player, asking for podcast episodes too. */
 void spotify_request_player_state(spotify_request_t *out);
 
+/* GET /v1/me/library/contains for one track or episode URI: is it in the person's library? */
+bool spotify_request_liked(const char *uri, spotify_request_t *out);
+
 const char *spotify_method_name(spotify_method_t m);
 
 #ifdef __cplusplus

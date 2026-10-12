@@ -10,8 +10,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: Style checker tests
-        run: python3 -m unittest discover -s tools/tests -v
+      - name: Tool tests
+        run: |
+          sudo apt-get update && sudo apt-get install -y python3-serial
+          python3 -m unittest discover -s tools/tests -v
       - name: Style check
         run: python3 tools/check_style.py
       - name: C formatting
@@ -74,7 +76,7 @@ jobs:
 
   firmware:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     container: espressif/idf:v6.1
     steps:
       - uses: actions/checkout@v7
@@ -83,6 +85,7 @@ jobs:
         run: |
           . "$IDF_PATH/export.sh"
           tools/firmware.sh build
+          tools/firmware.sh build nano_esp32
       - name: Install QEMU
         shell: bash
         run: |
@@ -103,3 +106,38 @@ jobs:
           path: |
             build/qemu-smoke.log
             build/qemu-prov
+
+  enclosure:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        run: pipx install uv==0.11.32
+      - name: Install the Inter font (the owner mark on the back cover and the perch)
+        run: sudo apt-get update && sudo apt-get install -y fonts-inter
+      - name: Enclosure tests
+        run: uv run --project enclosure --locked python -m pytest enclosure -q
+
+  hardware:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: kicad/kicad:10.0.6
+      options: --user root
+    steps:
+      - uses: actions/checkout@v7
+      - name: Point KiCad at its bundled symbol and footprint libraries
+        # The image ships the libraries but no library tables, so ERC and DRC would report every
+        # part as "library not in the current configuration".
+        run: |
+          cfg="${XDG_CONFIG_HOME:-$HOME/.config}/kicad/10.0"
+          mkdir -p "$cfg"
+          cp /usr/share/kicad/template/sym-lib-table /usr/share/kicad/template/fp-lib-table "$cfg/"
+      - name: Hardware checks (ERC, DRC, connectivity, sourcing, contract, pin map)
+        run: tools/hw/check_all.sh
+      - name: Upload ERC and DRC reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: hardware-reports
+          path: build/hardware

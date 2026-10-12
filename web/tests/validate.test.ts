@@ -48,6 +48,18 @@ describe("Wi-Fi", () => {
     expect(wifiPasswordValid("short77")).toBe(false);
     expect(wifiPasswordValid("p".repeat(65))).toBe(false);
   });
+
+  test("names and passwords refuse control characters, as the owl does", () => {
+    expect(ssidValid("Home\nTwo")).toBe(false);
+    expect(ssidValid("Home\u001b[2J")).toBe(false);
+    expect(ssidValid("Home\u007f")).toBe(false);
+    expect(ssidValid("\u0000")).toBe(false);
+    expect(wifiPasswordValid("pass\tword1")).toBe(false);
+    expect(wifiPasswordValid("password\r\n")).toBe(false);
+    expect(wifiPasswordValid("password\u007f")).toBe(false);
+    expect(ssidValid('Caf\u00e9 "5G" ~')).toBe(true);
+    expect(wifiPasswordValid("p\u00e4ss word~")).toBe(true);
+  });
 });
 
 test("the default redirect URI is the callback page beside the setup page", () => {

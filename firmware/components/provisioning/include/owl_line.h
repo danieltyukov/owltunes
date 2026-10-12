@@ -10,8 +10,9 @@ extern "C" {
 #endif
 
 /* Reassembles a byte stream (the console, a Bluetooth characteristic) into lines. A line longer
- * than OWL_PROV_LINE_MAX - 1 bytes, or one containing a NUL byte, is dropped whole; a "\r" before
- * the newline is removed; empty lines are skipped. */
+ * than OWL_PROV_LINE_MAX - 1 bytes, or one containing a NUL byte, is dropped whole; a line ends at "\n",
+ * "\r" or "\r\n"; empty lines are skipped. The buffer is cleared after
+ * each line has been handed over, so the callback must copy what it keeps. */
 typedef struct {
     char buf[OWL_PROV_LINE_MAX];
     size_t len;

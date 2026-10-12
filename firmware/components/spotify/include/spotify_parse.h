@@ -22,6 +22,9 @@ spotify_parse_result_t spotify_parse_list(owl_list_kind_t kind, const char *json
                                           const char *my_user_id, const char *source_uri,
                                           owl_list_page_t *out);
 
+/* Parse GET /v1/me/library/contains: a JSON array with one boolean per URI asked about. */
+spotify_parse_result_t spotify_parse_liked(const char *json, size_t len, bool *liked);
+
 typedef enum {
     SPOTIFY_ERROR_NONE,
     SPOTIFY_ERROR_AUTH_EXPIRED,

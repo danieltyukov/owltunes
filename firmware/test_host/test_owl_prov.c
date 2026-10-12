@@ -170,8 +170,36 @@ static void test_spotify_client_validates_and_resets_link_on_change(void)
 static void test_begin_requires_client(void)
 {
     fresh();
+    owl_prov_set_network(&prov, true, "192.168.1.23");
     send("{\"id\":1,\"cmd\":\"spotify_begin\"}");
     expect_error("no_client_id");
+}
+
+/* ESP-IDF documents its hardware RNG as truly random while Wi-Fi is enabled, as it is on an owl
+ * that is online. Offline, the login could not finish anyway and the state would carry no address. */
+static void test_begin_needs_the_network(void)
+{
+    linkable();
+    owl_prov_set_network(&prov, false, NULL);
+    s_next = 0;
+    send("{\"id\":2,\"cmd\":\"spotify_begin\"}");
+    expect_error("offline");
+    TEST_ASSERT_EQUAL_UINT8(0, s_next); /* no random bytes drawn */
+    TEST_ASSERT_EQUAL_INT64(0, prov.session_expires_ms);
+    fresh();
+    send("{\"id\":3,\"cmd\":\"spotify_begin\"}");
+    expect_error("offline"); /* the first thing to fix during setup is the Wi-Fi */
+}
+
+static void test_a_refused_begin_keeps_the_open_login(void)
+{
+    linkable();
+    send("{\"id\":2,\"cmd\":\"spotify_begin\"}");
+    TEST_ASSERT_TRUE(ok());
+    owl_prov_set_network(&prov, false, NULL);
+    send("{\"id\":3,\"cmd\":\"spotify_begin\"}");
+    expect_error("offline");
+    TEST_ASSERT_NULL(owl_prov_accept_code(&prov, "AQDcode", STATE, 2000));
 }
 
 static void test_begin_returns_authorize_url_with_ip_in_state(void)
@@ -229,6 +257,32 @@ static void test_expired_session_rejects_code(void)
     expect_error("expired");
     TEST_ASSERT_EQUAL_STRING("no_session",
                              owl_prov_accept_code(&prov, "AQDcode", STATE, OWL_PROV_SESSION_MS + 1));
+}
+
+static void test_longest_code_fits_one_line(void)
+{
+    /* 1023 characters, the longest code the owl takes, with a state that carries the longest
+     * IPv4 address: the request still fits one protocol line. */
+    static char code[1024];
+    static char json[OWL_PROV_LINE_MAX];
+    memset(code, 'A', 1023);
+    code[1023] = '\0';
+    fresh();
+    owl_prov_set_network(&prov, true, "192.168.123.234");
+    send("{\"id\":1,\"cmd\":\"spotify_client\",\"client_id\":\"" CLIENT "\",\"redirect_uri\":\"" REDIRECT
+         "\"}");
+    TEST_ASSERT_TRUE(ok());
+    owl_prov_take_actions(&prov);
+    send("{\"id\":2,\"cmd\":\"spotify_begin\"}");
+    TEST_ASSERT_TRUE(ok());
+    const char *state = strstr(field("authorize_url"), "&state=");
+    TEST_ASSERT_NOT_NULL(state);
+    int n = snprintf(json, sizeof json,
+                     "{\"id\":2147483647,\"cmd\":\"spotify_code\",\"code\":\"%s\",\"state\":\"%s\"}", code,
+                     state + strlen("&state="));
+    TEST_ASSERT_TRUE(n > 0 && (size_t)n + strlen("@owl \n") <= OWL_PROV_LINE_MAX);
+    send(json);
+    TEST_ASSERT_TRUE(ok());
 }
 
 static void test_code_with_unsafe_characters_is_rejected(void)
@@ -303,6 +357,108 @@ static void test_refresh_retry_keeps_login(void)
     TEST_ASSERT_EQUAL_UINT32(0, owl_prov_take_actions(&prov));
 }
 
+/* ---- when the provisioning task refreshes the access token (spec 9.4, 9.6) ---- */
+
+#define HOUR_MS (3600 * 1000)
+
+static spotify_token_t access;
+static owl_prov_refresh_t refresh;
+
+/* Linked and online, with an access token that is good for another hour at now 0, an open gate,
+ * nothing waiting to be saved and no forced refresh. */
+static void linked_with_token(void)
+{
+    linkable();
+    strcpy(prov.settings.refresh_token, "AQOld");
+    memset(&access, 0, sizeof access);
+    strcpy(access.access_token, "BQAccess");
+    access.expires_at_ms = HOUR_MS;
+    refresh = (owl_prov_refresh_t){.gate_open = true};
+}
+
+static void test_refresh_waits_for_a_login_and_a_network(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    owl_prov_set_network(&prov, false, NULL);
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    owl_prov_set_network(&prov, true, "192.168.1.23");
+    prov.settings.refresh_token[0] = '\0';
+    refresh.force = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+static void test_refresh_is_due_without_a_token_or_a_minute_before_expiry(void)
+{
+    linked_with_token();
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    TEST_ASSERT_FALSE(
+        owl_prov_refresh_due(&prov, &access, &refresh, HOUR_MS - SPOTIFY_REFRESH_MARGIN_MS - 1));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, HOUR_MS - SPOTIFY_REFRESH_MARGIN_MS));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, HOUR_MS + 1));
+    access.access_token[0] = '\0';
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+static void test_a_forced_refresh_replaces_a_token_that_looks_valid(void)
+{
+    linked_with_token();
+    refresh.force = true;
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+/* Retry-After, a quota lockout or a backoff holds back every refresh, forced or not. */
+static void test_refresh_never_goes_out_while_the_gate_is_closed(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    refresh.gate_open = false;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    refresh.force = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+/* A rotated refresh token is used only once it is on flash. */
+static void test_refresh_waits_for_a_pending_save(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    refresh.save_pending = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+    refresh.force = true;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+/* An answer the gate does not hold back (an unexpected reply) is not repeated before not_before_ms,
+ * unless Spotify refused the token the runtime has. */
+static void test_an_unexpected_answer_delays_the_next_refresh(void)
+{
+    linked_with_token();
+    access.access_token[0] = '\0';
+    refresh.not_before_ms = 300000;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 299999));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 300000));
+    refresh.force = true;
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 0));
+}
+
+/* A token that lasts a minute or less is inside the margin as soon as it arrives. The floor after a
+ * success keeps that from turning into a refresh on every pass; a forced refresh still goes. */
+static void test_a_short_lived_token_is_not_refreshed_again_before_the_floor(void)
+{
+    linked_with_token();
+    refresh.refreshed_at_ms = 1000;
+    access.expires_at_ms = 1000 + 30 * 1000;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 2000));
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 1000 + OWL_PROV_REFRESH_MIN_MS - 1));
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 1000 + OWL_PROV_REFRESH_MIN_MS));
+    refresh.force = true;
+    TEST_ASSERT_TRUE(owl_prov_refresh_due(&prov, &access, &refresh, 2000));
+    refresh.gate_open = false;
+    TEST_ASSERT_FALSE(owl_prov_refresh_due(&prov, &access, &refresh, 2000));
+}
+
 static void test_settings_from_another_version_fall_back_to_defaults(void)
 {
     owl_settings_t saved;
@@ -326,6 +482,56 @@ static void test_event_lines(void)
     TEST_ASSERT_FALSE(owl_prov_event(out, 10, "spotify", "linked", NULL, NULL));
 }
 
+static void test_wifi_add_refuses_control_bytes(void)
+{
+    fresh();
+    send("{\"id\":1,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\nTwo\",\"password\":\"password1\"}");
+    expect_error("bad_ssid");
+    send("{\"id\":2,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\u001b[2J\",\"password\":\"password1\"}");
+    expect_error("bad_ssid");
+    send("{\"id\":3,\"cmd\":\"wifi_add\",\"ssid\":\"Home\x7f\",\"password\":\"password1\"}");
+    expect_error("bad_ssid");
+    send("{\"id\":4,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"pass\\tword1\"}");
+    expect_error("bad_password");
+    send("{\"id\":5,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"password\x7f\"}");
+    expect_error("bad_password");
+    send("{\"id\":6,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"password\\r\\n\"}");
+    expect_error("bad_password");
+    TEST_ASSERT_EQUAL_UINT8(0, prov.settings.n_networks);
+    TEST_ASSERT_EQUAL_UINT32(0, owl_prov_take_actions(&prov));
+    /* Multibyte characters, spaces and quotes are fine: only control bytes are refused. */
+    send("{\"id\":7,\"cmd\":\"wifi_add\",\"ssid\":\"Caf\xC3\xA9 \\\"5G\\\" ~\",\"password\":\"p\xC3\xA4ss "
+         "word~\"}");
+    TEST_ASSERT_TRUE(ok());
+    TEST_ASSERT_EQUAL_UINT8(1, prov.settings.n_networks);
+}
+
+static void test_wifi_add_refuses_an_escaped_nul(void)
+{
+    fresh();
+    /* The escape decodes to a zero byte; the old check stopped there and saved "Home". */
+    send("{\"id\":1,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\u0000evil\",\"password\":\"password1\"}");
+    expect_error("bad_request");
+    send("{\"id\":2,\"cmd\":\"wifi_add\",\"ssid\":\"Home\",\"password\":\"password\\u0000evil\"}");
+    expect_error("bad_request");
+    TEST_ASSERT_EQUAL_UINT8(0, prov.settings.n_networks);
+    TEST_ASSERT_EQUAL_UINT32(0, owl_prov_take_actions(&prov));
+    /* An escaped backslash followed by the text u0000 is not an escape for NUL. */
+    send("{\"id\":3,\"cmd\":\"wifi_add\",\"ssid\":\"Home\\\\u0000\",\"password\":\"password1\"}");
+    TEST_ASSERT_TRUE(ok());
+    TEST_ASSERT_EQUAL_STRING("Home\\u0000", prov.settings.networks[0].ssid);
+}
+
+static void test_network_failure_event_names_the_network(void)
+{
+    TEST_ASSERT_TRUE(owl_prov_network_failed(out, sizeof out, "Home \"5G\"", "wifi_wrong_password"));
+    TEST_ASSERT_EQUAL_STRING("@owl {\"event\":\"network\",\"state\":\"failed\",\"ssid\":\"Home \\\"5G\\\"\","
+                             "\"error\":\"wifi_wrong_password\"}\n",
+                             out);
+    TEST_ASSERT_FALSE(owl_prov_network_failed(out, 20, "Home", "wifi_not_found"));
+    TEST_ASSERT_EQUAL_STRING("", out);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -334,13 +540,18 @@ int main(void)
     RUN_TEST(test_hello_reports_setup_state);
     RUN_TEST(test_wifi_add_validates_saves_and_updates);
     RUN_TEST(test_wifi_remove);
+    RUN_TEST(test_wifi_add_refuses_control_bytes);
+    RUN_TEST(test_wifi_add_refuses_an_escaped_nul);
     RUN_TEST(test_spotify_client_validates_and_resets_link_on_change);
     RUN_TEST(test_begin_requires_client);
+    RUN_TEST(test_begin_needs_the_network);
+    RUN_TEST(test_a_refused_begin_keeps_the_open_login);
     RUN_TEST(test_begin_returns_authorize_url_with_ip_in_state);
     RUN_TEST(test_code_flow_exchanges_and_saves_token);
     RUN_TEST(test_wrong_state_is_rejected);
     RUN_TEST(test_code_without_session_is_rejected);
     RUN_TEST(test_expired_session_rejects_code);
+    RUN_TEST(test_longest_code_fits_one_line);
     RUN_TEST(test_code_with_unsafe_characters_is_rejected);
     RUN_TEST(test_second_code_while_exchanging_is_busy);
     RUN_TEST(test_failed_exchange_ends_session);
@@ -348,8 +559,16 @@ int main(void)
     RUN_TEST(test_refresh_rotation_saves_new_token);
     RUN_TEST(test_refresh_rejection_forgets_login);
     RUN_TEST(test_refresh_retry_keeps_login);
+    RUN_TEST(test_refresh_waits_for_a_login_and_a_network);
+    RUN_TEST(test_refresh_is_due_without_a_token_or_a_minute_before_expiry);
+    RUN_TEST(test_a_forced_refresh_replaces_a_token_that_looks_valid);
+    RUN_TEST(test_refresh_never_goes_out_while_the_gate_is_closed);
+    RUN_TEST(test_refresh_waits_for_a_pending_save);
+    RUN_TEST(test_an_unexpected_answer_delays_the_next_refresh);
+    RUN_TEST(test_a_short_lived_token_is_not_refreshed_again_before_the_floor);
     RUN_TEST(test_settings_from_another_version_fall_back_to_defaults);
     RUN_TEST(test_event_lines);
+    RUN_TEST(test_network_failure_event_names_the_network);
     cJSON_Delete(reply);
     return UNITY_END();
 }

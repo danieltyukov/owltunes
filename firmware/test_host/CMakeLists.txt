@@ -18,6 +18,8 @@ add_subdirectory(${OWL_COMPONENTS}/spotify ${CMAKE_BINARY_DIR}/spotify)
 owl_strict_warnings(spotify)
 add_subdirectory(${OWL_COMPONENTS}/provisioning ${CMAKE_BINARY_DIR}/provisioning)
 owl_strict_warnings(provisioning)
+add_subdirectory(${OWL_COMPONENTS}/owl_shell ${CMAKE_BINARY_DIR}/owl_shell)
+owl_strict_warnings(owl_shell)
 
 enable_testing()
 
@@ -42,3 +44,31 @@ owl_add_test(test_owl_crypto owl_core)
 owl_add_test(test_spotify_auth spotify owl_core)
 owl_add_test(test_owl_prov provisioning spotify owl_core cjson)
 owl_add_test(test_owl_line provisioning spotify owl_core cjson)
+owl_add_test(test_owl_status owl_core)
+owl_add_test(test_owl_shell owl_shell owl_core cjson)
+owl_add_test(test_owl_wifi owl_core)
+
+# The LAN callback server from firmware/main, built against stand-ins for ESP-IDF (stubs/).
+owl_add_test(test_callback_server spotify owl_core)
+target_sources(test_callback_server PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/callback_server.c)
+target_include_directories(test_callback_server PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
+                           ${CMAKE_CURRENT_LIST_DIR}/../main)
+owl_add_test(test_spotify_gate spotify owl_core)
+owl_add_test(test_spotify_liked spotify owl_core)
+
+# The Web API transport from firmware/main, built against stand-ins for ESP-IDF's HTTP client.
+owl_add_test(test_spotify_http spotify owl_core)
+target_sources(test_spotify_http PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/spotify_http.c)
+target_include_directories(test_spotify_http PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
+                           ${CMAKE_CURRENT_LIST_DIR}/../main)
+
+# The Spotify runtime from firmware/main, with stand-ins for FreeRTOS, the token service and the
+# transport, and the real shared gate.
+owl_add_test(test_spotify_task owl_shell spotify owl_core cjson)
+target_sources(test_spotify_task PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/api_gate.c)
+target_include_directories(test_spotify_task PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
+                           ${CMAKE_CURRENT_LIST_DIR}/../main)
+
+# The rev A board header (pin map, straps, wake pins).
+owl_add_test(test_board_reva)
+target_include_directories(test_board_reva PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main)

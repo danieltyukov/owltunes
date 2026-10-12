@@ -1,0 +1,15 @@
+(version 1)
+# No board-wide clearance or track width rule: an unconditioned rule overrides every net class and
+# zone clearance and the .kicad_pro minimums. The net classes set the clearances; the .kicad_pro
+# keeps 0.15 mm as the minimum track and clearance (JLC 2-layer: 0.127 mm).
+(rule "JLC via drill without extra fee"
+	(condition "A.Type == 'Via'")
+	(constraint hole_size (min 0.3mm)))
+(rule "JLC copper to edge"
+	(constraint edge_clearance (min 0.3mm)))
+# J1 (HRO TYPE-C-31-M-12) has its VBUS and GND pads 0.2 mm apart, below the Power class's 0.25 mm.
+# The part sets that gap, so it holds only between two of J1's own pads; tracks and pours keep the
+# classes'.
+(rule "J1 pads keep the USB-C receptacle's own 0.2 mm gaps"
+	(condition "A.memberOfFootprint('J1') && B.memberOfFootprint('J1')")
+	(constraint clearance (min 0.2mm)))

@@ -1,8 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "board.h"
-#include "demo_state.h"
+#include "bsp.h"
 #include "esp_app_desc.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -14,9 +13,14 @@
 #include "lvgl.h"
 #include "net.h"
 #include "owl_app.h"
+#include "owl_status.h"
 #include "owl_ui.h"
 #include "provisioning_task.h"
 #include "settings_store.h"
+#include "shell.h"
+#include "spotify_task.h"
+#include "status.h"
+#include "timesync.h"
 
 static const char *TAG = "owltunes";
 
@@ -33,29 +37,42 @@ static void owl_name(char *out, size_t cap)
     snprintf(out, cap, "OwlTunes-%02X%02X", mac[4], mac[5]);
 }
 
+/* Runs on a network task: provisioning hears about every change, and a new address asks NTP for the
+ * time at once. */
+static void on_network(bool up, const char *ip)
+{
+    provisioning_network(up, ip);
+    if (up) {
+        timesync_network_up();
+    }
+}
+
 void app_main(void)
 {
     static owl_app_t app;
-    static owl_player_t player;
     static char name[24];
     static char setup_url[192];
+    static spotify_task_view_t spotify; /* about 1.1 KB */
 
     ESP_ERROR_CHECK(settings_store_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     owl_name(name, sizeof name);
     snprintf(setup_url, sizeof setup_url, "%s?owl=%s", CONFIG_OWL_SETUP_URL, name);
+    timesync_start();
     provisioning_start(name, esp_app_get_description()->version);
-    net_start(provisioning_network);
+    net_start(on_network, provisioning_network_failed);
+    spotify_task_start();
+    /* The console starts last: a login (spotify_begin) cannot arrive before the network code has
+     * enabled Wi-Fi, the condition ESP-IDF documents for esp_fill_random to give true random
+     * numbers (PKCE). The protocol also refuses spotify_begin while the owl is offline. */
+    shell_start(name);
 
     lv_init();
     lv_tick_set_cb(tick_ms);
-    lv_display_t *disp = board_display_init();
+    lv_display_t *disp = bsp_display_init();
 
     owl_app_init(&app);
-    owl_player_init(&player);
-    demo_state_load(&app, &player, esp_timer_get_time() / 1000);
-
     owl_ui_t *ui = owl_ui_create(disp);
     owl_ui_inputs_t inputs = {
         .art = NULL, .battery_percent = 100, .charging = true, .wifi = false, .ble = false};
@@ -63,14 +80,19 @@ void app_main(void)
 
     bool announced = false;
     while (true) {
+        int64_t now = esp_timer_get_time() / 1000;
         provisioning_view(&view);
+        spotify_task_view(&spotify);
+        owl_app_set_link(&app, spotify.link, false);
         inputs.wifi = view.network_up;
         inputs.setup =
             (owl_ui_setup_t){view.mode, setup_url, name, view.error[0] != '\0' ? view.error : NULL};
-        owl_ui_render(ui, &app, &player, &inputs, esp_timer_get_time() / 1000);
+        owl_ui_render(ui, &app, &spotify.player, &inputs, now);
+        owl_rgb_t led = owl_status_led(status_now(&view, &spotify), now);
+        bsp_status_led(led.r, led.g, led.b);
         uint32_t wait = lv_timer_handler();
         if (!announced) {
-            ESP_LOGI(TAG, "OWL_BOOT_OK track=\"%s\" name=%s", player.track.title, name);
+            ESP_LOGI(TAG, "OWL_BOOT_OK board=%s name=%s", CONFIG_OWL_BOARD_NAME, name);
             announced = true;
         }
         vTaskDelay(pdMS_TO_TICKS(wait < 5 ? 5 : (wait > 50 ? 50 : wait)));

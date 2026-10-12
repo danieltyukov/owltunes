@@ -1,0 +1,215 @@
+(footprint "TI_DNP_USON-6-1EP_2x2mm_P0.65mm"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "Texas Instruments DNP0006A USON-6 2 x 2 mm with thermal pad, 0.65 mm pitch, land pattern from the OPT3001 datasheet SBOS681C p. 42 (https://www.ti.com/lit/ds/symlink/opt3001.pdf)")
+	(tags "USON DNP0006A OPT3001 C90462")
+	(property "Reference" "REF**"
+		(at 0 -2.15 0)
+		(layer "F.SilkS")
+		(uuid "bee364ca-640a-5c59-accd-fec74d278163")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "TI_DNP_USON-6-1EP_2x2mm_P0.65mm"
+		(at 0 2.45 0)
+		(layer "F.Fab")
+		(uuid "9f6f3f05-e391-5be5-89cd-6943bb38d9d1")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" "https://www.ti.com/lit/ds/symlink/opt3001.pdf"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "ca39b692-a643-5c95-85a1-0550ae454100")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" "Texas Instruments DNP0006A USON-6 2 x 2 mm with thermal pad, 0.65 mm pitch, land pattern from the OPT3001 datasheet SBOS681C p. 42"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "279d0334-67d3-5165-a4a3-69783ffc4963")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(attr smd)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -1.175 -1.175)
+		(end -1.175 1.175)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "904e3d79-cdc4-529f-a6fd-79a676deb303")
+	)
+	(fp_line
+		(start 1.175 -1.175)
+		(end 1.175 1.175)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "6965349e-2bd0-5b86-abee-334d83367cff")
+	)
+	(fp_circle
+		(center -0.65 1.575)
+		(end -0.55 1.575)
+		(stroke
+			(width 0.15)
+			(type solid)
+		)
+		(fill yes)
+		(layer "F.SilkS")
+		(uuid "4a7fc423-763b-54e4-8e79-6f68d269ad51")
+	)
+	(fp_rect
+		(start -1.25 -1.45)
+		(end 1.25 1.75)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "e6af2b76-5297-5a08-bc11-a8a8a2365891")
+	)
+	(fp_line
+		(start -1 -1)
+		(end 1 -1)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "ce317115-6f3e-5ec0-b808-7a857293ebbf")
+	)
+	(fp_line
+		(start -1 0.5)
+		(end -1 -1)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "f330c93a-6fb6-55b8-9516-4d7f87937d6f")
+	)
+	(fp_line
+		(start -0.5 1)
+		(end -1 0.5)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "cc7163c9-cc90-52ff-8fbd-3759292fefc5")
+	)
+	(fp_line
+		(start 1 -1)
+		(end 1 1)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "60bad9e2-0f5f-572b-933c-9f5fcebbdc5c")
+	)
+	(fp_line
+		(start 1 1)
+		(end -0.5 1)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "ff5de16c-04b4-5d93-8dcf-3f37da360965")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "3f41f951-dd7e-58c4-83f8-ef646e4d3fd8")
+		(effects
+			(font
+				(size 0.5 0.5)
+				(thickness 0.075)
+			)
+		)
+	)
+	(pad "1" smd oval
+		(at -0.65 0.95)
+		(size 0.25 0.5)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "9179ae1d-e503-5db0-92ec-915443e3a62e")
+	)
+	(pad "2" smd oval
+		(at 0 0.95)
+		(size 0.25 0.5)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "476826e2-f359-5538-9e27-7df60a9e5aa6")
+	)
+	(pad "3" smd oval
+		(at 0.65 0.95)
+		(size 0.25 0.5)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "7cca732b-68c9-58b7-8384-5ea8661fa3da")
+	)
+	(pad "4" smd oval
+		(at 0.65 -0.95)
+		(size 0.25 0.5)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "650434ed-c726-519d-8cbe-8b11ea2bc807")
+	)
+	(pad "5" smd oval
+		(at 0 -0.95)
+		(size 0.25 0.5)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "eaa581cc-15e6-5b4c-965f-fef2f4383ab6")
+	)
+	(pad "6" smd oval
+		(at -0.65 -0.95)
+		(size 0.25 0.5)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(uuid "403eb80e-6296-5488-9bc8-f8e67066a400")
+	)
+	(pad "7" smd rect
+		(at 0 0)
+		(size 1.35 0.65)
+		(property pad_prop_heatsink)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(solder_paste_margin 0.0175)
+		(solder_paste_margin_ratio -0.05)
+		(zone_connect 2)
+		(uuid "bb722dc9-6be7-5181-9c22-602bedb9ed10")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/../lib/3dmodels/TI_DNP_USON-6-1EP_2x2mm_P0.65mm.step"
+		(offset
+			(xyz 0.009 0.013 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 -90)
+		)
+	)
+)

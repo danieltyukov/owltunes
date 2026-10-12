@@ -1,0 +1,295 @@
+# OwlTunes perch board rev A with the snap-off owl dock-pad section.
+# tools/hw/hw_netlist.py and tools/hw/hw_bom.py check the schematic against this file.
+# The two sections share one PCB but no nets: the pad section's nets all start with PAD_.
+# position_offset is the field "FT Position Offset" ("x,y" in mm, footprint frame) that moves the
+# CPL point from the KiCad anchor to the origin of the part's EasyEDA footprint (JLC's placement
+# reference), found by a pad-by-pad match of the two footprints; JLC's preview confirms it.
+board = "perch-dock"
+
+# ---------------------------------------------------------------------------------------------
+# Sheet perch: USB-C power in, fuse, TVS, three pogo pins, dock ID resistor, power LED
+# ---------------------------------------------------------------------------------------------
+
+[[part]]
+ref = "J1"
+sheet = "perch"
+symbol = "Connector:USB_C_Receptacle_USB2.0_16P"
+footprint = "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12"
+value = "USB-C power"
+lcsc = "C165948"
+mpn = "TYPE-C-31-M-12"
+manufacturer = "Korean Hroparts Elec"
+alt = "C5337088 TYPE-C-31-M-12A, same footprint"
+# EasyEDA's TYPE-C-31-M-12 origin sits near the pad pattern's centre, 1.571 mm from KiCad's (the
+# receptacle body centre) toward the signal pad row
+position_offset = "0,1.571"
+side = "front"
+height = 3.26
+pins = { A1 = "GND", A12 = "GND", B1 = "GND", B12 = "GND", A4 = "VBUS_IN", A9 = "VBUS_IN", B4 = "VBUS_IN", B9 = "VBUS_IN", A5 = "PERCH_CC1", B5 = "PERCH_CC2", SH = "GND" }
+nc = ["A6", "A7", "A8", "B6", "B7", "B8"]
+
+[[part]]
+ref = "R1"
+sheet = "perch"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "5.1k"
+lcsc = "C25905"
+mpn = "0402WGF5101TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "PERCH_CC1", 2 = "GND" }
+
+[[part]]
+ref = "R2"
+sheet = "perch"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "5.1k"
+lcsc = "C25905"
+mpn = "0402WGF5101TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "PERCH_CC2", 2 = "GND" }
+
+[[part]]
+ref = "D1"
+sheet = "perch"
+symbol = "Device:D_Zener"
+footprint = "Diode_SMD:D_SOD-123F"
+value = "SMF5.0A"
+lcsc = "C193402"
+mpn = "SMF5.0A"
+manufacturer = "MDD"
+alt = "C151296 Littelfuse SMF5.0A"
+side = "front"
+height = 1.1
+pins = { 1 = "VBUS_IN", 2 = "GND" }
+
+[[part]]
+ref = "F1"
+sheet = "perch"
+symbol = "Device:Polyfuse"
+footprint = "Fuse:Fuse_1206_3216Metric"
+value = "1.1A hold"
+lcsc = "C71465"
+mpn = "nSMD110"
+manufacturer = "TECHFUSE"
+alt = "C20801 RUILON SMD1206P110TF, same footprint"
+side = "front"
+height = 0.9
+pins = { 1 = "VBUS_IN", 2 = "VBUS_OUT" }
+
+[[part]]
+ref = "C1"
+sheet = "perch"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0603_1608Metric"
+value = "10uF"
+lcsc = "C19702"
+mpn = "CL10A106KP8NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "front"
+height = 0.9
+pins = { 1 = "VBUS_OUT", 2 = "GND" }
+
+[[part]]
+ref = "C2"
+sheet = "perch"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "100nF"
+lcsc = "C1525"
+mpn = "CL05B104KO5NNNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "front"
+height = 0.6
+pins = { 1 = "VBUS_OUT", 2 = "GND" }
+
+[[part]]
+ref = "P1"
+sheet = "perch"
+symbol = "Connector_Generic:Conn_01x01"
+footprint = "owltunes:PogoPin_Xinyangze_YZ71215080P-02"
+value = "Pogo DET"
+lcsc = "C5157364"
+mpn = "YZ71215080P-02"
+manufacturer = "Xinyangze"
+alt = "C5157412 YZ53415080R-01 (1 A, check the footprint)"
+side = "front"
+height = 7.0
+pins = { 1 = "DOCK_ID" }
+
+[[part]]
+ref = "P2"
+sheet = "perch"
+symbol = "Connector_Generic:Conn_01x01"
+footprint = "owltunes:PogoPin_Xinyangze_YZ71215080P-02"
+value = "Pogo GND"
+lcsc = "C5157364"
+mpn = "YZ71215080P-02"
+manufacturer = "Xinyangze"
+alt = "C5157412 YZ53415080R-01 (1 A, check the footprint)"
+side = "front"
+height = 7.0
+pins = { 1 = "GND" }
+
+[[part]]
+ref = "P3"
+sheet = "perch"
+symbol = "Connector_Generic:Conn_01x01"
+footprint = "owltunes:PogoPin_Xinyangze_YZ71215080P-02"
+value = "Pogo VBUS"
+lcsc = "C5157364"
+mpn = "YZ71215080P-02"
+manufacturer = "Xinyangze"
+alt = "C5157412 YZ53415080R-01 (1 A, check the footprint)"
+side = "front"
+height = 7.0
+pins = { 1 = "VBUS_OUT" }
+
+[[part]]
+ref = "R3"
+sheet = "perch"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "DOCK_ID", 2 = "GND" }
+
+[[part]]
+ref = "D2"
+sheet = "perch"
+symbol = "Device:D_TVS"
+footprint = "Diode_SMD:D_SOD-523"
+value = "LESD5D5.0CT1G"
+lcsc = "C5274290"
+mpn = "LESD5D5.0CT1G"
+manufacturer = "LRC"
+side = "front"
+height = 0.7
+pins = { 1 = "DOCK_ID", 2 = "GND" }
+
+[[part]]
+ref = "R4"
+sheet = "perch"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "VBUS_OUT", 2 = "LED_A" }
+
+[[part]]
+ref = "LED1"
+sheet = "perch"
+symbol = "Device:LED"
+footprint = "LED_SMD:LED_0603_1608Metric"
+value = "red"
+lcsc = "C2286"
+mpn = "KT-0603R"
+manufacturer = "Hubei KENTO Elec"
+side = "front"
+height = 0.8
+pins = { 1 = "GND", 2 = "LED_A" }
+
+[[part]]
+ref = "H1"
+sheet = "perch"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2"
+side = "front"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "H2"
+sheet = "perch"
+symbol = "Mechanical:MountingHole"
+footprint = "MountingHole:MountingHole_2.2mm_M2"
+value = "M2"
+side = "front"
+height = 0.0
+assembled = false
+
+# ---------------------------------------------------------------------------------------------
+# Sheet owl_pads: the snap-off board in the owl's back cover. Gold pads on the bottom, J2 on top,
+# cabled to the main board's J303 with a straight 4-pin JST SH cable (pin 1 to pin 1).
+# ---------------------------------------------------------------------------------------------
+
+[[part]]
+ref = "J2"
+sheet = "owl_pads"
+symbol = "Connector_Generic_MountingPin:Conn_01x04_MountingPin"
+footprint = "Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal"
+value = "To J303: GND, VBUS, DET, GND"
+lcsc = "C160404"
+mpn = "SM04B-SRSS-TB(LF)(SN)"
+manufacturer = "JST"
+alt = "C51940130 XY-SM04B-SRSS-TB, same footprint"
+side = "front"
+height = 2.95
+pins = { 1 = "PAD_GND", 2 = "PAD_VBUS", 3 = "PAD_DET", 4 = "PAD_GND", MP = "PAD_GND" }
+
+[[part]]
+ref = "PAD1"
+sheet = "owl_pads"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D3.0mm"
+value = "DET"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "PAD_DET" }
+
+[[part]]
+ref = "PAD2"
+sheet = "owl_pads"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D3.0mm"
+value = "GND"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "PAD_GND" }
+
+[[part]]
+ref = "PAD3"
+sheet = "owl_pads"
+symbol = "Connector:TestPoint"
+footprint = "TestPoint:TestPoint_Pad_D3.0mm"
+value = "VBUS"
+side = "back"
+height = 0.0
+assembled = false
+pins = { 1 = "PAD_VBUS" }
+
+[[part]]
+ref = "MB1"
+sheet = "owl_pads"
+symbol = "Mechanical:MountingHole"
+footprint = "owltunes:MouseBite_2.5mm_2x0.6mm"
+value = "Breakaway"
+side = "front"
+height = 0.0
+assembled = false
+
+[[part]]
+ref = "MB2"
+sheet = "owl_pads"
+symbol = "Mechanical:MountingHole"
+footprint = "owltunes:MouseBite_2.5mm_2x0.6mm"
+value = "Breakaway"
+side = "front"
+height = 0.0
+assembled = false

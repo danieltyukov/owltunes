@@ -6,10 +6,12 @@ now and are meant to travel over Bluetooth later, so the console can also be use
 ## Framing
 
 - One message per line: the prefix `@owl ` (with its space), compact JSON, then a newline. A
-  carriage return before the newline is ignored.
-- A line is at most 1024 bytes, prefix and newline included. Longer lines are dropped whole.
-- Lines without the prefix are not protocol messages. The console also carries the firmware's
-  log, so both sides skip them.
+  line also ends at a carriage return, so CR LF and a bare CR work too.
+- A line is at most 1536 bytes, prefix and newline included. Longer lines are dropped whole.
+- Lines the owl prints without the prefix are the firmware's log; the setup page skips them. Lines
+  the computer sends without the prefix are not ignored: the owl treats them as developer
+  commands ([console.md](console.md)) and answers with `@owl` events this page does not list, which
+  the setup page ignores. Before the developer console existed, the owl dropped such lines.
 - Requests carry a number `id` that the reply repeats. Events have no `id`.
 
 ```text
@@ -28,10 +30,10 @@ Success is `{"id":N,"ok":true, ...}` with the fields below. Failure is
 | Command | Parameters | Reply fields | Errors |
 |---|---|---|---|
 | `hello` | none | `name`, `fw`, `protocol` (1), `setup` (`needs_wifi`, `needs_spotify` or `ready`), `linked`, `client_id`, `redirect_uri`, `ip` (empty when offline), `networks` (saved SSIDs) | |
-| `wifi_add` | `ssid` (1 to 32 bytes), `password` (empty for an open network, else 8 to 64 bytes) | none | `bad_ssid`, `bad_password`, `full` (four networks saved) |
+| `wifi_add` | `ssid` (1 to 32 bytes), `password` (empty for an open network, else 8 to 64 bytes); neither may contain control characters (bytes below 0x20, and 0x7f) | none | `bad_ssid`, `bad_password`, `full` (four networks saved) |
 | `wifi_remove` | `ssid` | none | `not_found` |
 | `spotify_client` | `client_id` (32 lowercase hex characters), `redirect_uri` (`https://...` or `http://127.0.0.1:<port>...`, under 160 characters) | none | `bad_client_id`, `bad_redirect_uri` |
-| `spotify_begin` | none | `authorize_url` | `no_client_id`, `too_long` |
+| `spotify_begin` | none | `authorize_url` | `offline`, `no_client_id`, `too_long` |
 | `spotify_code` | `code`, `state` | `accepted` (true) | `no_session`, `expired`, `bad_state`, `bad_code`, `busy` |
 | `spotify_logout` | none | none | |
 
@@ -45,13 +47,15 @@ refresh token to both.
 
 | Event | States | Fields |
 |---|---|---|
-| `network` | `up`, `down` | `ip` when up |
+| `network` | `up`, `down`, `failed` (joining a saved Wi-Fi network did not work; the owl goes on to the next saved network and keeps trying) | `ip` when up; `ssid` and `error` when failed |
 | `spotify` | `linking` (exchanging a code), `linked` (the login is saved in flash, after a code exchange or after the saved login passed its check at boot), `failed` (the login did not complete), `logged_out` (Spotify refused the saved login) | `error` for `failed` and `logged_out` |
 
 An event looks like `@owl {"event":"spotify","state":"failed","error":"invalid_grant"}`.
 
 The owl writes a new login to flash before it reports `linked`. If the write fails, it reports
-`failed` with `error` `storage` instead and tries the write again later.
+`failed` with `error` `storage` instead and tries the write again later. The same goes for a new
+refresh token from a refresh: the owl uses neither it nor the access token that came with it
+before the write works.
 
 ## Error codes
 
@@ -64,11 +68,12 @@ Errors in a reply (`"ok":false`):
 | `too_long` | The reply, or the authorize URL for `spotify_begin`, would not fit in one line. |
 | `bad_ssid`, `bad_password`, `full`, `not_found` | Wi-Fi network checks, see the table above. |
 | `bad_client_id`, `bad_redirect_uri` | Client ID or redirect URI checks, see the table above. |
+| `offline` | `spotify_begin` while the owl is not online. The login could not finish without a network. It also means the owl makes the PKCE verifier only while its Wi-Fi is enabled, which ESP-IDF documents as the condition for true random numbers from the chip's generator (the radio may still sleep between beacons, and the emulator uses the host's generator). A login that is already open stays open. |
 | `no_client_id` | `spotify_begin` before a client ID and redirect URI were saved. |
 | `no_session` | `spotify_code` without an open login. |
 | `expired` | The login was opened more than 10 minutes ago. |
 | `bad_state` | The `state` does not match the open login. |
-| `bad_code` | The code is empty, longer than 511 characters, or has characters outside `A-Z a-z 0-9 - . _ ~`. |
+| `bad_code` | The code is empty, longer than 1023 characters, or has characters outside `A-Z a-z 0-9 - . _ ~`. |
 | `busy` | The owl is already exchanging a code. |
 
 The `error` of a `spotify` event:
@@ -84,13 +89,22 @@ The `error` of a `spotify` event:
 | `no_refresh_token` | `failed` | Spotify accepted the code but sent no refresh token, so there is nothing to save. |
 | `storage` | `failed` | The login worked but could not be written to flash. |
 
+The `error` of a `network` event:
+
+| Code | Meaning |
+|---|---|
+| `wifi_not_found` | The network is not in range, uses 5 GHz only, or uses security the owl does not support. |
+| `wifi_wrong_password` | The network refused the password. |
+| `wifi_no_address` | The owl joined but got no address within 20 seconds. |
+| `wifi_failed` | Any other reason. |
+
 ## The Spotify login
 
 1. The page sends `spotify_client` with the person's client ID and, as the redirect URI, the
    address of the callback page next to it.
-2. `spotify_begin` makes the owl create a PKCE verifier (64 random bytes), its S256 challenge and
-   a `state`: 16 random bytes in base64url, then `.` and the owl's IPv4 address when it is
-   online. The reply is the full authorize URL. The login stays open for 10 minutes; a new
+2. `spotify_begin`, sent while the owl is online, makes the owl create a PKCE verifier (64 random
+   bytes), its S256 challenge and a `state`: 16 random bytes in base64url, then `.` and the owl's
+   IPv4 address. The reply is the full authorize URL. The login stays open for 10 minutes; a new
    `spotify_begin` replaces it.
 3. Spotify sends the browser to the redirect URI with `code` and `state`. The code reaches the owl
    by one of three routes, all ending in the same check:
@@ -105,16 +119,20 @@ The `error` of a `spotify` event:
    - the line `@owl {"id":1,"cmd":"spotify_code","code":"...","state":"..."}` pasted into the USB
      console.
 4. The owl accepts a code only for an open, unexpired login whose state matches exactly (compared
-   in constant time), and only when the code is 1 to 511 URL-safe characters
+   in constant time), and only when the code is 1 to 1023 URL-safe characters
    (`A-Z a-z 0-9 - . _ ~`). It exchanges the code at `https://accounts.spotify.com/api/token`
    itself, saves the refresh token to flash, and then reports `spotify` `linked`, or `failed`
    when the exchange or the save did not work. The verifier, access token and refresh token never
    leave the owl.
-5. At every start with a saved login, once the owl is online, it refreshes the login once. A new
-   refresh token from Spotify replaces the saved one. `invalid_grant`, `invalid_client` and
-   `unauthorized_client` forget the saved login and the owl asks to log in again. If Spotify
-   cannot be reached or answers with a server error, the owl keeps the login and checks again
-   after 5 minutes.
+5. At every start with a saved login, once the owl is online, it refreshes the login, and it
+   refreshes it again a minute before each access token expires (they last an hour). A new
+   refresh token from Spotify replaces the saved one and is written to flash before the new
+   access token is used. `invalid_grant`, `invalid_client` and `unauthorized_client` forget the
+   saved login and the owl asks to log in again. If Spotify cannot be reached, answers with a
+   server error or asks the owl to slow down, the owl keeps the login and tries again when the
+   wait is over: from 2 s growing to 60 s, or Spotify's `Retry-After` (these waits also hold back
+   the Web API, see [console.md](console.md)). Any other answer is tried again after 5 minutes.
+   The first refresh after a start reports `spotify` `linked` when it passes.
 
 ## Versions
 

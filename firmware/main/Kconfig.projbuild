@@ -4,12 +4,30 @@ menu "OwlTunes"
         prompt "Board"
         default OWL_BOARD_QEMU
         help
-            Hardware the firmware runs on. The dev kits and the OwlTunes board are added in
-            the bring-up phase.
+            The hardware the firmware runs on. tools/firmware.sh build <board> layers
+            firmware/boards/bsp_<board>/sdkconfig.board over sdkconfig.defaults, and that file
+            selects the matching entry here. QEMU stays the default so plain idf.py runs and CI
+            keep working.
 
         config OWL_BOARD_QEMU
-            bool "QEMU emulator (virtual RGB panel)"
+            bool "QEMU emulator (virtual RGB panel, Ethernet)"
+            select OWL_NET_ETH_QEMU
+
+        config OWL_BOARD_NANO_ESP32
+            bool "Arduino Nano ESP32 (no display, RGB status LED, Wi-Fi)"
+            select OWL_NET_WIFI
     endchoice
+
+    config OWL_BOARD_NAME
+        string
+        default "qemu" if OWL_BOARD_QEMU
+        default "nano_esp32" if OWL_BOARD_NANO_ESP32
+
+    config OWL_NET_ETH_QEMU
+        bool
+
+    config OWL_NET_WIFI
+        bool
 
     config OWL_SETUP_URL
         string "Setup page address"

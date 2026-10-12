@@ -5,13 +5,14 @@ const MESSAGES = new Map<string, string>(Object.entries({
   bad_request: "The owl did not understand the page. Reload this page and connect again.",
   unknown_cmd: "The owl's firmware is older than this page. Update the firmware, then try again.",
   too_long: "That value is too long for the owl.",
-  bad_ssid: "The network name must be 1 to 32 characters.",
-  bad_password: "Wi-Fi passwords are 8 to 64 characters. Leave it empty for an open network.",
+  bad_ssid: "The network name must be 1 to 32 characters, without tabs or line breaks.",
+  bad_password: "Wi-Fi passwords are 8 to 64 characters, without tabs or line breaks. Leave it empty for an open network.",
   full: "The owl keeps four networks. Remove one first.",
   not_found: "The owl does not know that network.",
   bad_client_id: "That is not a client ID. It is the 32 letters and digits on your Spotify app's page.",
   bad_redirect_uri: "The redirect URI must start with https://.",
   no_client_id: "Save your client ID first.",
+  offline: "The owl is not on Wi-Fi yet. Wait until this page shows it online (add a network above if there is none), then press Log in again.",
   no_session: "That login is no longer open. Press Log in with Spotify again.",
   expired: "That login took more than 10 minutes. Press Log in with Spotify again.",
   bad_state: "That login belongs to an earlier attempt. Press Log in with Spotify again.",
@@ -36,6 +37,26 @@ const EVENT_MESSAGES = new Map<string, string>(Object.entries({
   no_refresh_token: "Spotify did not give the owl a lasting login. Log in again.",
   storage: "The owl could not save the login to its memory. Try again, and update the firmware if it keeps happening.",
 }));
+
+/** Why the owl could not join a saved Wi-Fi network: the error of a network event in state failed. */
+const WIFI_MESSAGES = new Map<string, (ssid: string) => string>(Object.entries({
+  // The owl also reports a wrong password when the signal is too weak to finish the handshake.
+  wifi_wrong_password: (ssid: string) =>
+    `The owl could not join ${ssid}: check the password, or move closer to the router. To change the password, remove the network and add it again.`,
+  wifi_not_found: (ssid: string) =>
+    `The owl cannot find ${ssid}. Check the name, and that the network is in range and uses 2.4 GHz.`,
+  wifi_no_address: (ssid: string) =>
+    `The owl got no address from ${ssid} in time. Check that the router is working; the owl keeps trying.`,
+}));
+
+/** The sentence for a network event in state failed; the owl keeps trying the next saved network. */
+export function describeNetworkFailure(ssid: string, error: string | undefined): string {
+  const known = error === undefined ? undefined : WIFI_MESSAGES.get(error);
+  if (known !== undefined) {
+    return known(ssid);
+  }
+  return `The owl could not join ${ssid} (${error ?? "no reason given"}). It keeps trying.`;
+}
 
 export function describeError(code: string): string {
   return MESSAGES.get(code) ?? `Something went wrong (${code}).`;
