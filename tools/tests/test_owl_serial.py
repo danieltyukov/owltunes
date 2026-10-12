@@ -140,6 +140,22 @@ class BoardTest(unittest.TestCase):
         self.board.close()
         self.assertEqual(vmin(self.owl.slave), 1)
 
+    def test_close_closes_a_port_that_has_no_file_descriptor(self):
+        # pyserial's Windows port has no fd; the port must still be closed.
+        real = self.board._ser
+
+        class NoFd:
+            closed = False
+
+            def close(self):
+                self.closed = True
+                real.close()
+
+        port = NoFd()
+        self.board._ser = port
+        self.board.close()
+        self.assertTrue(port.closed)
+
     def test_hello_is_retried_until_the_board_answers(self):
         hello = self.board.hello(timeout=10)
         self.assertEqual(hello["name"], "OwlTunes-7DF8")

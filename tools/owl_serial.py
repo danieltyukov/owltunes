@@ -155,8 +155,10 @@ class Board:
 
     def close(self) -> None:
         if self._ser is not None:
+            fd = getattr(self._ser, "fd", None)  # pyserial's Windows port has none
+            if fd is not None:
+                blocking_reads(fd)
             try:
-                blocking_reads(self._ser.fd)
                 self._ser.close()
             except (OSError, self._serial.SerialException):
                 pass
