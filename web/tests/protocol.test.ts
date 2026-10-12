@@ -23,6 +23,11 @@ describe("encodeRequest", () => {
     );
   });
 
+  test("fits the longest Spotify code the owl takes in one line", () => {
+    const state = `${"Q".repeat(22)}.192.168.123.234`;
+    expect(() => encodeRequest(2147483647, "spotify_code", { code: "A".repeat(1023), state })).not.toThrow();
+  });
+
   test("refuses lines over the limit", () => {
     expect(() => encodeRequest(1, "spotify_code", { code: "x".repeat(LINE_MAX) })).toThrow(OwlError);
   });
@@ -51,6 +56,14 @@ describe("LineSplitter", () => {
     expect(lines).toEqual(['@owl {"id":1,"ok":true}', "I (5) log"]);
     splitter.push(bytes('ent":"network","state":"up"}\n'));
     expect(lines[2]).toBe('@owl {"event":"network","state":"up"}');
+  });
+
+  test("ends a line at a bare CR, CR LF or CR LF split across chunks", () => {
+    const lines: string[] = [];
+    const splitter = new LineSplitter((line) => lines.push(line));
+    splitter.pushText("info\rhelp\r\nthird\r");
+    splitter.pushText("\nfourth\n");
+    expect(lines).toEqual(["info", "help", "third", "fourth"]);
   });
 
   test("keeps multi-byte characters split across chunks", () => {

@@ -65,9 +65,16 @@ describe("lanCallbackUrl", () => {
     const state = `${NONCE}.10.0.0.1`;
     expect(lanCallbackUrl(state, "AQD&grant_type=x")).toBeNull();
     expect(lanCallbackUrl(state, 'AQD"><script>')).toBeNull();
-    expect(lanCallbackUrl(state, "A".repeat(512))).toBeNull();
+    expect(lanCallbackUrl(state, "A".repeat(1024))).toBeNull();
     expect(lanCallbackUrl(state, "")).toBeNull();
   });
+});
+
+test("accepts Spotify's long codes, up to 1023 characters", () => {
+  // Spotify's codes were 563 characters long in October 2026.
+  const state = `${NONCE}.192.168.123.234`;
+  expect(lanCallbackUrl(state, "A".repeat(563))).not.toBeNull();
+  expect(lanCallbackUrl(state, "A".repeat(1023))).not.toBeNull();
 });
 
 test("consoleLine is a ready-to-paste protocol request", () => {

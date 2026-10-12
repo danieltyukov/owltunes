@@ -1,0 +1,18 @@
+# Arduino Nano ESP32 (u-blox NORA-W106: ESP32-S3R8, 16 MB flash, 8 MB octal PSRAM, native USB).
+# Layered over sdkconfig.defaults by firmware/CMakeLists.txt when OWL_BOARD is nano_esp32.
+CONFIG_OWL_BOARD_NANO_ESP32=y
+
+# The console, and the setup page's Web Serial link, use the native USB port (USB-Serial/JTAG)
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+
+# 8 MB octal PSRAM (quad mode boot-loops with "wrong PSRAM line mode"). Large buffers, Wi-Fi and
+# lwIP buffers and TLS sessions go there so internal RAM stays free for the drivers that need it.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
+
+# Keep a crash's core dump in flash for idf.py coredump-info
+CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH=y

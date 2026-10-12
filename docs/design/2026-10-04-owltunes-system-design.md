@@ -260,7 +260,8 @@ call; BLE media keys respond immediately. On the perch the owl is always powered
 | `owl_ble` | BLE HID consumer control and the provisioning GATT service | NimBLE |
 | `owl_usb` | TinyUSB composite: CDC console and HID consumer control | TinyUSB |
 | `owl_store` | NVS settings, tokens, album-art cache on LittleFS | ESP-IDF |
-| BSPs | `bsp_waveshare_amoled175`, `bsp_waveshare_knob18`, `bsp_owltunes_reva` | selected by Kconfig |
+| `owl_shell` | Developer console on USB: commands and JSON status lines for host scripts and hardware tests | `owl_core`; the setup protocol's line writer |
+| BSPs | `bsp_waveshare_amoled175`, `bsp_waveshare_knob18`, `bsp_owltunes_reva`; for development `bsp_nano_esp32` (headless Arduino Nano ESP32) and `bsp_qemu` | selected by Kconfig |
 
 ### 9.3 Data flow
 
@@ -419,7 +420,7 @@ outputs (published on GitHub Releases instead), local agent and MCP configuratio
 | Core logic | Host unit tests (CTest) for the state machine, command queue, poll scheduler and gesture recogniser |
 | Spotify client | Parser tests against recorded, anonymised API responses, including error and rate-limit cases |
 | UI | Desktop simulator renders every screen to PNG; golden-image comparison in CI |
-| Firmware | CI builds for every BSP; QEMU boot smoke test |
+| Firmware | CI builds for every BSP; QEMU boot and setup protocol tests; on the Arduino Nano ESP32, a scripted hardware smoke test and an opt-in test against a real Spotify account |
 | Hardware bring-up | Scripted serial test menu on the dev kits and rev A: display, touch, ring, buttons, haptics, IMU, gauge, charger, Wi-Fi RSSI |
 | Setup page | Unit tests for PKCE and state handling; browser end-to-end test against a mock Spotify |
 | PCB | KiCad ERC and DRC in CI; design review before ordering |

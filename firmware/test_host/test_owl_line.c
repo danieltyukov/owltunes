@@ -27,6 +27,43 @@ static void feed(const char *s)
     owl_line_feed(&lines, s, strlen(s), collect, NULL);
 }
 
+/* A line can hold a Wi-Fi password or a login code: nothing of it stays in the buffer once handled. */
+static void test_a_delivered_line_is_wiped_from_the_buffer(void)
+{
+    reset();
+    feed("@owl {\"cmd\":\"wifi_add\",\"password\":\"hunter2hunter2\"}\n");
+    TEST_ASSERT_EQUAL(1, n_got);
+    for (size_t i = 0; i < sizeof lines.buf; i++) {
+        TEST_ASSERT_EQUAL_CHAR(0, lines.buf[i]);
+    }
+}
+
+static void test_a_discarded_line_is_wiped_too(void)
+{
+    reset();
+    char big[OWL_PROV_LINE_MAX + 8];
+    memset(big, 'S', sizeof big);
+    owl_line_feed(&lines, big, sizeof big, collect, NULL);
+    for (size_t i = 0; i < sizeof lines.buf; i++) {
+        TEST_ASSERT_EQUAL_CHAR(0, lines.buf[i]);
+    }
+    reset();
+    owl_line_feed(&lines, "secret\0tail", 11, collect, NULL);
+    for (size_t i = 0; i < sizeof lines.buf; i++) {
+        TEST_ASSERT_EQUAL_CHAR(0, lines.buf[i]);
+    }
+    TEST_ASSERT_EQUAL(0, n_got);
+}
+
+static void test_a_bare_carriage_return_ends_a_line(void)
+{
+    reset();
+    feed("info\rhelp\r");
+    TEST_ASSERT_EQUAL(2, n_got);
+    TEST_ASSERT_EQUAL_STRING("info", got[0]);
+    TEST_ASSERT_EQUAL_STRING("help", got[1]);
+}
+
 static void test_chunks_are_reassembled(void)
 {
     reset();
@@ -85,6 +122,9 @@ int main(void)
     UNITY_BEGIN();
     RUN_TEST(test_chunks_are_reassembled);
     RUN_TEST(test_crlf_and_empty_lines);
+    RUN_TEST(test_a_delivered_line_is_wiped_from_the_buffer);
+    RUN_TEST(test_a_discarded_line_is_wiped_too);
+    RUN_TEST(test_a_bare_carriage_return_ends_a_line);
     RUN_TEST(test_longest_line_fits);
     RUN_TEST(test_overlong_line_is_dropped_whole);
     RUN_TEST(test_nul_byte_drops_the_line);

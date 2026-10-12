@@ -27,6 +27,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from owl_serial import redact_line  # noqa: E402
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUILD = ROOT / "build" / "firmware"
 WORK = ROOT / "build" / "qemu-prov"
@@ -91,7 +94,7 @@ class Owl:
         assert self.proc.stdout is not None
         for raw in self.proc.stdout:
             line = raw.decode("utf-8", "replace").rstrip("\r\n")
-            self.log.write(line + "\n")
+            self.log.write(redact_line(line) + "\n")  # --link puts your own client ID on the console
             self.log.flush()
             self.fresh.put(line)
 
@@ -159,6 +162,14 @@ class Owl:
             return msg if msg and msg.get("id") == req_id and "ok" in msg else None
         return self._wait(match, timeout, f"a reply to {cmd}")
 
+    def type(self, text: str) -> int:
+        """Send a developer console line (no @owl prefix). Returns the mark to wait for answers from."""
+        since = self.mark()
+        assert self.proc.stdin is not None
+        self.proc.stdin.write((text + "\n").encode())
+        self.proc.stdin.flush()
+        return since
+
     def stop(self) -> None:
         if self.proc.poll() is None:
             os.killpg(self.proc.pid, signal.SIGTERM)
@@ -178,6 +189,28 @@ def authorize_params(owl: Owl) -> dict[str, str]:
     return dict(urllib.parse.parse_qsl(url.query))
 
 
+def shell_checks(owl: Owl) -> None:
+    """The developer console that shares the port with the setup protocol (docs/console.md)."""
+    info = owl.wait_event("info", since=owl.type("info"))
+    check(info.get("board") == "qemu" and info.get("wifi") == "ethernet" and info.get("ip") == QEMU_IP,
+          "info reports the board and its network")
+    check(info.get("partition") == "ota_0" and info.get("flash_kb") == 16384,
+          "the app runs from the first OTA slot of a 16 MB flash")
+    check(info.get("status") == "needs_login", "an owl that is online but not linked needs a login")
+    check("info" in owl.wait_event("help", since=owl.type("help")).get("commands", ""), "help lists the commands")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("frobnicate"))
+    check(refused.get("error") == "unknown_cmd" and "cmd" not in refused,
+          "an unknown command is refused without echoing it")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("info please"))
+    check(refused.get("cmd") == "info" and refused.get("error") == "bad_arg", "an unexpected argument is refused")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("next"))
+    check(refused.get("cmd") == "next" and refused.get("error") == "not_linked",
+          "playback commands wait for a Spotify login")
+    refused = owl.wait_event("cmd", "refused", since=owl.type("auth"))
+    check(refused.get("error") == "not_linked", "auth says when there is no login")
+    check(owl.send("hello").get("ok") is True, "the setup protocol still answers next to the console")
+
+
 def run_checks(flash: pathlib.Path) -> None:
     owl = Owl(flash, free_port(), WORK / "run1.log")
     try:
@@ -189,6 +222,14 @@ def run_checks(flash: pathlib.Path) -> None:
         up = owl.wait_event("network", "up")
         check(up.get("ip") == QEMU_IP, "QEMU Ethernet comes up with the slirp address")
         check(owl.send("hello").get("setup") == "needs_spotify", "with a network the owl needs Spotify")
+        if os.environ.get("OWL_QEMU_NO_NTP"):
+            print("skip - the NTP clock check (OWL_QEMU_NO_NTP is set: this network blocks UDP 123)")
+        else:
+            # Bounded: without NTP this fails after 60 s with a clear message, it never hangs.
+            synced = owl.wait_event("time", "synced", timeout=60)
+            check(re.fullmatch(r"20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ", synced.get("utc", "")) is not None,
+                  f"the clock is set from NTP once the network is up ({synced.get('utc')})")
+        shell_checks(owl)
 
         check(owl.send("wifi_add", ssid="Home", password="short").get("error") == "bad_password",
               "a short Wi-Fi password is refused")
@@ -273,11 +314,12 @@ def extra_checks(owl: Owl) -> None:
     status, body = http_get(f"{base}?error=access_denied&state={state}")
     check(status == 400 and "cancelled" in body, "the callback reports a cancelled login")
     since = owl.mark()
-    status, body = http_get(f"{base}?code=AQDlan&state={state}")
+    code = "AQD" + "l" * 1020  # the longest code the owl takes: 1023 characters
+    status, body = http_get(f"{base}?code={code}&state={state}")
     check(status == 200 and "linking to Spotify" in body, "the callback accepts the code")
     owl.wait_event("spotify", "linking", since=since)
     failed = owl.wait_event("spotify", "failed", timeout=90, since=since)
-    check(failed.get("error") in ("invalid_client", "invalid_grant"), "a code from the LAN reaches Spotify too")
+    check(failed.get("error") in ("invalid_client", "invalid_grant"), "a 1023-character code from the LAN reaches Spotify too")
     check(wait_listening(base, False), "the callback server stops when the login ends")
 
 

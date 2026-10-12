@@ -17,7 +17,7 @@ export function readCallback(search: string): CallbackParams {
   return { code: q.get("code"), state: q.get("state"), error: q.get("error") };
 }
 
-const CODE = /^[A-Za-z0-9._~-]{1,511}$/;
+const CODE = /^[A-Za-z0-9._~-]{1,1023}$/;
 const OCTET = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])";
 const STATE = new RegExp(`^[A-Za-z0-9_-]{22}(?:\\.(${OCTET}\\.${OCTET}\\.${OCTET}\\.${OCTET}))?$`);
 

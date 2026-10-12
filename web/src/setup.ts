@@ -2,7 +2,7 @@
 
 import { $ } from "./dom";
 import { CHANNEL, type Handoff } from "./callback";
-import { describeError, describeEvent } from "./messages";
+import { describeError, describeEvent, describeNetworkFailure } from "./messages";
 import { OwlClient, OwlError, type OwlEvent, type OwlReply, type Transport } from "./protocol";
 import { openSerial, serialSupported } from "./serial";
 import { clientIdValid, defaultRedirectUri, normalizeClientId, redirectUriValid, ssidValid, wifiPasswordValid } from "./validate";
@@ -17,8 +17,13 @@ const REDIRECT_INVALID_HINT =
 const REDIRECT_MISMATCH_HINT =
   "The owl's client ID was saved with a different setup page. Press Save client ID on this page so the login returns here.";
 
+/** The last network state the owl reported, and whether the status line still shows a Wi-Fi failure. */
+let networkUp = false;
+let wifiFailureShown = false;
+
 function status(text: string): void {
   $("status").textContent = text;
+  wifiFailureShown = false;
 }
 
 function fail(err: unknown): void {
@@ -67,6 +72,7 @@ function showOwl(hello: OwlReply): void {
   $("owl-name").textContent = String(hello.name ?? "");
   $("owl-fw").textContent = String(hello.fw ?? "");
   $("owl-network").textContent = networkText(hello.ip);
+  networkUp = typeof hello.ip === "string" && hello.ip !== "";
   renderNetworks(Array.isArray(hello.networks) ? hello.networks.map(String) : []);
   const clientId = typeof hello.client_id === "string" ? hello.client_id : "";
   if (clientId !== "") {
@@ -98,8 +104,18 @@ async function firstHello(): Promise<OwlReply> {
 }
 
 function onEvent(event: OwlEvent): void {
-  if (event.event === "network") {
-    $("owl-network").textContent = networkText(event.state === "up" ? event.ip : "");
+  if (event.event === "network" && event.state === "failed") {
+    // Failures queue behind the newest up/down state, so one that arrives while the owl is online is stale.
+    if (!networkUp) {
+      status(describeNetworkFailure(typeof event.ssid === "string" ? event.ssid : "", typeof event.error === "string" ? event.error : undefined));
+      wifiFailureShown = true;
+    }
+  } else if (event.event === "network") {
+    networkUp = event.state === "up";
+    $("owl-network").textContent = networkText(networkUp ? event.ip : "");
+    if (networkUp && wifiFailureShown) {
+      status("");
+    }
   } else if (event.event === "spotify") {
     if (event.state === "linking") {
       status("Your owl is linking to Spotify...");

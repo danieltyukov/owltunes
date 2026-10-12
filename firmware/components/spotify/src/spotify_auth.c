@@ -152,6 +152,9 @@ spotify_token_result_t spotify_parse_token_response(int http_status, const char 
         if (access != NULL && access[0] != '\0' && strlen(access) < sizeof token->access_token) {
             const char *refresh = sj_str(root, "refresh_token");
             int64_t expires_in = sj_int(root, "expires_in", 3600);
+            if (expires_in > SPOTIFY_TOKEN_LIFETIME_MAX_S) {
+                expires_in = SPOTIFY_TOKEN_LIFETIME_MAX_S; /* refresh at least once a day */
+            }
             owl_utf8_copy(token->access_token, sizeof token->access_token, access);
             if (refresh != NULL && refresh[0] != '\0' && strlen(refresh) < sizeof token->refresh_token) {
                 owl_utf8_copy(token->refresh_token, sizeof token->refresh_token, refresh);

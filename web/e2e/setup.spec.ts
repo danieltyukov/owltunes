@@ -126,13 +126,77 @@ test("a stray linked event does not cancel a login in progress", async ({ page }
   expect((await owlState(page)).codes).toEqual(["AQDtest-code"]);
 });
 
+test("setup explains a Wi-Fi network the owl could not join", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "player", status: "playing", title: "Night Flight", link: "api" }); // console lines are ignored
+    emit({ event: "network", state: "failed", ssid: "Home", error: "wifi_wrong_password" });
+  });
+  await expect(page.getByRole("status")).toHaveText(
+    "The owl could not join Home: check the password, or move closer to the router. To change the password, remove the network and add it again.",
+  );
+  await expect(page.getByText("Not on Wi-Fi yet.")).toBeVisible();
+});
+
+test("a late Wi-Fi failure does not undo the network the owl is on", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "up", ip: "192.168.1.20" });
+    emit({ event: "network", state: "failed", ssid: "Old", error: "wifi_not_found" });
+  });
+  await expect(page.getByText("192.168.1.20")).toBeVisible();
+  await expect(page.getByText("Not on Wi-Fi yet.")).toBeHidden();
+  await expect(page.getByRole("status")).not.toContainText("could not");
+  await expect(page.getByRole("status")).not.toContainText("cannot find");
+});
+
+test("a Wi-Fi failure message clears once the owl comes up", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "failed", ssid: "Wrong", error: "wifi_not_found" });
+  });
+  await expect(page.getByRole("status")).toContainText("cannot find Wrong");
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "up", ip: "192.168.1.20" });
+  });
+  await expect(page.getByText("Online at 192.168.1.20.")).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("");
+});
+
+test("coming up keeps an unrelated status message", async ({ page }) => {
+  await openSetup(page);
+  await page.evaluate(() => {
+    const emit = (window as unknown as { __owlEmit: (e: Record<string, unknown>) => void }).__owlEmit;
+    emit({ event: "network", state: "failed", ssid: "Wrong", error: "wifi_not_found" });
+    emit({ event: "spotify", state: "linking" });
+    emit({ event: "network", state: "up", ip: "192.168.1.20" });
+  });
+  await expect(page.getByRole("status")).toHaveText("Your owl is linking to Spotify...");
+});
+
+test("setup asks for Wi-Fi before a Spotify login", async ({ page }) => {
+  await openSetup(page);
+  await page.getByLabel("Client ID").fill(CLIENT_ID);
+  await page.getByRole("button", { name: "Save client ID" }).click();
+  await expect(page.getByRole("status")).toHaveText("Client ID saved. Now log in.");
+  await page.getByRole("button", { name: "Log in with Spotify" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "The owl is not on Wi-Fi yet. Wait until this page shows it online (add a network above if there is none), then press Log in again.",
+  );
+  expect((await owlState(page)).state).toBeNull();
+});
+
 test("setup checks input before the owl sees it", async ({ page }) => {
   await openSetup(page);
   await page.getByLabel("Network name").fill("Home");
   await page.getByLabel("Password").fill("short");
   await page.getByRole("button", { name: "Save network" }).click();
   await expect(page.getByRole("status")).toHaveText(
-    "Wi-Fi passwords are 8 to 64 characters. Leave it empty for an open network.",
+    "Wi-Fi passwords are 8 to 64 characters, without tabs or line breaks. Leave it empty for an open network.",
   );
   await page.getByLabel("Client ID").fill("not-a-client-id");
   await page.getByRole("button", { name: "Save client ID" }).click();

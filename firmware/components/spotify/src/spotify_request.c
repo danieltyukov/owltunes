@@ -195,3 +195,9 @@ void spotify_request_player_state(spotify_request_t *out)
     memset(out, 0, sizeof *out);
     set_path(out, SPOTIFY_GET, "/v1/me/player?additional_types=episode");
 }
+
+bool spotify_request_liked(const char *uri, spotify_request_t *out)
+{
+    memset(out, 0, sizeof *out);
+    return uri_query(out, SPOTIFY_GET, "/v1/me/library/contains?uris=", uri);
+}
