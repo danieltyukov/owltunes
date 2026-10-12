@@ -112,7 +112,7 @@ class Board:
         self._redact = tuple(text for text in redact if text)
         self._log = log.open("a", encoding="utf-8") if log is not None else None
         self._ser: Any = None
-        self.open(open_timeout)  # on the Nano ESP32 this resets the board: see wait_boot()
+        self.open(open_timeout)  # on the Nano ESP32 this restarts the board: see wait_boot()
 
     def open(self, timeout: float = 20.0) -> None:
         """Open the port, waiting up to timeout for it to appear (the board re-enumerates on reset)."""
@@ -122,7 +122,10 @@ class Board:
             ser.port = self.port
             ser.baudrate = 115200
             ser.timeout = 0.2
-            ser.dtr = False  # held low; the Nano ESP32 still resets when the port opens
+            # Both low before the open makes pyserial lower DTR first, while RTS is still asserted:
+            # that restarts the Nano ESP32 on purpose, so every script starts from OWL_BOOT_OK.
+            # (Low here is the logical value; esptool calls the asserted line PIN_LOW.)
+            ser.dtr = False
             ser.rts = False
             try:
                 ser.open()
@@ -171,9 +174,9 @@ class Board:
         return since
 
     def wait_boot(self, timeout: float = 20.0, since: int = 0) -> int:
-        """Wait for the firmware's boot line. Opening the port resets the Nano ESP32 (USB-Serial/JTAG
-        restarted the chip on every open, 3 of 3 times, with DTR and RTS held low), so call this right
-        after open() or reset(). Returns the position after the boot line."""
+        """Wait for the firmware's boot line. open() restarts the Nano ESP32 on purpose (DTR goes low
+        while RTS is still asserted), so call this right after open() or reset(). Returns the position
+        after the boot line."""
         self.wait(lambda line: True if BOOT_MARKER in line else None, timeout, "the boot line", since)
         return self.mark()
 

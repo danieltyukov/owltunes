@@ -87,8 +87,8 @@ resets the board, and `--rom` flashes a board that waits in ROM download mode. `
 
 The USB-Serial/JTAG controller restarts the chip (reset reason `usb` in `info`) when DTR goes low
 while RTS is still high. Opening the port alone does not restart it (measured on 11 October 2026).
-The scripts use pyserial, which lowers DTR before RTS when it opens the port, so every script
-restarts the firmware and waits for its `OWL_BOOT_OK` line before it sends anything. The setup
+The scripts ask pyserial for both lines low before the open, which makes it lower DTR first, so
+every script restarts the firmware and waits for its `OWL_BOOT_OK` line before it sends anything. The setup
 page lowers RTS first and leaves the owl running. A terminal opened while a test runs may restart
 the board too.
 
