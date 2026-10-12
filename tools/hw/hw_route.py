@@ -18,7 +18,7 @@ planes); the outer GND pours and the stitching vias come after the session impor
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
 Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
-qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 local_power planes outer_pours stitching.
+qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 local_power late_links planes outer_pours stitching.
 Needs KiCad's pcbnew Python module.
 """
 
@@ -109,13 +109,14 @@ GROUPS = {
     # VIN_CHG taps from the D101/D102 cathode run: east to TP101 above the diode anodes (D101's
     # VBUS_USB anode stays open to the east and south of TP101); and to R103, the CHG_EN2 pull-up,
     # which sits between the VBAT and VSYS runs north of U101, so that tap crosses on F.Cu west of
-    # U101 and leaves the ground below U101 pin 1 free for BAT_NTC.
+    # U101 and leaves the ground below U101 pin 1 free for BAT_NTC. Its top via sits at y 1.8, low
+    # enough for the +3V3 link (late_links) to pass between it and the VSYS F.Cu run at y 3.25.
     "vin_chg_taps": [
         ("VIN_CHG", 0.5, [(24.1, -4.0), (24.3, -4.2), (29.3, -4.2), (29.3, -5.5)]),
         ("VIN_CHG", 0.25, [(24.1, -4.0), (23.4, -4.1)]),
-        ("VIN_CHG", 0.25, [(23.4, -4.1), (22.5, -3.2), (22.5, 2.2)], "F"),
-        ("VIN_CHG", 0.25, [(22.5, 2.2), (22.5, 2.99)]),
-        ("VIN_CHG", "via", [(23.4, -4.1), (22.5, 2.2)]),
+        ("VIN_CHG", 0.25, [(23.4, -4.1), (22.5, -3.2), (22.5, 1.8)], "F"),
+        ("VIN_CHG", 0.25, [(22.5, 1.8), (22.5, 2.99)]),
+        ("VIN_CHG", "via", [(23.4, -4.1), (22.5, 1.8)]),
     ],
     # TPS_PG from U103 pin 5 to R212 on the ESP32 EN network: a via in the pocket west of pin 5
     # (inside the +3V3 and FB runs), F.Cu north, east of the crystal and its load caps (nothing on
@@ -418,6 +419,22 @@ GROUPS = {
         ("GND", 0.25, [(0.763, -4.25), (1.4, -4.3)]),
         ("GND", "via", [(28.55, -13.3), (21.6, -13.35), (1.4, -4.3)]),
         ("+3V3", "via", [(28.6, -15.75)]),
+    ],
+    # Links Freerouting could not make in the routed board (hand copper after the import):
+    # - +3V3, west group (U104 pin 1, C110, R206, R207, R210, R211, R304 to R306, R309, U302, U303,
+    #   C306 to C308, J202): a via beside R306's +3V3 pad (west of I2C_SCL's hook under R306), F.Cu
+    #   east at y 27.5 over the module's left column (below DOCK_DET's F.Cu run), a via into the In2
+    #   +3V3 pour under the module.
+    # - +3V3, U301 group (U301, C304, C305, R105, R106, R308): F.Cu from that group's via at
+    #   (26.28, 2.22) west at y 2.5, between the VIN_CHG tap's via and the VSYS F.Cu run, to a via
+    #   beside TP104 on the TPS63802 output.
+    "late_links": [
+        ("+3V3", 0.25, [(-11.41, 27.99), (-12.1, 27.75)]),
+        ("+3V3", 0.25, [(-12.1, 27.75), (-11.85, 27.5), (-6.3, 27.5)], "F"),
+        ("+3V3", "via", [(-12.1, 27.75), (-6.3, 27.5)]),
+        ("+3V3", 0.25, [(18.3, 2.6), (19.25, 2.5)]),
+        ("+3V3", 0.25, [(19.25, 2.5), (25.95, 2.5), (26.28, 2.22)], "F"),
+        ("+3V3", "via", [(19.25, 2.5)]),
     ],
     # Inner planes. In1 is solid GND. In2 is GND too (the reference for the B.Cu parts: U101,
     # U103 and their caps, the crystal, the QSPI block and the USB corridor) except for a +3V3
