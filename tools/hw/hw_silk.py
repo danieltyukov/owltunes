@@ -52,6 +52,12 @@ MARKS = {
         ("BOOT", "B", -16.0, 22.5, 0.8),
         ("TX", "B", -25.7, 22.0, 0.8),
         ("RX", "B", -25.7, 19.0, 0.8),
+        # Power test pads for bring-up (their references are hidden): above TP101 (VIN_CHG), TP102
+        # (VSYS) and TP103 (VBAT), below TP106 (GND), each nearer its own pad than any other.
+        ("VIN", "B", 29.2, -4.1, 0.8),
+        ("VSYS", "B", 28.9, 4.4, 0.8),
+        ("VBAT", "B", 20.6, 4.8, 0.8),
+        ("GND", "B", 29.2, -9.7, 0.8),
         # U201's own pin 1 triangle sits at the module corner over the antenna notch, so the
         # board edge cuts it; this dot beside pin 1 (8.75, 35.61) marks it on the board.
         ("dot", "B", 10.1, 35.85, 0.2),
