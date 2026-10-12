@@ -48,6 +48,7 @@ board. The review behind these files is [rev-a-review.md](rev-a-review.md).
 | Surface, mask | ENIG (gold pads for the pogo contacts), green |
 | Quantity | 5 |
 | Board shape | One design: the dock-pad section hangs on a mouse-bite neck. If JLC asks, it is one design with a breakaway section, not a panel of several designs |
+| Edge rails and fiducials | If JLC asks, the same answer as the main board: added by JLCPCB (the board has no fiducials), tab routing, not V-cut. Ask in the order remark for no tabs at J1 (its shell overhangs the right edge by 0.5 mm) or in the dock-pad section's key notch. File each tab nub flush, on the dock-pad section too: it sits in a recess with 0.2 mm clearance |
 | PCB Assembly | Economic, top side, quantity 3 |
 | BOM, CPL | `production/bom.csv`, `production/positions.csv` (15 parts, all top) |
 | Remove order number | No: JLC prints its number where it likes. The perch board is hidden in the perch body and the dock-pad section behind the owl's back cover, which shows only the gold pads through their windows |
