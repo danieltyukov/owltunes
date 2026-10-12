@@ -4,11 +4,13 @@ Rev A is the first OwlTunes board set: the owl main board (4 layers, JLCPCB asse
 sides), the perch board with a snap-off dock-pad section for the owl's back cover, enclosure v1
 and perch v1 (MJF PA12). Spec: `docs/design/2026-10-04-owltunes-system-design.md`, sections 7 and 8.
 
-Status on 11 October 2026: the main board schematic is complete (107 footprints, ERC clean, the
-connectivity matches `hardware/owl-mainboard/design.toml`) and enclosure v1 is drawn. Placement,
-routing, the perch board and perch v1 are in progress. The ring test has not been printed yet, so
-the magnet count, the ring variant (A with the 6710 bearing, B with the printed bushing) and the
-3.0 mm Hall gap are provisional.
+Status on 12 October 2026: both boards are placed, routed and reviewed (ERC 0, DRC 0 with
+schematic parity, [rev-a-review.md](rev-a-review.md)), and their fabrication files are ready
+(`tools/hw/hw_fab.py`; what to order is in [ordering.md](ordering.md)). Enclosure v1 and perch v1
+are drawn and reviewed, and the main board's fit check against enclosure v1 finds no clash. Nothing
+is ordered yet. The ring test runs when the parts are delivered, so until then the magnet count,
+the ring variant (A with the 6710 bearing, B with the printed bushing) and the 3.0 mm Hall gap are
+provisional.
 
 The firmware pin map is `firmware/main/board_owltunes_reva.h` (see [pinmap.md](pinmap.md)). It
 is a header only for now: rev A board support arrives with the P3 board selection.
