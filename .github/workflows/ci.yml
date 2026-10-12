@@ -126,6 +126,13 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v7
+      - name: Point KiCad at its bundled symbol and footprint libraries
+        # The image ships the libraries but no library tables, so ERC and DRC would report every
+        # part as "library not in the current configuration".
+        run: |
+          cfg="${XDG_CONFIG_HOME:-$HOME/.config}/kicad/10.0"
+          mkdir -p "$cfg"
+          cp /usr/share/kicad/template/sym-lib-table /usr/share/kicad/template/fp-lib-table "$cfg/"
       - name: Hardware checks (ERC, DRC, connectivity, sourcing, contract, pin map)
         run: tools/hw/check_all.sh
       - name: Upload ERC and DRC reports on failure
