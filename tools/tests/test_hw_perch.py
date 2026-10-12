@@ -136,9 +136,9 @@ class PerchTest(unittest.TestCase):
         self.assertEqual(enclosure_errors(board, perch_constants(), heights), [])
 
     def test_constants_check_catches_a_moved_part(self):
-        import pcbnew
-
         board = self.load_board()
+        import pcbnew  # after load_board, which skips without KiCad
+
         heights = {ref: p["height"] for ref, p in self.perch.items()}
         refs = {fp.GetReference(): fp for fp in board.GetFootprints()}
         refs["LED1"].Move(pcbnew.VECTOR2I(pcbnew.FromMM(-1.0), 0))
