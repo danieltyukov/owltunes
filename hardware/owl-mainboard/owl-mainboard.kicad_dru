@@ -30,3 +30,14 @@
 (rule "U303 pads keep the LGA's own 0.15 mm gaps"
 	(condition "A.memberOfFootprint('U303') && B.memberOfFootprint('U303')")
 	(constraint clearance (min 0.15mm)))
+# J201's four shell tabs (through-hole, the receptacle's shield) join the GND pours solid: the
+# USB lines, CC and VBUS round the receptacle leave room for one thermal spoke only.
+(rule "J201 shell joins the pours solid"
+	(condition "A.memberOfFootprint('J201') && A.Pad_Number == 'SH'")
+	(constraint zone_connection solid))
+# C202's GND pad (module 3V3 decoupling) reaches GND through its own track to module pin 1
+# (tools/hw/hw_route.py local_power); the tracks round it leave the B.Cu pour one spoke, so the
+# pour keeps off the pad.
+(rule "C202 GND pad joins by its track"
+	(condition "A.memberOfFootprint('C202') && A.Pad_Number == '2'")
+	(constraint zone_connection none))

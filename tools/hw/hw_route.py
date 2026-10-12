@@ -18,7 +18,7 @@ planes); the outer GND pours and the stitching vias come after the session impor
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
 Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
-qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 planes.
+qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 local_power planes outer_pours stitching.
 Needs KiCad's pcbnew Python module.
 """
 
@@ -317,7 +317,8 @@ GROUPS = {
     # into D201. CC1 stays inside the hook on B.Cu; CC2 crosses the west leg on F.Cu (via beside
     # its pad, via below R202). D201's and R201's GND pads, inside the hook, share two GND vias.
     # From the hook's north-east corner VBUS drops to F.Cu (the B.Cu USB pair and VBUS_DOCK are
-    # walls on B.Cu), runs east at y -24.55 and up the right side over the In1 GND plane, south of
+    # walls on B.Cu), runs east at y -24.55 and up the right side at x 29.4 (east of C304, leaving
+    # room for U301's and C304's vias) over the In1 GND plane, south of
     # the BAT_NTC run, and comes back to B.Cu through two vias between TP101 and D102, east of
     # D101's anode, which the VIN_CHG tap and VBUS_DOCK box in on B.Cu.
     "vbus_usb": [
@@ -325,8 +326,8 @@ GROUPS = {
         ("VBUS_USB", 0.5, [(-9.55, -29.3), (-9.55, -28.3), (-7.6, -28.3), (-7.6, -25.2), (-12.85, -25.2),
                            (-13.4, -25.75), (-13.4, -26.3)]),
         ("VBUS_USB", 0.5, [(-7.6, -25.2), (-7.6, -24.55), (-6.9, -24.55)]),
-        ("VBUS_USB", 0.5, [(-7.6, -24.55), (-6.9, -24.55), (26.85, -24.55), (28.6, -22.8), (28.6, -7.1),
-                           (28.0, -6.6)], "F"),
+        ("VBUS_USB", 0.5, [(-7.6, -24.55), (-6.9, -24.55), (26.05, -24.55), (29.4, -21.2), (29.4, -7.9),
+                           (28.6, -7.1), (28.0, -6.6)], "F"),
         ("VBUS_USB", 0.5, [(28.6, -7.1), (28.0, -6.6), (26.9, -5.3)]),
         ("VBUS_USB", "via", [(-7.6, -24.55), (-6.9, -24.55), (28.6, -7.1), (28.0, -6.6)]),
         ("USB_CC1", 0.15, [(-10.75, -29.3), (-10.75, -28.05), (-10.4, -27.7), (-8.4, -27.7)]),
@@ -345,7 +346,8 @@ GROUPS = {
     # them, staggered at y 14.35, 15.0 and 14.4: TP_SCL, TP_RST, GND pin 25, and GND pin 31 with
     # the west mounting pad. Pin 1 joins the east mounting pad and a via beside it, pin 7 the qspi
     # GND via at (2.1, 14.35), pin 4 a via below it. TP_SDA and TP_INT drop to vias below their
-    # pads, LCD_RST to a via below the QSPI vias (part B review). Freerouting takes them on.
+    # pads, LCD_RST to a via below the QSPI vias (part B review) and on to the module by hand.
+    # Freerouting takes the rest on.
     "j301_fanout": [
         ("GND", 0.25, [(-4.5, 13.44), (-4.5, 13.95), (-5.1, 14.4)], "F"),
         ("GND", 0.25, [(-5.2, 13.2), (-5.2, 14.0), (-5.1, 14.4)], "F"),
@@ -358,12 +360,18 @@ GROUPS = {
         ("TP_SDA", 0.1, [(-3.6, 10.562), (-3.6, 9.55)], "F"),
         ("TP_INT", 0.1, [(-4.2, 10.562), (-4.2, 9.3), (-4.45, 8.95)], "F"),
         ("LCD_RST", 0.1, [(-0.6, 10.562), (-0.55, 10.05), (-0.55, 7.5)], "F"),
+        # LCD_RST on to module pin 32: B.Cu west at y 7.3 under the F.Cu runs that come down past
+        # J301's west end, F.Cu north at x -10.1 (west of the touch bus), B.Cu round LCD_TE's stub
+        # and via (pin 31) into pin 32 from the outside.
+        ("LCD_RST", 0.1, [(-0.55, 7.5), (-0.75, 7.3), (-10.1, 7.3)]),
+        ("LCD_RST", 0.1, [(-10.1, 7.3), (-10.1, 23.0)], "F"),
+        ("LCD_RST", 0.1, [(-10.1, 23.0), (-11.7, 23.0), (-11.7, 25.45), (-8.75, 25.45)]),
         ("GND", "via", [(-5.1, 14.4), (-3.0, 15.0), (5.05, 14.35), (3.6, 9.6)]),
         ("TP_RST", "via", [(-3.9, 15.0)]),
         ("TP_SCL", "via", [(-3.3, 14.35)]),
         ("TP_SDA", "via", [(-3.6, 9.55)]),
         ("TP_INT", "via", [(-4.45, 8.95)]),
-        ("LCD_RST", "via", [(-0.55, 7.5)]),
+        ("LCD_RST", "via", [(-0.55, 7.5), (-10.1, 7.3), (-10.1, 23.0)]),
     ],
     # DISP_3V3, the panel supply from U104 (TPS22917): J301's top row pins 21 and 23 cannot reach
     # its bottom row pins 22, 24 and 26 between the rows, so an F.Cu loop runs from the top pins
@@ -390,6 +398,27 @@ GROUPS = {
         ("DISP_3V3", 0.3, [(-13.55, 14.56), (-13.55, 13.2), (-14.68, 13.2), (-14.68, 12.4)]),
         ("DISP_3V3", "via", [(-6.4, 10.4)]),
     ],
+    # Fine-pitch power pins Freerouting left open (the Power class's 0.2 mm clearance does not fit
+    # its tracks between 0.5 mm pitch pads):
+    # - U303 (LGA-12): pad 2 to R309's +3V3 pad and straight across under the package (0.225 mm
+    #   from pads 8 and 12) to pads 9 and 10 and on to C307 (C307 and C308 are joined already).
+    # - U301 (TSSOP-10): pin 8 (GND) to C304's GND pad and a via above it, pin 10 (+3V3) to C304's
+    #   other pad and a via below it, F.Cu west to the +3V3 run over the package; pins 6 and 5 (+3V3)
+    #   joined under the package between the pin rows; pin 4 (GND) to a via west of the package.
+    # - C202 (module decoupling): its GND pad to module pin 1 (GND); tracks round it leave the B.Cu
+    #   pour one spoke, so the DRU keeps the pour off that pad and this track is its GND path.
+    "local_power": [
+        ("+3V3", 0.2, [(-2.0, -5.26), (-0.763, -5.25), (0.763, -5.25), (0.763, -5.75), (2.0, -5.73)]),
+        ("GND", 0.25, [(27.15, -14.0), (28.75, -14.02), (28.55, -13.3)]),
+        ("GND", 0.25, [(22.85, -13.5), (21.85, -13.5), (21.6, -13.35)]),
+        ("+3V3", 0.25, [(27.15, -13.0), (22.85, -13.0)]),
+        ("+3V3", 0.25, [(27.15, -15.0), (28.75, -14.98), (28.6, -15.75)]),
+        ("+3V3", 0.25, [(28.6, -15.75), (24.0, -15.75)], "F"),
+        ("GND", 0.25, [(10.3, 34.78), (9.75, 35.33), (8.75, 35.61)]),
+        ("GND", 0.25, [(0.763, -4.25), (1.4, -4.3)]),
+        ("GND", "via", [(28.55, -13.3), (21.6, -13.35), (1.4, -4.3)]),
+        ("+3V3", "via", [(28.6, -15.75)]),
+    ],
     # Inner planes. In1 is solid GND. In2 is GND too (the reference for the B.Cu parts: U101,
     # U103 and their caps, the crystal, the QSPI block and the USB corridor) except for a +3V3
     # pour under the module, inside its pin ring: x -8.4 to 8.4, from y 18.8 (above the bottom pin
@@ -403,6 +432,37 @@ GROUPS = {
         ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (8.4, 44.0), (8.4, 18.8), (-8.4, 18.8),
                          (-8.4, 44.0), (-32.0, 44.0)], "In2", 0),
         ("+3V3", "pour", [(-8.4, 18.8), (8.4, 18.8), (8.4, 37.0), (-8.4, 37.0)], "In2", 1),
+    ],
+    # GND stitching vias round the board edge, about every 3 mm on a line 0.75 mm inside it (ruling
+    # R5: at least 0.7 mm), and along the antenna notch's lower edge under the module (the strips
+    # beside the notch are the antenna rule area: no vias). Spots that would come within the class
+    # clearance of other copper or 0.2 mm of any pad, within 1.6 mm of a mounting hole or under
+    # J201 are left out: the right edge beside the charger's test pads and VBUS_USB's F.Cu run, the
+    # bottom edge under J201 and at SW203, the left edge at U302. Placed after the Freerouting
+    # import (tools/hw: scratch generator, coordinates kept here as data).
+    "stitching": [
+        ("GND", "via", [(-10.12, 35.85), (-6.09, 35.85), (-3.06, 35.85), (-0.03, 35.85), (3.0, 35.85),
+                        (6.03, 35.85), (18.22, 42.09), (21.18, 41.47), (23.92, 40.18), (26.29, 38.31),
+                        (28.17, 35.94), (29.46, 33.21), (30.09, 30.25), (30.15, 27.23), (30.15, 24.2),
+                        (30.15, 21.17), (30.15, 18.14), (30.15, 6.02), (30.15, -6.1), (30.15, -9.13),
+                        (30.15, -12.16), (30.15, -15.19), (30.15, -18.22), (30.15, -21.24), (30.09, -24.27),
+                        (29.45, -27.23), (28.16, -29.96), (26.28, -32.32), (23.9, -34.19), (21.16, -35.47),
+                        (18.21, -36.09), (15.18, -36.15), (12.15, -36.15), (9.12, -36.15), (6.09, -36.15),
+                        (3.56, -36.15), (-3.5, -36.15), (-6.03, -36.15), (-18.14, -36.1), (-21.1, -35.49),
+                        (-23.85, -34.22), (-26.23, -32.37), (-28.13, -30.01), (-29.43, -27.28),
+                        (-30.08, -24.33), (-30.15, -21.31), (-30.15, -18.28), (-30.15, -15.25),
+                        (-30.15, -12.22), (-30.15, -9.19), (-30.15, -6.16), (-30.15, -3.13), (-30.15, 2.93),
+                        (-30.15, 5.96), (-30.15, 8.99), (-30.15, 12.02), (-30.15, 15.05), (-30.15, 18.08),
+                        (-30.15, 21.1), (-30.15, 24.13), (-30.15, 27.16), (-30.1, 30.19), (-29.48, 33.15),
+                        (-28.2, 35.89), (-26.33, 38.27), (-23.97, 40.15), (-21.24, 41.45), (-18.29, 42.09)]),
+    ],
+    # Outer GND pours, drawn after the Freerouting import: F.Cu and B.Cu flood every free area with
+    # GND (0.2 mm from other nets, thermal spokes to GND pads), joined to In1 and In2 by the GND vias
+    # and the edge stitching. The antenna rule area, J301's keep-out and RT101's no-pour areas stay
+    # empty.
+    "outer_pours": [
+        ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (-32.0, 44.0)], "F", 0),
+        ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (-32.0, 44.0)], "B", 0),
     ],
 }
 
