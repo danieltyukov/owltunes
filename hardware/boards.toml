@@ -4,7 +4,7 @@
 name = "owl-mainboard"
 netlist = true
 contract = true
-drc = false
+drc = true  # accepted: 3 silk_edge_clearance (J201 receptacle front and U201 pin 1 triangle overhang the edge), excluded in owl-mainboard.kicad_pro
 
 [[board]]
 name = "perch-dock"
