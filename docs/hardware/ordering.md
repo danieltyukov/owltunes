@@ -36,7 +36,7 @@ board. The review behind these files is [rev-a-review.md](rev-a-review.md).
 | PCB Assembly | Standard, both sides, quantity 3 |
 | Confirm parts placement | Yes |
 | BOM, CPL | `production/bom.csv` (43 rows), `production/positions.csv` (87 parts: 6 top, 81 bottom) |
-| Rotation offsets set | D101 180, D102 180, J101 180, U202 90, U303 270 (`FT Rotation Offset`, from `rotation_offset` in design.toml). Method: each part's EasyEDA footprint, which JLC places from, compared pad by pad with the KiCad footprint, less the Fabrication Toolkit's own table rotation ([rev-a-review.md](rev-a-review.md), Findings fixed). Confirm every polarised part in JLC's placement preview before paying; a change goes back through `hw_fab.py` and is listed here |
+| Rotation offsets set | D101 180, D102 180, J101 180, U202 90, U303 270 (`FT Rotation Offset`, from `rotation_offset` in design.toml): offset set from the EasyEDA pad match; confirm in the preview. Method: each part's EasyEDA footprint, which JLC places from, compared pad by pad with the KiCad footprint, less the Fabrication Toolkit's own table rotation ([rev-a-review.md](rev-a-review.md), Findings fixed). The 90 and 270 on the bottom-side U202 and U303 assume JLC turns bottom parts the way the toolkit does: if either shows 180 degrees off, use the other sign (270 for U202, 90 for U303). Check every other polarised part in the preview too, before paying; a change goes back through `hw_fab.py` and is listed here |
 
 ## Perch board with the dock-pad section (JLCPCB)
 
