@@ -72,16 +72,16 @@
       "diff_pair_dimensions": [],
       "drc_exclusions": [
         [
+          "silk_edge_clearance|109475000|63400000|e4342cf9-9a11-44b4-841a-5b144d4b8213|a24bcbba-6ce8-481d-a36a-9a5c46739482",
+          "U201 library pin 1 triangle sits at the module corner, which overhangs the board edge over the antenna notch by design; hw_silk.py puts a pin 1 dot beside pin 1 on the board"
+        ],
+        [
           "silk_edge_clearance|83300000|136900000|bca9ff4f-090a-45f5-8ac0-8aa880c53655|8e1e0071-7c2a-4fe2-ab8a-3d6e768d8849",
           "J201 library silkscreen runs to the receptacle front, which overhangs the board edge by design; the fab output clips it at the edge"
         ],
         [
           "silk_edge_clearance|92700000|136900000|bca9ff4f-090a-45f5-8ac0-8aa880c53655|bee54963-8201-4e65-bd13-7d477379d862",
           "J201 library silkscreen runs to the receptacle front, which overhangs the board edge by design; the fab output clips it at the edge"
-        ],
-        [
-          "silk_edge_clearance|109475000|63400000|e4342cf9-9a11-44b4-841a-5b144d4b8213|a24bcbba-6ce8-481d-a36a-9a5c46739482",
-          "U201 library pin 1 triangle sits at the module corner, which overhangs the board edge over the antenna notch by design; hw_silk.py puts a pin 1 dot beside pin 1 on the board"
         ]
       ],
       "meta": {
