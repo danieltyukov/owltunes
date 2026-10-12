@@ -40,7 +40,7 @@ Values from `enclosure/owl_params.py` and `enclosure/owl_v1.py`.
 | Magnet carrier (magnets flush with its rear face at 9.2, flange 9.2 to 10.2) | 6.2 to 10.2 |
 | Main board (TMAG5273 on the back side, Hall element 3.0 mm behind the magnets) | 10.5 to 11.5 |
 | Battery foam | 11.5 to 12.7 |
-| Battery 803040 | 12.7 to 20.7 |
+| Battery (8 mm: an 803030 class cell in a cavity drawn for an 803040) | 12.7 to 20.7 |
 | Back cover | 20.7 to 22.2 |
 
 Outside size 66 x 84 x 23.5 mm (spec 7.1: about 66 x 84 x 22). Every 0.1 mm added to the Hall
@@ -50,8 +50,11 @@ gap adds 0.1 mm of depth.
 
 Bought separately and fitted at assembly ([assembly.md](assembly.md) steps 6 and 8):
 
-- Battery: any 1S LiPo 803040 (8 x 30 x 40 mm, about 1000 mAh) with a protection circuit and a
-  2-wire lead on a JST PH 2.0 2-pin plug (see Protection and known limits for the polarity).
+- Battery: a 2-wire 1S LiPo of the 803030 class (8 x 30 x 30 mm) with a protection circuit and a
+  JST PH 2.0 2-pin plug: efaso 803030 740 mAh, or EEMB 803030 700 mAh if its plug is confirmed as
+  PH 2.0. The cavity is drawn for an 803040 (8 x 30 x 40 mm); the shorter cell sits lead end up
+  against a 1 mm foam-tape end stop on the cover ([assembly.md](assembly.md) step 8). See
+  Protection and known limits for the polarity and the charge current.
 - Thermal gap pad: a piece of soft, electrically insulating silicone gap pad, about 5 x 5 mm,
   1.5 mm thick (it compresses into the 1.2 mm battery gap), 1 to 3 W/mK. It goes on the back of
   the board, centred on RT101's copper patch: the 4.5 x 3 mm copper rectangle under the solder
@@ -139,13 +142,13 @@ The divider draws 30 uA, only while docked (on external power).
 | Screen off, Wi-Fi associated | about 3 mA | about 3 mA | Espressif light sleep with DTIM 3, 32.768 kHz crystal fitted |
 | Wi-Fi off, BLE advertising | 0.5 to 1 mA | about 0.5 to 1 mA | Espressif BLE light sleep figures |
 | Deep sleep | about 30 uA | about 44 uA | below |
-| Typical day (1 h use) | about 6 days | 5 to 7 days | 1 h at 120 to 180 mA, 15 min hot standby at 3 mA, deep sleep the rest; 850 mAh usable of the 1000 mAh cell |
+| Typical day (1 h use) | about 6 days | 3.5 to 5 days | 1 h at 120 to 180 mA, 15 min hot standby at 3 mA, deep sleep the rest; about 630 mAh usable of the 740 mAh cell (595 of a 700 mAh one) |
 
 Deep sleep, battery side: TPS63802 quiescent 11 uA; BQ24073 battery sleep 4.3 uA; MAX17048
 hibernate 3 uA; pack protection about 3 uA; and the 3.3 V loads (ESP32-S3 deep sleep 8 uA,
 DRV2605L standby 4.1 uA, TPS63802 divider 5.0 uA, TMAG5273 wake-up-and-sleep at 100 ms about 2 uA,
 LIS2DW12 low-power about 1 uA, OPT3001 shutdown 0.3 uA = 20.4 uA at 3.3 V, 22.7 uA from the cell at
-80 % light-load efficiency). Total about 44 uA: 850 mAh usable lasts about 2.2 years. The largest
+80 % light-load efficiency). Total about 44 uA: 630 mAh usable lasts about 1.6 years. The largest
 single item is the TPS63802 quiescent current; measure all of this at bring-up.
 
 These figures assume every pull-up is idle: the buttons open, DOCK_DET undocked, and an encoder
@@ -177,9 +180,15 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 
 ## Protection and known limits
 
-- The pack is any 1S LiPo 803040 (8 x 30 x 40 mm) with a protection circuit and a 2-wire lead on
-  a JST PH 2.0 2-pin plug. J101 is a 2-pin JST PH, S2B-PH-SM4-TB (pin 1 VBAT, pin 2 GND). A
-  pack's own NTC wire, if it has one, is not used: the board's RT101 is on TS.
+- The pack is a 2-wire 1S LiPo of the 803030 class (8 x 30 x 30 mm; efaso 803030 740 mAh or EEMB
+  803030 700 mAh) with a protection circuit and a JST PH 2.0 2-pin plug. J101 is a 2-pin JST PH,
+  S2B-PH-SM4-TB (pin 1 VBAT, pin 2 GND). A pack's own NTC wire, if it has one, is not used: the
+  board's RT101 is on TS.
+- Charge current against the smaller cell: ICHG is 0.445 A (0.488 A worst case), 0.6 to 0.66 C
+  for 740 mAh and 0.7 C for 700 mAh; on USB the input limit keeps it at about 0.42 A less the
+  system load. The cell must be rated for at least 0.5 A charge; many small cells allow 1 C, some
+  only 0.5 C, so check the listing. A 0.5 C cell needs R101 raised (ICHG = 890 / RISET, for
+  example 3.9k for 0.23 A).
 - J101 (battery) has no reverse-polarity protection. Many packs are wired the other way round,
   so check that the plug's red wire lands on the silkscreen `+` (pin 1, with the dot) before
   plugging it in; the housing can be re-pinned (see [assembly.md](assembly.md)).
@@ -205,7 +214,8 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Dock pads | on the main board | separate dock-pad board, cabled to J303 | the main board is about 11 mm in front of the back surface |
 | Antenna keep-out | 15 mm from the ring | not reachable in 66 x 84 mm | to be measured in the ring test (RSSI with and without the ring stack); WROOM-1U fallback on the same pads |
 | Owl depth | about 22 mm | 23.5 mm | bearing plus a 3.0 mm sensor gap |
-| Battery NTC | 10k NTC in the pack, JST PH (8.1) | 2-wire pack on a 2-pin JST PH; RT101 (10k NTC) on the board under the cell | cheap off-the-shelf 803040 packs are 2-wire, and the BQ24073 does not charge with TS open. Cost: RT101 reads the board under the cell, so the charge temperature window is approximate (a few degrees warm in fast charge) |
+| Battery NTC | 10k NTC in the pack, JST PH (8.1) | 2-wire pack on a 2-pin JST PH; RT101 (10k NTC) on the board under the cell | cheap off-the-shelf packs are 2-wire, and the BQ24073 does not charge with TS open. Cost: RT101 reads the board under the cell, so the charge temperature window is approximate (a few degrees warm in fast charge) |
+| Battery size | 1S LiPo about 1000 mAh (803040) | 803030 class, 740 mAh (efaso; EEMB 700 mAh as the fallback) in the 803040 cavity, held by a foam end stop | the only listings found with a stated JST PH 2.0 plug that fit the cavity: the efaso 803040 variant has a 1.0 mm pitch plug, and an 803040 whose protection board sits outside its 40 mm is too long. Cost: about 26 % less capacity, a typical day of 3.5 to 5 days instead of about 6. An 803040 with a PH 2.0 plug and its protection board inside the 40 mm fits the same cavity later |
 | Charger input limit | not stated | 0.424 A typical, 0.478 A worst case (R102 3.6k) | USB 2.0 default power without CC sensing; faster charging needs CC sensing in rev B |
 | Cover glass retention | not stated | adhesive: glass on an adhesive ring, 1.3 mm retainer ring glued into the lip opening | a snap does not fit the 1.3 mm lip with the bearing behind it. Owner review point: the glass could come loose if a glue joint fails in a drop; a mechanical lock (a taller lip or a bayonet) is a v2 item |
 | Perch USB-C | on the back of the perch (7.3) | right side of the back rest, the plug enters along +X | J1 is an edge-mount receptacle in the tilted rest plane and the perch board is Economic PCBA (top side only). Owner review point: a back exit needs a vertical receptacle on the board's bottom side, hand-soldered or with Standard PCBA, plus a boss on the rest's back; rev B can move it. The side channel takes the largest Type-C overmold (12.35 x 6.5 mm) |

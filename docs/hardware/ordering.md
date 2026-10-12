@@ -76,10 +76,11 @@ enclosure and one perch.
 
 | Part | Source | Quantity |
 |---|---|---|
-| Battery: 1S LiPo, 803030 class (an 8 x 30 x 30 mm cell of about 740 mAh; up to 8 x 30 x 40 mm fits the cavity), protection circuit, 2-wire lead on a JST PH 2.0 2-pin plug. J101 pin 1 is VBAT and pin 2 is GND; check every pack's polarity before plugging it in (J101 has no reverse-polarity protection, [assembly.md](assembly.md) step 6). No NTC wire: the charger reads RT101 on the board | any | 2 (one spare) |
+| Battery: 2-wire 1S LiPo, 803030 class (8 x 30 x 30 mm: efaso 803030 740 mAh, or EEMB 803030 700 mAh if its plug is confirmed as PH 2.0), protection circuit, JST PH 2.0 2-pin plug; it sits in the 803040 cavity against a foam end stop ([assembly.md](assembly.md) step 8). J101 pin 1 is VBAT and pin 2 is GND; check every pack's polarity before plugging it in (J101 has no reverse-polarity protection, [assembly.md](assembly.md) step 6). No NTC wire: the charger reads RT101 on the board | any | 2 (one spare) |
 | Thermal gap pad for RT101: soft, electrically insulating silicone, 1.5 mm thick, 1 to 3 W/mK, cut to about 5 x 5 mm ([rev-a.md](rev-a.md), Off-board parts) | any | 1 small sheet |
 | LRA Leader LD0832AA-0099F (C2682305), alternate LD0832AA-0126F (C2942349) | LCSC | 4 |
 | JST SH 1.0 mm 2-pin pigtail, pre-crimped, single ended, about 10 cm, 28 or 30 AWG, for the LRA (soldered to the motor's leads under heat shrink) | any | 1 pack of 10 |
+| 1 mm double-sided foam tape (battery end stop) and 1.5 mm heat-shrink tubing (LRA splices) | any | 1 roll each |
 | JST SH 4-pin cable, 50 mm, pin 1 to pin 1 (Qwiic or STEMMA QT, for example Adafruit 4399), J303 to the dock-pad board | any | 3 |
 | ESP32-S3-WROOM-1U-N16R8 (C3013946), loose: the fallback if the ring test loses more than 6 dB of RSSI, swapped by hand onto one board | LCSC | 2 |
 | 2.4 GHz antenna with a U.FL (IPEX MHF1) plug for the WROOM-1U, for example Molex 146153-0050 (C916292) | LCSC | 2 |
