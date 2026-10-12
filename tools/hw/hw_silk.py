@@ -8,7 +8,10 @@ x = KiCad x - 100, y = 100 - KiCad y (on the main board, x right as seen from th
 origin at the display centre). Texts are centred on (x, y) with a 0.15 mm stroke; back side
 texts are mirrored so they read from the back. Everything goes into a KiCad group named
 "hw_silk", and a run first deletes what that group holds, so the marks can be moved and drawn
-again. tools/hw/hw_place.py keeps the reference designators clear of them.
+again. tools/hw/hw_place.py keeps the reference designators clear of them. On a board with an
+enclosure contract (hardware/<board>/mech/contract.json) a run fails, and saves nothing, if a
+mark's strokes reach into a boss keep-out circle on its side (the back cover's bosses on the back,
+the body's on the front), where the boss would hide it.
 
 Usage: python3 tools/hw/hw_silk.py owl-mainboard|perch-dock
 Needs KiCad's pcbnew Python module.
@@ -16,10 +19,12 @@ Needs KiCad's pcbnew Python module.
 
 from __future__ import annotations
 
+import json
 import sys
 
 import pcbnew
 
+from hw_contract import keepout_poly, overlap_mm2
 from hw_netlist import ROOT
 from hw_titleblock import DATE, LICENCE
 
@@ -29,10 +34,12 @@ DOT_LINE = 0.1  # outline width of a filled dot
 
 MARKS = {
     "owl-mainboard": [
-        # Name, owner, licence and the title block's date, on the back in the left strip between
+        # Owner, name, licence and the title block's date, on the back in the left strip between
         # the H2 and H3 bosses, above U302: outside the cell, so they stay visible with it fitted.
-        ("OwlTunes rev A", "B", -22.5, 6.6, 1.0),
-        ("Tyukov Inc", "B", -22.5, 5.0, 1.0),
+        # The H2 cover boss (r 3 at (-19, 9)) reaches down to y 6, so the owner mark sits left of
+        # it and the board name, the widest line, below it.
+        ("Tyukov Inc", "B", -26.0, 7.0, 1.0),
+        ("OwlTunes rev A", "B", -22.5, 5.0, 1.0),
         (LICENCE, "B", -22.5, 3.35, 0.8),
         (DATE, "B", -22.5, 2.15, 0.8),
         # JLC prints the order number here (ordering.md: "Specify a location"); under the cell.
@@ -103,13 +110,42 @@ def draw(board: pcbnew.BOARD, marks: list) -> int:
     return len(marks)
 
 
+def boss_clashes(board: pcbnew.BOARD, contract: dict) -> list[str]:
+    """The drawn marks whose strokes overlap a boss keep-out circle of the contract on their side."""
+    errors = []
+    marks = [item for g in board.Groups() if g.GetName() == GROUP for item in g.GetItems()]
+    for k in contract.get("keepouts", []):
+        if k["kind"] != "circle":
+            continue
+        layer = pcbnew.B_SilkS if k["side"] == "back" else pcbnew.F_SilkS
+        area = keepout_poly(k)
+        for item in marks:
+            if item.GetLayer() != layer:
+                continue
+            strokes = pcbnew.SHAPE_POLY_SET()
+            item.TransformShapeToPolygon(strokes, layer, 0, pcbnew.FromMM(0.005), pcbnew.ERROR_OUTSIDE)
+            if overlap_mm2(strokes, area) > 0:
+                name = item.GetText() if isinstance(item, pcbnew.PCB_TEXT) else "dot"
+                errors.append(f"{name} on {board.GetLayerName(layer)} reaches into the {k['name']} keep-out "
+                              f"(r {k['r']} at owl ({k['x'] - 100:.2f}, {100 - k['y']:.2f}))")
+    return errors
+
+
 def silk(board_name: str) -> int:
     if board_name not in MARKS:
         print(f"no marks for {board_name}")
         return 1
-    path = ROOT / "hardware" / board_name / f"{board_name}.kicad_pcb"
+    folder = ROOT / "hardware" / board_name
+    path = folder / f"{board_name}.kicad_pcb"
     board = pcbnew.LoadBoard(str(path))
     n = draw(board, MARKS[board_name])
+    contract = folder / "mech" / "contract.json"
+    if contract.exists():
+        errors = boss_clashes(board, json.loads(contract.read_text()))
+        if errors:
+            print("\n".join(errors))
+            print(f"{board_name}: {len(errors)} mark(s) under a boss, nothing saved")
+            return 1
     pcbnew.SaveBoard(str(path), board)
     print(f"{board_name}: {n} silkscreen marks")
     return 0

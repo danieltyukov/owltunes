@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import pathlib
 import subprocess
 import sys
@@ -94,6 +95,34 @@ class SilkTest(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr[-1500:])
         texts = [t[2] for t in self.items(pcbnew.LoadBoard(str(self.path))) if t[0] == "text"]
         self.assertEqual(sorted(texts), ["B", "keep"])
+
+    def test_a_mark_under_a_boss_on_its_side_fails_and_saves_nothing(self):
+        # Contract circles in KiCad mm: a back cover boss round owl (0, 0), a front body boss
+        # round owl (10, 0).
+        mech = pathlib.Path(self.tmp.name) / "hardware" / "b" / "mech"
+        mech.mkdir()
+        (mech / "contract.json").write_text(json.dumps({"keepouts": [
+            {"kind": "circle", "name": "H9 cover boss", "r": 3.0, "x": 100.0, "y": 100.0, "side": "back"},
+            {"kind": "circle", "name": "H9 body boss", "r": 3.0, "x": 110.0, "y": 100.0, "side": "front"},
+            {"kind": "polygon", "name": "lug", "side": "back", "points": [[90, 90], [91, 90], [91, 91]]},
+        ]}))
+        before = self.path.read_bytes()
+        for marks in ([("NAME", "B", 3.5, 0.0, 1.0)], [("1", "F", 10.0, 2.6, 0.8)]):
+            hw_silk.MARKS["b"] = marks
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(hw_silk.silk("b"), 1, marks)
+            self.assertIn("keep-out", out.getvalue())
+            self.assertEqual(self.path.read_bytes(), before)
+        # Clear of both circles, or under the front boss on the back side: drawn.
+        board = self.silk([("NAME", "B", 6.0, 0.0, 1.0), ("1", "B", 10.0, 0.0, 0.8), ("2", "F", 0.0, 0.0, 0.8)])
+        self.assertEqual(sorted(t[2] for t in self.items(board) if t[0] == "text"), ["1", "2", "NAME", "keep"])
+
+    def test_main_board_marks_clear_the_contract_bosses(self):
+        contract = HW.parent.parent / "hardware" / "owl-mainboard" / "mech" / "contract.json"
+        board = pcbnew.BOARD()
+        hw_silk.draw(board, self.saved[1]["owl-mainboard"])
+        self.assertEqual(hw_silk.boss_clashes(board, json.loads(contract.read_text())), [])
 
     def test_every_board_mark_meets_the_jlc_minimums(self):
         # JLC: text 0.8 mm high or more with a 0.15 mm stroke; the owner mark 1.0 mm (11 October
