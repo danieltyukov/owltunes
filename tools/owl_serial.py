@@ -43,7 +43,7 @@ def blocking_reads(fd: int) -> None:
         attrs[6][termios.VTIME] = 0
         termios.tcsetattr(fd, termios.TCSANOW, attrs)
     except termios.error:
-        pass  # the board was unplugged: its next tty starts with the default
+        pass  # the port is already gone, so there is nothing to restore
 
 
 def parse_line(line: str) -> Message | None:
