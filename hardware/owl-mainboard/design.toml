@@ -179,9 +179,11 @@ side = "back"
 height = 1.1
 pins = { 1 = "VIN_CHG", 2 = "VBUS_DOCK" }
 
-# Battery (controller ruling, 11 October 2026): any 2-wire 803040 LiPo with a protection circuit and
-# a JST PH 2.0 plug. The BQ24073 does not charge with TS open, so the board carries its own NTC,
-# RT101, on the back under the cell; a pack's own NTC wire, if it has one, is not used.
+# Battery (controller rulings, 11 October 2026): a 2-wire 803030 class LiPo (efaso 803030 740 mAh,
+# or EEMB 803030 700 mAh with a confirmed PH 2.0 plug) with a protection circuit and a JST PH 2.0
+# plug, in the cavity drawn for an 803040 (docs/hardware/assembly.md step 8). The BQ24073 does not
+# charge with TS open, so the board carries its own NTC, RT101, on the back under the cell; a pack's
+# own NTC wire, if it has one, is not used.
 # RT101 is a 10k NTC with B25/50 3950 K, 1 % on R25 and on B (controller ruling, 11 October 2026).
 # It is steeper than the 103AT-2 curve the TS thresholds assume, so the charge window narrows from
 # about -0.6 to 51 C to +3.5 to 47.2 C on the B25/50 model (VCOLD 2.1 V and VHOT 0.30 V at 75 uA:
@@ -1203,7 +1205,7 @@ height = 0.6
 pins = { 1 = "+3V3", 2 = "GND" }
 
 # LRA Leader LD0832AA-0099F (off board): 8 mm, 1.8 V rms, 235 Hz, 24 ohm, AWG32 leads 27 mm long,
-# crimped into a JST SHR-02V-S-B housing with SSH-003T-P0.2-H contacts (C263995).
+# soldered under heat shrink to a pre-crimped JST SH 2-pin pigtail that plugs into J302.
 [[part]]
 ref = "J302"
 sheet = "periph"
