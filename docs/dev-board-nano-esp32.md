@@ -113,6 +113,9 @@ OWL_WIFI_SSID=Your network
 OWL_WIFI_PASSWORD=its password
 ```
 
+A value in double quotes keeps the spaces at its ends. The scripts remove one pair of surrounding
+double quotes, so a value that really starts and ends with `"` needs a second pair.
+
 Then run `tools/hil_nano.py --wifi`. It saves a network that is never in range ahead of yours,
 checks that the owl reports it and joins yours next, and checks that the owl rejoins by itself
 after a reset. The password goes to the board only; the script never prints it.
