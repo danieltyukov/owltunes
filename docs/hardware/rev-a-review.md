@@ -63,6 +63,8 @@ Verdict: ready to order, subject to the placement preview rotation check at orde
   position file on the board and on the symbols, so schematic parity stays at 0.
 - No rotation table entry of the toolkit matches a perch footprint, so the CPL rotation is the
   KiCad rotation. Polarised parts to check in the placement preview: J1, J2, D1, D2, LED1, P1 to P3.
+  LED1 needs no offset although its EasyEDA pin 1 is the anode (main board section, Rotation
+  offsets).
 - J1 carries `FT Position Offset` 0,1.571 (12 October 2026, main board section, Findings fixed):
   its CPL point is the EasyEDA footprint's origin, 1.571 mm toward the board centre from the KiCad
   anchor. The preview checks its position as well as its rotation.
@@ -144,6 +146,14 @@ offset a part needs is the EasyEDA-to-KiCad angle less the table's angle. Five p
 The rest match: U102, U103, U304 and J301 were drawn in EasyEDA's orientation, U104 and U302 use
 the SOT-23-6 "BR" footprint the toolkit's 180 fits, U301's TSSOP fits the toolkit's 270, and Y201
 differs only in pad numbering (no polarity). The preview still has the last word.
+
+The comparison matches pads by number, so it assumes that EasyEDA's pad numbers carry KiCad's pin
+functions. That holds for every polarised part on both boards (PMEG2020EH C456104 and SMF5.0A
+C193402 have pin 1 = cathode in their EasyEDA symbols; LESD5D5.0 C5274290 is bidirectional) except
+the perch LED (KT-0603R, C2286), whose EasyEDA pin 1 is the anode while KiCad's LED pin 1 is the
+cathode. Matched by number LED1 would need 180; matched by function it needs 0, so its CPL (180,
+the KiCad rotation, no offset) is right. Do not add a rotation offset to LED1; the placement
+preview checks it (ordering.md lists it).
 
 Position offsets (fix round 1). The toolkit puts each SMD part's CPL point on the KiCad
 footprint's anchor, while JLC places its EasyEDA footprint by that footprint's origin. Fitting
