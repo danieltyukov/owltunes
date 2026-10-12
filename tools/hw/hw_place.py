@@ -117,7 +117,7 @@ PLACE = {
     "R306": (-10.9, 27.99, 0, "back"),
     "R305": (-10.9, 29.26, 0, "back"),
     # Dock link: TVS on VBUS_DOCK and ESD on DOCK_PAD at the connector, then the divider.
-    "D301": (17.8, -26.4, 0, "back"),
+    "D301": (17.8, -26.2, 0, "back"),
     "D302": (12.0, -26.6, 0, "back"),
     "R307": (12.0, -24.8, 0, "back"),
     "R308": (14.2, -24.8, 0, "back"),

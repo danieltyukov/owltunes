@@ -38,7 +38,7 @@ MARKS = {
         # JLC prints the order number here (ordering.md: "Specify a location"); under the cell.
         ("JLCJLCJLCJLC", "B", -6.0, -18.0, 0.8),
         # Connectors and test pads.
-        ("DOCK", "B", 14.0, -33.0, 0.8),
+        ("DOCK", "B", 14.0, -31.825, 0.8),
         ("EXP", "B", -24.0, -13.6, 0.8),
         ("LRA", "B", 28.3, -20.0, 0.8),
         ("RESET", "B", 18.8, 25.3, 0.8),

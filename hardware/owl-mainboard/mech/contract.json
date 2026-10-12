@@ -689,7 +689,7 @@
       "h": 4.25,
       "height": 2.95,
       "kicad_x": 114.0,
-      "kicad_y": 132.0,
+      "kicad_y": 130.825,
       "knob": [],
       "ref": "J303",
       "rot": 180.0,
@@ -697,7 +697,7 @@
       "w": 6.0,
       "why": "dock link to the dock-pad board",
       "x": 14.0,
-      "y": -32.0
+      "y": -30.825
     },
     {
       "cu": 0.0,

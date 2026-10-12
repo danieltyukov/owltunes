@@ -107,7 +107,9 @@ PLACEMENTS = (
     Placement("J301", 0.0, 12.0, 180.0, "front", 11.5, 5.6, 1.0,
               "display FPC, entry faces the panel's top edge; reach provisional until the paper FPC check", cv=1.0),
     Placement("J101", 22.0, 18.0, 90.0, "back", 9.9, 7.6, 4.8, "battery connector, wires run down to the pack", cv=0.6),
-    Placement("J303", 14.0, -32.0, 180.0, "back", 6.0, 4.25, 2.95, "dock link to the dock-pad board", cv=SH_CV),
+    # J303 at y -30.825: its courtyard top sits on the battery zone's edge (y -27.5), which leaves the
+    # mated plug's cable about 2.0 mm to bend before the body's bottom wall (inner face y -37.4).
+    Placement("J303", 14.0, -30.825, 180.0, "back", 6.0, 4.25, 2.95, "dock link to the dock-pad board", cv=SH_CV),
     Placement("J302", 24.0, -20.0, 90.0, "back", 4.0, 4.25, 2.95, "LRA lead connector, motor on the right", cv=SH_CV),
     Placement("J202", -24.0, -18.0, 270.0, "back", 6.0, 4.25, 2.95, "expansion / encoder fallback", cv=SH_CV),
 )
