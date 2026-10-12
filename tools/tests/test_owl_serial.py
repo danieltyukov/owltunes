@@ -6,9 +6,12 @@ import tempfile
 import termios
 import threading
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from owl_serial import Board, BoardError, find_port, load_env_file, parse_line, redact_line  # noqa: E402
+import owl_serial  # noqa: E402
+from owl_serial import (Board, BoardError, find_port, load_env_file, parse_line, redact_line,  # noqa: E402
+                        wait_online)
 
 try:
     import serial  # noqa: F401
@@ -183,6 +186,43 @@ class BoardTest(unittest.TestCase):
     def test_a_missing_answer_times_out(self):
         with self.assertRaises(BoardError):
             self.board.wait_event("never", timeout=0.3)
+
+
+class OnlineBoard:
+    """Answers hello like a board that joins its network after a few tries."""
+
+    def __init__(self, offline_hellos, networks=("Home",)):
+        self.offline_hellos = offline_hellos
+        self.networks = list(networks)
+        self.hellos = 0
+
+    def hello(self):
+        self.hellos += 1
+        ip = "" if self.hellos <= self.offline_hellos else "192.168.1.23"
+        return {"name": "OwlTunes-7DF8", "ip": ip, "networks": self.networks}
+
+
+class WaitOnlineTest(unittest.TestCase):
+    def wait(self, board, timeout=60):
+        clock = iter(range(0, 1000, 2))
+        with mock.patch.object(owl_serial.time, "monotonic", side_effect=lambda: float(next(clock))), \
+                mock.patch.object(owl_serial.time, "sleep"):
+            return wait_online(board, timeout)
+
+    def test_the_owl_is_asked_until_it_has_an_address(self):
+        board = OnlineBoard(offline_hellos=3)
+        self.assertEqual(self.wait(board)["ip"], "192.168.1.23")
+        self.assertEqual(board.hellos, 4)
+
+    def test_an_owl_that_stays_offline_is_an_error_with_the_time(self):
+        with self.assertRaisesRegex(BoardError, "did not come online within 20 s"):
+            self.wait(OnlineBoard(offline_hellos=1000), timeout=20)
+
+    def test_an_owl_without_a_saved_network_fails_at_once_and_says_so(self):
+        board = OnlineBoard(offline_hellos=1000, networks=())
+        with self.assertRaisesRegex(BoardError, "no Wi-Fi network saved"):
+            self.wait(board)
+        self.assertEqual(board.hellos, 1)
 
 
 class RedactLineTest(unittest.TestCase):

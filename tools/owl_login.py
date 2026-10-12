@@ -33,13 +33,12 @@ import urllib.parse
 import webbrowser
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from owl_serial import Board, BoardError, Message, find_port, load_env_file  # noqa: E402
+from owl_serial import Board, BoardError, Message, find_port, load_env_file, wait_online  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 WORK = ROOT / "build" / "owl-login"
 DEFAULT_HTTP_PORT = 8765
 LOGIN_TIMEOUT_S = 600  # the owl keeps a login open for 10 minutes
-ONLINE_TIMEOUT_S = 90  # boot, then join the saved Wi-Fi network
 EXCHANGE_TIMEOUT_S = 90
 BOOT_CHECK_TIMEOUT_S = 90
 AUTHORIZE_PREFIX = "https://accounts.spotify.com/authorize?"
@@ -137,21 +136,6 @@ def client_id_from(args: argparse.Namespace) -> str:
     if client_id is None:
         raise Failure("give your Spotify app's client ID (--client-id, OWL_SPOTIFY_CLIENT_ID or private/hil.env)")
     return client_id
-
-
-def wait_online(board: Board, timeout: float = ONLINE_TIMEOUT_S) -> Message:
-    """hello once the owl has an address. The owl refuses to start a login while it is offline."""
-    deadline = time.monotonic() + timeout
-    while True:
-        hello = board.hello()
-        if hello.get("ip", ""):
-            return hello
-        if not hello.get("networks"):
-            raise Failure("the owl has no Wi-Fi network saved: add one first (the setup page or "
-                          "tools/hil_nano.py --wifi)")
-        if time.monotonic() > deadline:
-            raise Failure(f"the owl did not come online within {timeout:.0f} s")
-        time.sleep(2)
 
 
 def link(board: Board, client_id: str, port: int, open_browser: bool) -> None:

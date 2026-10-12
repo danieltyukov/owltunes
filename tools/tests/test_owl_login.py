@@ -148,43 +148,6 @@ class ClientIdTest(unittest.TestCase):
                 self.client_id(None, env_file, {})
 
 
-class OnlineBoard:
-    """Answers hello like a board that joins its network after a few tries."""
-
-    def __init__(self, offline_hellos, networks=("Home",)):
-        self.offline_hellos = offline_hellos
-        self.networks = list(networks)
-        self.hellos = 0
-
-    def hello(self):
-        self.hellos += 1
-        ip = "" if self.hellos <= self.offline_hellos else "192.168.1.23"
-        return {"name": "OwlTunes-7DF8", "ip": ip, "networks": self.networks}
-
-
-class WaitOnlineTest(unittest.TestCase):
-    def wait(self, board, timeout=60):
-        clock = iter(range(0, 1000, 2))
-        with mock.patch.object(owl_login.time, "monotonic", side_effect=lambda: float(next(clock))), \
-                mock.patch.object(owl_login.time, "sleep"):
-            return owl_login.wait_online(board, timeout)
-
-    def test_the_owl_is_asked_until_it_has_an_address(self):
-        board = OnlineBoard(offline_hellos=3)
-        self.assertEqual(self.wait(board)["ip"], "192.168.1.23")
-        self.assertEqual(board.hellos, 4)
-
-    def test_an_owl_that_stays_offline_is_a_failure(self):
-        with self.assertRaises(owl_login.Failure):
-            self.wait(OnlineBoard(offline_hellos=1000), timeout=20)
-
-    def test_an_owl_without_a_saved_network_fails_at_once(self):
-        board = OnlineBoard(offline_hellos=1000, networks=())
-        with self.assertRaises(owl_login.Failure):
-            self.wait(board)
-        self.assertEqual(board.hellos, 1)
-
-
 class RebootingBoard:
     """A board for boot_check: each reset gives the next scripted outcome of the boot check."""
 

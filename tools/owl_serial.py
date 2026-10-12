@@ -257,3 +257,20 @@ class Board:
                 where: Callable[[Message], bool] | None = None) -> Message:
         """Type a console command and return the first matching event it answers with."""
         return self.wait_event(event, state, timeout, self.type(text), where)
+
+
+def wait_online(board: Board, timeout: float = 90.0) -> Message:
+    """hello once the owl has an address. Opening the port restarts the Nano ESP32, so the first
+    answers come while it is still booting and joining Wi-Fi. The owl refuses to start a login
+    while it is offline."""
+    deadline = time.monotonic() + timeout
+    while True:
+        hello = board.hello()
+        if hello.get("ip", ""):
+            return hello
+        if not hello.get("networks"):
+            raise BoardError("the owl has no Wi-Fi network saved: add one first (the setup page or "
+                             "tools/hil_nano.py --wifi)")
+        if time.monotonic() > deadline:
+            raise BoardError(f"the owl did not come online within {timeout:.0f} s")
+        time.sleep(2)
