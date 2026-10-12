@@ -196,7 +196,10 @@ GROUPS = {
     # J201 fan-out to U202: each D+ pad (A6, B6) drops to a via just above the pad row and each D-
     # pad (A7, B7) to a via just below it, the pairs join and run on F.Cu (over the solid In1 GND)
     # to vias beside U202 pins 6 and 4; D- passes below the J201 peg hole and the through-hole shell
-    # tab. B.Cu above the pads stays free for CC1, CC2 and VBUS.
+    # tab. B.Cu above the pads stays free for CC1, CC2 and VBUS. The pairs leave In2 for In1 as
+    # reference at the J201-side vias, so a GND via sits beside each pair's two vias (above D+,
+    # below D-) to carry the return current between the planes (Step 1 review M6); at the U202
+    # end J201's shell tab does that.
     "usb_fanout": [
         ("USB_DP_CONN", 0.2, [(-11.75, -29.755), (-11.75, -28.4)]),
         ("USB_DP_CONN", 0.2, [(-12.75, -29.755), (-12.75, -28.4)]),
@@ -208,6 +211,7 @@ GROUPS = {
         ("USB_DM_CONN", 0.2, [(-6.7, -31.0), (-5.638, -30.95)]),
         ("USB_DP_CONN", "via", [(-11.75, -28.4), (-12.75, -28.4), (-6.7, -28.75)]),
         ("USB_DM_CONN", "via", [(-12.25, -31.05), (-11.25, -31.05), (-6.7, -31.0)]),
+        ("GND", "via", [(-12.25, -27.65), (-11.75, -31.95)]),
     ],
     # QSPI from the module's bottom row (B.Cu; left to right D2 D1 CLK D0 CS D3, the FSPI IO_MUX
     # pins) to J301 on F.Cu (top row CS D1 D3 TE, bottom row D0 CLK D2), Fine class 0.1 mm, one
