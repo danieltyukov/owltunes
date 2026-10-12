@@ -39,6 +39,15 @@ class SyncTest(unittest.TestCase):
                 if want is not None:
                     self.assertEqual(pad.GetNetname(), want, f"{ref}.{pad.GetNumber()}")
 
+    def test_rotation_offsets_reach_the_footprints(self):
+        # The Fabrication Toolkit reads FT Rotation Offset from the footprint, not the symbol.
+        board = pcbnew.LoadBoard(str(ROOT / "hardware" / "owl-mainboard" / "owl-mainboard.kicad_pcb"))
+        want = {p["ref"]: str(p["rotation_offset"]) for p in load_design("owl-mainboard")["part"] if "rotation_offset" in p}
+        have = {fp.GetReference(): fp.GetField("FT Rotation Offset").GetText()
+                for fp in board.GetFootprints() if fp.HasField("FT Rotation Offset")}
+        self.assertEqual(have, want)
+        for ref in have:
+            self.assertFalse(board.FindFootprintByReference(ref).GetField("FT Rotation Offset").IsVisible(), ref)
 
     def test_main_board_footprints_match_their_library_copies(self):
         # A library edit (such as the trimmed WROOM-1 antenna keep-out) reaches the board via hw_sync.py.

@@ -67,11 +67,12 @@ Verdict: ready to order, subject to the placement preview rotation check at orde
 ## Main board (owl-mainboard, 4 layers, 1.0 mm, 61.8 x 79.8 mm)
 
 Verdict: ready to order, subject to the placement preview rotation check at order time (listed in
-the private order notes, with five parts whose rotation is predicted to need an offset). Blockers:
-none.
+the private order notes; five rotation offsets are already set from the footprint comparison
+below). Blockers: none.
 
 Reviewed on the fabrication files of 12 October 2026 (`python3 tools/hw/hw_fab.py owl-mainboard`
-on commit 3c914ce, board unchanged by the run). Analyzers: kicad-happy 2.2.1 (schematic, PCB with
+on commit 3c914ce, board unchanged by the run; regenerated after the rotation offsets, with
+Gerbers identical apart from their dates). Analyzers: kicad-happy 2.2.1 (schematic, PCB with
 `--full`, cross analysis, EMC, thermal, Gerber, SPICE subcircuits with ngspice, lifecycle);
 datasheets read for every IC (table below).
 
@@ -122,7 +123,26 @@ schematic. Pages are the printed page numbers.
 
 ### Findings fixed
 
-Nothing on the board changed in this review. Fixed before it, in task 10 part C and its polish
+Rotation offsets. Each assembled part's EasyEDA footprint (the footprint JLC's placement uses as
+zero) was compared pad by pad with the KiCad footprint on the board. The Fabrication Toolkit writes
+bottom rotations as 180 minus the KiCad rotation, which is the rotation seen from below with the
+board turned over left to right (true for all 81 bottom parts), plus its own table offsets; the
+offset a part needs is the EasyEDA-to-KiCad angle less the table's angle. Five parts got an
+`FT Rotation Offset` (design.toml `rotation_offset`, the symbol field, copied to the footprint by
+`hw_sync.py` and checked by `hw_bom.py` and a test):
+
+| Ref | Offset | Reason |
+|---|---|---|
+| D101, D102 (PMEG2020EH, C456104) | 180 | EasyEDA's footprint has pad 1, the cathode, on the right at zero; KiCad's D_SOD-123F has it on the left. CPL 180 becomes 0 |
+| J101 (S2B-PH-SM4-TB, C295747) | 180 | The EasyEDA footprint matches KiCad's at zero, but the toolkit's `^JST_PH_S` rule adds 180; the offset cancels it. CPL 270 becomes 90 |
+| U202 (USBLC6-2SC6, C7519) | 90 | EasyEDA's SOT-23-6 "BL" footprint (rows horizontal, pin 1 bottom left) is 270 from KiCad's; the toolkit's SOT-23 rule gives 180. CPL 180 becomes 270 |
+| U303 (LIS2DW12TR, C189624) | 270 | EasyEDA's LGA-12 "BL" footprint runs pins 1 to 4 along the bottom, KiCad's down the left (ruling R30). CPL 180 becomes 90 |
+
+The rest match: U102, U103, U304 and J301 were drawn in EasyEDA's orientation, U104 and U302 use
+the SOT-23-6 "BR" footprint the toolkit's 180 fits, U301's TSSOP fits the toolkit's 270, and Y201
+differs only in pad numbering (no polarity). The preview still has the last word.
+
+Nothing else on the board changed in this review. Fixed before it, in task 10 part C and its polish
 round, from the same analyzers and the part C review: GND return vias within 1 mm of every USB via
 (RP-001 on the USB nets), stale zone fills after the late hand links, partial copies of hand copper
 left by the Specctra import, enclosed outer-pour regions joined with ten GND vias, the board name
@@ -166,7 +186,7 @@ moved out from under the H2 cover boss, and labels for the power test pads.
 | TPS63802 channel vias near pad 8 | The two GND vias in U103's centre channel sit 0.089 mm from pad 8's mask opening. They are tented and on the same net (GND) as pad 8, so a mask sliver lost there cannot short anything. JLC's DFM may still flag it. | Look at U103 under the loupe (bringup.md step 1). |
 | Slow nets cross the In2 +3V3 boundary under the module | DISP_EN runs 12.0 mm along the 0.2 mm gap between the In2 GND and +3V3 pours at y 18.83; I2C_SDA, HALL_INT, TP_RST, EXP_A, EXP_B, IMU_INT1 and ESP_EN cross x = +-8.4 or y = 18.8. All are static or slow, In1 GND lies under every F.Cu run, and the B.Cu runs there sit over the +3V3 pour, which the module's decoupling ties to GND. QSPI and USB never leave GND reference. | Sensor bus rise time at 400 kHz (bringup.md step 5). |
 | No fiducials on the board | The order selects edge rails with fiducials added by JLCPCB. The rails must be tab-routed, not V-cut: the outer pours and the stitching vias sit 0.3 to 0.5 mm from the edge, under the 0.4 mm JLC keeps from a V-cut line, and the outline is rounded. | File each tab nub flush before the board goes into the enclosure (it fits closely). |
-| Part rotations not yet seen in JLC's preview | The preview needs the owner's JLC sign-in. Comparing each part's EasyEDA footprint with the board predicts five parts that need an `FT Rotation Offset` (D101, D102, J101, U202, U303); the private order notes list them with the expected orientation of every polarised part. | Checked in the preview before paying; any offset goes back through `hw_fab.py` and is recorded in [ordering.md](ordering.md). |
+| Part rotations not yet seen in JLC's preview | The preview needs the owner's JLC sign-in. The five offsets above come from the footprint comparison, which assumes JLC's zero is the EasyEDA footprint's and that JLC reads bottom rotations as the toolkit does; the private order notes list every polarised part with its expected orientation. | Checked in the preview before paying; any change goes back through `hw_fab.py` and is recorded in [ordering.md](ordering.md). |
 
 ### Analyses not run, and why
 
@@ -184,6 +204,6 @@ moved out from under the H2 cover boss, and labels for the power test pads.
   the board.
 - CPL coordinates are owl millimetres from the board's auxiliary origin (100, 100), Y up. Bottom
   rotations are the toolkit's (180 minus the KiCad rotation, plus its table offsets for SOT-23,
-  JST_PH_S and TSSOP footprints).
+  JST_PH_S and TSSOP footprints), plus each part's `FT Rotation Offset`.
 - 42 reference designators are hidden on the silkscreen for lack of room; the assembly drawing
   comes from the Fab layers.

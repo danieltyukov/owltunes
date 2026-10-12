@@ -25,7 +25,7 @@ import pcbnew
 from hw_netlist import ROOT
 
 STOCK = Path("/usr/share/kicad/footprints")
-FIELDS = ("LCSC Part #", "MPN", "Manufacturer")
+FIELDS = ("LCSC Part #", "MPN", "Manufacturer", "FT Rotation Offset")  # the toolkit reads the offset from the footprint
 
 
 def parse(text: str) -> list:

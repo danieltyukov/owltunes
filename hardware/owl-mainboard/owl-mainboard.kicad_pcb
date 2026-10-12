@@ -8064,6 +8064,18 @@
 				(justify mirror)
 			)
 		)
+		(property "FT Rotation Offset" "270"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "2c11da76-c0ff-47d6-bebc-b7b22dd4aa80")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/5058b045-1194-4265-add8-fc583b3842ce/e9333370-b8e5-4bd7-a12a-b4a6edfe69fb")
 		(sheetname "/periph/")
 		(sheetfile "periph.kicad_sch")
@@ -17367,6 +17379,18 @@
 				(justify mirror)
 			)
 		)
+		(property "FT Rotation Offset" "180"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "c0ea676c-ade6-43d7-9839-0e47df78d2d7")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa/854ede46-0439-4197-a95c-3dc465215582")
 		(sheetname "/power/")
 		(sheetfile "power.kicad_sch")
@@ -19858,6 +19882,18 @@
 				(justify mirror)
 			)
 		)
+		(property "FT Rotation Offset" "90"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "5b9afbb1-d86b-4466-b32e-ee37d0df811f")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/a859415a-f165-4418-b711-7bb21928059d/351c8cd6-c866-42de-a2d3-a4f3eb791be3")
 		(sheetname "/mcu_usb/")
 		(sheetfile "mcu_usb.kicad_sch")
@@ -20431,6 +20467,18 @@
 			(layer "B.SilkS")
 			(hide yes)
 			(uuid "7d9ef8bf-17ba-4f52-8443-6a5afbcafb77")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "FT Rotation Offset" "180"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "d869068c-f309-4e4f-8d15-d0126a45d78e")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22033,6 +22081,18 @@
 					(thickness 0.15)
 				)
 				(justify mirror)
+			)
+		)
+		(property "FT Rotation Offset" "180"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "27b0f4b4-be4f-417a-b3f4-d13d813f8a0d")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
 			)
 		)
 		(path "/4af1d6fc-f0db-4f00-b9e9-54eaa77529fa/cafd0381-17d7-427b-b295-6041f2cb56e0")

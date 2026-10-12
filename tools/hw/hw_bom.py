@@ -4,6 +4,8 @@
 Each part that is assembled (assembled = true, the default) must have a non-empty mpn in
 design.toml and carry the non-empty fields "LCSC Part #" and "MPN" in the schematic, equal to
 design.toml, and the LCSC number must look like C followed by digits. Test points, mounting holes and fiducials set assembled = false.
+A part with rotation_offset in design.toml carries it as the field "FT Rotation Offset" (the
+Fabrication Toolkit's CPL rotation fix); no other part carries that field.
 
 Usage: python3 tools/hw/hw_bom.py owl-mainboard [--sheets power,mcu_usb]
 """
@@ -38,6 +40,9 @@ def check(design: dict, comps: dict[str, dict], sheets: set[str] | None = None) 
         for field, key in (("LCSC Part #", "lcsc"), ("MPN", "mpn")):
             if not comp["fields"].get(field, "").strip() or comp["fields"].get(field, "") != part.get(key, ""):
                 errors.append(f"{ref}: field {field!r} is {comp['fields'].get(field)!r}, design says {part.get(key)!r}")
+        offset = str(part["rotation_offset"]) if "rotation_offset" in part else None
+        if comp["fields"].get("FT Rotation Offset") != offset:
+            errors.append(f"{ref}: field 'FT Rotation Offset' is {comp['fields'].get('FT Rotation Offset')!r}, design says {offset!r}")
     return errors
 
 

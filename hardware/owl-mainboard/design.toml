@@ -2,6 +2,11 @@
 # tools/hw/hw_netlist.py checks the KiCad schematic against this file; tools/hw/hw_bom.py checks
 # the LCSC and MPN fields; tools/tests/test_hw_design.py checks the design rules below.
 # Heights are millimetres above the board surface. Prices live in private/, never here.
+# rotation_offset is the schematic field "FT Rotation Offset" (degrees) that the Fabrication
+# Toolkit adds to a part's CPL rotation, so JLC places the part the way its EasyEDA footprint
+# (JLC's zero) maps onto the KiCad footprint; each one is set from a pad-by-pad match of the two
+# footprints (Task 12 part B, 12 October 2026) and confirmed in JLC's placement preview. A part
+# switched to its alt has its own EasyEDA footprint, so its offset must be derived again.
 board = "owl-mainboard"
 
 # ---------------------------------------------------------------------------------------------
@@ -150,6 +155,8 @@ lcsc = "C456104"
 mpn = "PMEG2020EH,115"
 manufacturer = "Nexperia"
 alt = "C223608 MBR120VLSFT1G, same SOD-123F footprint"
+# EasyEDA's C456104 footprint has pad 1, the cathode, on the right at zero; KiCad's D_SOD-123F on the left
+rotation_offset = 180
 side = "back"
 height = 1.1
 pins = { 1 = "VIN_CHG", 2 = "VBUS_USB" }
@@ -164,6 +171,8 @@ lcsc = "C456104"
 mpn = "PMEG2020EH,115"
 manufacturer = "Nexperia"
 alt = "C223608 MBR120VLSFT1G, same SOD-123F footprint"
+# EasyEDA's C456104 footprint has pad 1, the cathode, on the right at zero; KiCad's D_SOD-123F on the left
+rotation_offset = 180
 side = "back"
 height = 1.1
 pins = { 1 = "VIN_CHG", 2 = "VBUS_DOCK" }
@@ -188,6 +197,8 @@ lcsc = "C295747"
 mpn = "S2B-PH-SM4-TB(LF)(SN)"
 manufacturer = "JST"
 alt = "C3029440 XUNPU WAFER-PH2.0-2PWB, check the footprint"
+# EasyEDA's C295747 footprint matches KiCad's at zero; this cancels the toolkit's ^JST_PH_S rule (180)
+rotation_offset = 180
 side = "back"
 height = 4.8
 pins = { 1 = "VBAT", 2 = "GND", MP = "GND" }
@@ -769,6 +780,8 @@ lcsc = "C7519"
 mpn = "USBLC6-2SC6"
 manufacturer = "STMicroelectronics"
 alt = "C2687116 UMW USBLC6-2SC6, same pins"
+# EasyEDA's C7519 footprint is SOT-23-6 BL (270 from KiCad's); the toolkit's SOT-23 rule gives 180
+rotation_offset = 90
 side = "back"
 height = 1.45
 pins = { 1 = "USB_DP_CONN", 6 = "USB_DP_CONN", 3 = "USB_DM_CONN", 4 = "USB_DM_CONN", 2 = "GND" }
@@ -1252,6 +1265,8 @@ lcsc = "C189624"
 mpn = "LIS2DW12TR"
 manufacturer = "STMicroelectronics"
 alt = "C50385411 LIS2DW12TR-MS (MSKSEMI second source, test before use)"
+# EasyEDA's C189624 footprint is LGA-12 BL, pins 1 to 4 along the bottom; KiCad's runs them down the left
+rotation_offset = 270
 side = "back"
 height = 0.7
 pins = { 1 = "I2C_SCL", 2 = "+3V3", 3 = "IMU_SA0", 4 = "I2C_SDA", 6 = "GND", 7 = "GND", 8 = "GND", 9 = "+3V3", 10 = "+3V3", 12 = "IMU_INT1" }

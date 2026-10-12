@@ -8184,6 +8184,17 @@
 				)
 			)
 		)
+		(property "FT Rotation Offset" "180"
+			(at 40.64 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "2620d513-5e86-4177-9a9e-bc2872077c16")
 		)
@@ -9300,6 +9311,17 @@
 			)
 		)
 		(property "Manufacturer" "JST"
+			(at 198.12 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "FT Rotation Offset" "180"
 			(at 198.12 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -10644,6 +10666,17 @@
 			)
 		)
 		(property "Manufacturer" "Nexperia"
+			(at 40.64 50.8 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "FT Rotation Offset" "180"
 			(at 40.64 50.8 0)
 			(hide yes)
 			(show_name no)

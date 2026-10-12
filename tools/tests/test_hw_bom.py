@@ -28,6 +28,18 @@ class BomCheckTest(unittest.TestCase):
         self.assertIn("R2: design.toml has no mpn", errors)
         self.assertIn("R2: field 'MPN' is '', design says ''", errors)
 
+    def test_rotation_offset_field_must_equal_the_design(self):
+        design = {"part": [{"ref": "D1", "lcsc": "C1", "mpn": "A", "rotation_offset": 180},
+                           {"ref": "U1", "lcsc": "C2", "mpn": "B", "rotation_offset": 90},
+                           {"ref": "R1", "lcsc": "C3", "mpn": "C"}]}
+        fields = {"LCSC Part #": "C1", "MPN": "A", "FT Rotation Offset": "180"}
+        comps = {"D1": {"fields": fields},
+                 "U1": {"fields": {"LCSC Part #": "C2", "MPN": "B"}},
+                 "R1": {"fields": {"LCSC Part #": "C3", "MPN": "C", "FT Rotation Offset": "270"}}}
+        errors = check(design, comps)
+        self.assertEqual(errors, ["U1: field 'FT Rotation Offset' is None, design says '90'",
+                                  "R1: field 'FT Rotation Offset' is '270', design says None"])
+
     def test_sheet_filter_skips_other_sheets(self):
         design = {"part": [{"ref": "R1", "sheet": "power", "lcsc": "C1", "mpn": "A"},
                            {"ref": "R2", "sheet": "periph", "lcsc": "bad", "mpn": ""}]}
