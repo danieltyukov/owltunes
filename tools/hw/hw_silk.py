@@ -68,6 +68,9 @@ MARKS = {
     "perch-dock": [
         # Owner mark on the top, below the pogo pins and clear of the snap-off neck.
         ("Tyukov Inc", "F", -2.0, -6.2, 1.0),
+        # Dock-pad section: which way round it goes into the owl (the cover's key takes the notch
+        # at the DET end), between the pad rows' tracks and vias.
+        ("J2 towards J303 >", "F", -2.5, -17.6, 0.8),
     ],
 }
 

@@ -43,8 +43,11 @@ steps that drive pins need a test build that takes its pins from
    temperature after 30 minutes (R = V(TS) / 75 uA; T in kelvin is
    `1 / (1 / 298.15 + ln(R / 10k) / 3950)`). RT101 reads the board under the cell, so expect it a
    few degrees warmer (see `rev-a.md`, open items).
-10. **Perch.** Dock on a powered perch: DOCK_DET (GPIO1) about 330 mV, CHG_PGOOD low, LED on
-    the perch lit.
+10. **Perch.** Dock on a powered perch and read DOCK_DET (GPIO1) at once: about 0.33 V (330 mV)
+    is right, with CHG_PGOOD low and the LED on the perch lit. 3 V or more means undock at once:
+    either the pins do not touch the pads, or the dock-pad board is turned or its cable reversed,
+    which puts the perch's 5 V on GPIO1 and can lift +3V3 towards 4 V in deep sleep. Redo the
+    meter check of [assembly.md](assembly.md) step 7 before docking again.
 11. **Power.** Measure deep-sleep current from the pack (target about 44 uA, see `rev-a.md`),
     screen-on current, and Wi-Fi RSSI against the Waveshare kit at the same spot. If an encoder is
     fitted on J202, check that it rests open at its detents (a closed channel adds 0.33 mA).

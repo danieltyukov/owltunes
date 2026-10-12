@@ -4396,6 +4396,16 @@
 	)
 	(gr_line
 		(start 86 113)
+		(end 86 115.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "890cbff8-b7f5-44a3-9a93-be08a30b72ee")
+	)
+	(gr_line
+		(start 86 113)
 		(end 98.75 113)
 		(stroke
 			(width 0.05)
@@ -4405,14 +4415,45 @@
 		(uuid "e7387574-4e2d-444c-89b0-cefec5beeb8f")
 	)
 	(gr_line
-		(start 86 121)
-		(end 86 113)
+		(start 86 115.5)
+		(end 87 115.5)
 		(stroke
 			(width 0.05)
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "f49ee98e-6147-421b-b0c3-2280eedc88d7")
+		(uuid "8d8ae717-7952-4e2a-a52b-8670d8ef06ae")
+	)
+	(gr_line
+		(start 86 118.5)
+		(end 86 121)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "1d974d4f-0473-4746-9451-e28901485e29")
+	)
+	(gr_arc
+		(start 87 115.5)
+		(mid 88.5 117)
+		(end 87 118.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "8f8848a8-5e64-495d-8782-f37895867ec3")
+	)
+	(gr_line
+		(start 87 118.5)
+		(end 86 118.5)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "Edge.Cuts")
+		(uuid "e3be5632-9fc9-4da2-89fe-93f0c8c8f107")
 	)
 	(gr_line
 		(start 98.75 108)
@@ -4527,6 +4568,18 @@
 			)
 		)
 	)
+	(gr_text "J2 towards J303 >"
+		(locked yes)
+		(at 97.5 117.6 0)
+		(layer "F.SilkS")
+		(uuid "0b384dee-df7d-4538-b4d4-9e23f301cf31")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.15)
+			)
+		)
+	)
 	(gr_text "GND"
 		(at 100 102.3 0)
 		(layer "F.SilkS")
@@ -4553,7 +4606,7 @@
 		(locked yes)
 		(at 98 106.2 0)
 		(layer "F.SilkS")
-		(uuid "ab3b15dc-9bb4-4aad-a069-49172fffc447")
+		(uuid "3ddfdda5-50f7-4882-8a61-c2083303e283")
 		(effects
 			(font
 				(size 1 1)
@@ -5702,8 +5755,8 @@
 		)
 	)
 	(group "hw_silk"
-		(uuid "afa72870-53cb-47c2-a09c-a22c7d680b28")
-		(members "ab3b15dc-9bb4-4aad-a069-49172fffc447")
+		(uuid "bc879146-6658-409d-8b7c-44d6978cc68b")
+		(members "0b384dee-df7d-4538-b4d4-9e23f301cf31" "3ddfdda5-50f7-4882-8a61-c2083303e283")
 	)
 	(embedded_fonts no)
 )

@@ -240,6 +240,13 @@ def back_cover(mark: bool = True) -> Part:
     plate -= Pos(0, DOCK_BOARD_Y + DOCK_BOARD[1] / 2 + rd / 2 - EPS, (recess_z0 + BATTERY_BACK_Z + EPS) / 2) * Box(
         rw, rd + EPS, DOCK_BOARD[2] + EPS
     )
+    # key: a tongue at the recess's DET end (-x) fills the board's notch (owl_params DOCK_KEY_*) up to
+    # the board's back face, so the board seats only with J2 towards J303
+    kx = -P.DOCK_PAD_BOARD[0] / 2 + P.DOCK_KEY_DEPTH - P.DOCK_KEY_R
+    kr = P.DOCK_KEY_R - P.DOCK_KEY_CLEAR
+    x0, kz0, kz1 = -DOCK_BOARD[0] / 2 - EPS, recess_z0 - EPS, recess_z0 + P.DOCK_PAD_BOARD[2]
+    plate += Pos((x0 + kx) / 2, DOCK_BOARD_Y, kz0) * Box(kx - x0, 2 * kr, kz1 - kz0, align=R.BOTTOM)
+    plate += by_depth(kx, DOCK_BOARD_Y, kr, kz0, kz1)
     for k in (-1, 0, 1):
         plate -= by_depth(k * DOCK_PAD_PITCH, DOCK_PAD_Y, DOCK_PAD_WINDOW_D / 2, BACK_Z - EPS, BATTERY_BACK_Z)
     magnet_top = BACK_Z + DOCK_MAGNET_FLOOR + DOCK_MAGNET_H

@@ -183,6 +183,14 @@ MODULE_SIDE = "back"  # the WROOM-1 sits on the PCB back side; its antenna overh
 DOCK_PAD_PITCH = 4.5
 DOCK_PAD_Y = -31.0
 DOCK_PAD_ORDER = ("PAD_DET", "PAD_GND", "PAD_VBUS")
+# The dock-pad board (the perch board's snap-off section, with J2 beyond PAD_VBUS) is keyed: a notch with
+# a round end in its DET end, centred across the board, takes a tongue standing in the back cover's
+# recess, so the board seats only with J2 towards J303. Turned round, the VBUS pad would meet the perch's
+# DET pin and put the perch's 5 V on GPIO1.
+DOCK_PAD_BOARD = (28.0, 8.0, 1.6)
+DOCK_KEY_R = 1.5  # half the notch width, and the radius of its end
+DOCK_KEY_DEPTH = 2.5  # from the board's DET end to the bottom of the notch
+DOCK_KEY_CLEAR = 0.2  # per side between the tongue and the notch, as between the board and its recess
 
 # LRA: Leader LD0832AA-0099F specification REV.00 (LCSC C2682305), page 13: body 8 +-0.1 x 3.25 +-0.1
 # (plus 0.3 foam on top and 0.15 tape under it), leads 27 +-2 long. At the mounting face the lead tab

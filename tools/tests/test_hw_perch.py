@@ -147,6 +147,42 @@ class PerchTest(unittest.TestCase):
         self.assertTrue(any(e.startswith("LED1") for e in errors), errors)
         self.assertTrue(any(e.startswith("H1") for e in errors), errors)
 
+    def test_dock_pad_board_is_keyed_at_its_det_end(self):
+        # owl_params DOCK_KEY_*: the notch the back cover's tongue takes is in the pad section's DET
+        # end, J2 at the other end, so the board seats in the owl only with J2 towards J303
+        board = self.load_board()
+        import pcbnew  # after load_board, which skips without KiCad
+
+        mm = pcbnew.ToMM
+        refs = {fp.GetReference(): fp for fp in board.GetFootprints()}
+        w, h, _ = P.DOCK_PAD_BOARD
+        edges = [s for s in board.GetDrawings() if s.GetLayer() == pcbnew.Edge_Cuts]
+        # the pad section: everything below the neck (the pads sit 0.5 above its centre line)
+        top = mm(refs["PAD2"].GetPosition().y) - h / 2
+        pts = [(mm(p.x), mm(p.y)) for s in edges for p in (s.GetStart(), s.GetEnd()) if mm(p.y) > top]
+        x0, x1 = min(p[0] for p in pts), max(p[0] for p in pts)
+        y0, y1 = min(p[1] for p in pts), max(p[1] for p in pts)
+        self.assertAlmostEqual(x1 - x0, w, places=2)
+        self.assertAlmostEqual(y1 - y0, h, places=2)
+        mid = (x0 + x1) / 2
+        s = 1 if mm(refs["PAD1"].GetPosition().x) < mid else -1  # +1: the DET end is at x0
+        end = x0 if s > 0 else x1
+        cx, cy = end + s * (P.DOCK_KEY_DEPTH - P.DOCK_KEY_R), (y0 + y1) / 2
+        self.assertGreater(s * (mm(refs["J2"].GetPosition().x) - mid), 0, "J2 must be at the other end")
+
+        def near(p, x, y):
+            return abs(mm(p.x) - x) < 0.01 and abs(mm(p.y) - y) < 0.01
+
+        arcs = [e for e in edges if e.GetShape() == pcbnew.SHAPE_T_ARC]
+        self.assertTrue(any(near(a.GetCenter(), cx, cy) and abs(mm(a.GetRadius()) - P.DOCK_KEY_R) < 0.01
+                            and near(a.GetArcMid(), end + s * P.DOCK_KEY_DEPTH, cy) for a in arcs),
+                        f"no notch end of r {P.DOCK_KEY_R} at ({cx}, {cy})")
+        for y in (cy - P.DOCK_KEY_R, cy + P.DOCK_KEY_R):
+            self.assertTrue(any({(round(mm(e.GetStart().x), 2), round(mm(e.GetStart().y), 2)),
+                                 (round(mm(e.GetEnd().x), 2), round(mm(e.GetEnd().y), 2))}
+                                == {(round(end, 2), round(y, 2)), (round(cx, 2), round(y, 2))} for e in edges),
+                            f"no notch side at y {y}")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -291,6 +291,35 @@ def test_dock_pad_board_clears_the_battery_and_the_alignment_recesses():
         assert k * V.DOCK_PAD_PITCH + V.DOCK_PAD_WINDOW_D / 2 < w / 2
 
 
+def dock_pad_board(turned: bool = False):
+    """The dock-pad board on its recess floor, its key notch in the DET end (-x), or turned round by
+    180 degrees about the recess centre."""
+    w, h, t = P.DOCK_PAD_BOARD
+    z0 = V.BATTERY_BACK_Z - V.DOCK_BOARD[2]
+    cx = -w / 2 + P.DOCK_KEY_DEPTH - P.DOCK_KEY_R
+    board = Pos(0, 0, z0) * Box(w, h, t, align=R.BOTTOM)
+    board -= Pos((cx - w / 2 - 1.0) / 2, 0, z0 - 1.0) * Box(cx + w / 2 + 1.0, 2 * P.DOCK_KEY_R, t + 2.0, align=R.BOTTOM)
+    board -= Pos(cx, 0, z0 - 1.0) * Cylinder(P.DOCK_KEY_R, t + 2.0, align=R.BOTTOM)
+    return Pos(0, V.DOCK_BOARD_Y) * (Rot(0, 0, 180) * board if turned else board)
+
+
+def test_dock_pad_board_seats_only_with_j2_towards_j303(parts):
+    # the key sits at the DET end; J2 is beyond PAD_VBUS, at the other end
+    assert P.DOCK_PAD_ORDER[0] == "PAD_DET"
+    for recess, board in zip(V.DOCK_BOARD[:2], P.DOCK_PAD_BOARD[:2]):
+        assert recess == pytest.approx(board + 2 * P.DOCK_KEY_CLEAR)
+    cover = parts["back_cover"]
+    assert overlap_volume(dock_pad_board(), cover) < 1e-3
+    assert overlap_volume(dock_pad_board(turned=True), cover) > 1.0
+    # the tongue is a structural wall across, and stands to the board's back face
+    w, _h, t = P.DOCK_PAD_BOARD
+    cx = -w / 2 + P.DOCK_KEY_DEPTH - P.DOCK_KEY_R
+    z = V.BATTERY_BACK_Z - V.DOCK_BOARD[2] + t - 0.05
+    across = chords(cover, (cx, V.DOCK_BOARD_Y - 3.0, z), (cx, V.DOCK_BOARD_Y + 3.0, z))
+    assert across == [pytest.approx(2 * (P.DOCK_KEY_R - P.DOCK_KEY_CLEAR))]
+    assert across[0] >= P.MJF_STRUCT_WALL
+
+
 def test_battery_fits_between_board_and_cover():
     assert V.BATTERY_FRONT_Z - V.BATTERY_BACK_Z == pytest.approx(C.BATTERY_T)
     assert V.PCB_BACK_Z - V.BATTERY_FRONT_Z == pytest.approx(C.BATTERY_FOAM)
