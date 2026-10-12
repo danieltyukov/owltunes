@@ -314,11 +314,12 @@ def extra_checks(owl: Owl) -> None:
     status, body = http_get(f"{base}?error=access_denied&state={state}")
     check(status == 400 and "cancelled" in body, "the callback reports a cancelled login")
     since = owl.mark()
-    status, body = http_get(f"{base}?code=AQDlan&state={state}")
+    code = "AQD" + "l" * 1020  # the longest code the owl takes: 1023 characters
+    status, body = http_get(f"{base}?code={code}&state={state}")
     check(status == 200 and "linking to Spotify" in body, "the callback accepts the code")
     owl.wait_event("spotify", "linking", since=since)
     failed = owl.wait_event("spotify", "failed", timeout=90, since=since)
-    check(failed.get("error") in ("invalid_client", "invalid_grant"), "a code from the LAN reaches Spotify too")
+    check(failed.get("error") in ("invalid_client", "invalid_grant"), "a 1023-character code from the LAN reaches Spotify too")
     check(wait_listening(base, False), "the callback server stops when the login ends")
 
 
