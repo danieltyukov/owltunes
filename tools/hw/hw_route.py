@@ -428,6 +428,15 @@ GROUPS = {
     # - +3V3, U301 group (U301, C304, C305, R105, R106, R308): F.Cu from that group's via at
     #   (26.28, 2.22) west at y 2.5, between the VIN_CHG tap's via and the VSYS F.Cu run, to a via
     #   beside TP104 on the TPS63802 output.
+    # - I2C_SDA, U304 pin 6 (boxed in by the antenna rule area above y 33, U304's own pins and
+    #   the +3V3 F.Cu runs): F.Cu west at y 32.8 above ESP_EN's run, north-west beside its
+    #   diagonal and west at y 35.2 over the +3V3 vias at x 7.3, a via inside the module's pin
+    #   ring and B.Cu under the module to the SDA run from pin 35. The Freerouting GND diagonals
+    #   under the module that crossed this path are gone; the B.Cu pour joins those pads.
+    # - I2C_SDA, U102 pin 8: a via below the pin, F.Cu north round CHG_PGOOD's via at
+    #   (21.65, 13.3) and south at x 20.5, a B.Cu hop under the VSYS and +3V3 F.Cu runs (between
+    #   the +3V3 via beside TP104 and TP103), F.Cu south at x 20.55 to the bus via at
+    #   (19.929, -11.292) on the U301 side.
     "late_links": [
         ("+3V3", 0.25, [(-11.41, 27.99), (-12.1, 27.75)]),
         ("+3V3", 0.25, [(-12.1, 27.75), (-11.85, 27.5), (-6.3, 27.5)], "F"),
@@ -435,6 +444,14 @@ GROUPS = {
         ("+3V3", 0.25, [(18.3, 2.6), (19.25, 2.5)]),
         ("+3V3", 0.25, [(19.25, 2.5), (25.95, 2.5), (26.28, 2.22)], "F"),
         ("+3V3", "via", [(19.25, 2.5)]),
+        ("I2C_SDA", 0.15, [(16.35, 32.45), (16.0, 32.8), (10.15, 32.8), (7.75, 35.2), (5.6, 35.2)], "F"),
+        ("I2C_SDA", 0.15, [(5.6, 35.2), (1.5, 31.1), (-6.2, 31.1), (-7.0, 30.3), (-7.0, 28.5)]),
+        ("I2C_SDA", 0.15, [(25.25, 9.01), (25.25, 8.1)]),
+        ("I2C_SDA", 0.15, [(25.25, 8.1), (25.25, 12.9), (24.15, 14.0), (21.2, 14.0), (20.5, 13.3),
+                           (20.5, 5.0), (19.8, 4.3)], "F"),
+        ("I2C_SDA", 0.15, [(19.8, 4.3), (19.8, 1.6)]),
+        ("I2C_SDA", 0.15, [(19.8, 1.6), (20.55, 0.85), (20.55, -10.67), (19.929, -11.292)], "F"),
+        ("I2C_SDA", "via", [(5.6, 35.2), (25.25, 8.1), (19.8, 4.3), (19.8, 1.6)]),
     ],
     # Inner planes. In1 is solid GND. In2 is GND too (the reference for the B.Cu parts: U101,
     # U103 and their caps, the crystal, the QSPI block and the USB corridor) except for a +3V3

@@ -26720,14 +26720,6 @@
 		(uuid "082d5f58-6643-486f-bac5-4cfe6edf902e")
 	)
 	(segment
-		(start 100.8 70.71)
-		(end 101.5 70.71)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "GND")
-		(uuid "08853169-1fe1-4dab-aa66-807c24950a18")
-	)
-	(segment
 		(start 87.6116 82.9509)
 		(end 87.6116 81.8417)
 		(width 0.25)
@@ -27477,14 +27469,6 @@
 		(uuid "70a24093-bf61-41d8-9f05-5decfcec9132")
 	)
 	(segment
-		(start 107.12 64.39)
-		(end 100.8 70.71)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "GND")
-		(uuid "71558689-0a7c-4d63-ad59-6efa2a69ca97")
-	)
-	(segment
 		(start 126.72 89.01)
 		(end 126.72 89.55)
 		(width 0.2)
@@ -28034,14 +28018,6 @@
 		(layer "B.Cu")
 		(net "GND")
 		(uuid "beb7c2fa-ff6c-46fe-891e-bab318faeb42")
-	)
-	(segment
-		(start 94.48 64.39)
-		(end 100.8 70.71)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "GND")
-		(uuid "c2af4c14-9f81-4118-9f27-d66aff50282f")
 	)
 	(segment
 		(start 124.25 101.438)
@@ -29960,15 +29936,6 @@
 		(uuid "0c3fd47d-b566-4b7d-9688-9fef6cf3a55b")
 	)
 	(segment
-		(start 87.9 72.25)
-		(end 88.15 72.5)
-		(width 0.25)
-		(locked yes)
-		(layer "F.Cu")
-		(net "+3V3")
-		(uuid "117d98be-001d-4175-920a-23ed0e544a70")
-	)
-	(segment
 		(start 128.6 115.75)
 		(end 124 115.75)
 		(width 0.25)
@@ -29986,13 +29953,22 @@
 		(uuid "2559dbb0-a5d7-4d17-905c-fd3da393f4f1")
 	)
 	(segment
-		(start 119.25 97.5)
-		(end 125.95 97.5)
+		(start 87.9 72.25)
+		(end 88.15 72.5)
 		(width 0.25)
 		(locked yes)
 		(layer "F.Cu")
 		(net "+3V3")
-		(uuid "35b0e943-06e7-4ed7-b4a1-b195e0a64dbc")
+		(uuid "37211701-5565-4ea8-af80-e07e1a5fb8d2")
+	)
+	(segment
+		(start 88.15 72.5)
+		(end 93.7 72.5)
+		(width 0.25)
+		(locked yes)
+		(layer "F.Cu")
+		(net "+3V3")
+		(uuid "3a635db0-4126-4b8b-983d-76b5f6222b77")
 	)
 	(segment
 		(start 123.9737 110.7537)
@@ -30027,6 +30003,15 @@
 		(uuid "60097af9-9d8e-4dee-99fc-e6198f79a157")
 	)
 	(segment
+		(start 125.95 97.5)
+		(end 126.28 97.78)
+		(width 0.25)
+		(locked yes)
+		(layer "F.Cu")
+		(net "+3V3")
+		(uuid "624c688d-88cb-4724-9c8f-9b7906a9f40e")
+	)
+	(segment
 		(start 126.2836 108.4438)
 		(end 126.2836 97.7827)
 		(width 0.25)
@@ -30059,15 +30044,6 @@
 		(uuid "7f114b2e-6e5b-425a-b9b5-a2644703d1ba")
 	)
 	(segment
-		(start 88.15 72.5)
-		(end 93.7 72.5)
-		(width 0.25)
-		(locked yes)
-		(layer "F.Cu")
-		(net "+3V3")
-		(uuid "7f9dad21-e5b5-49ae-bfeb-b9b9a1f45976")
-	)
-	(segment
 		(start 119.2 70.0659)
 		(end 119.2 69.28)
 		(width 0.25)
@@ -30084,13 +30060,13 @@
 		(uuid "8640b446-1e2c-4341-b2f4-921691ae95f5")
 	)
 	(segment
-		(start 125.95 97.5)
-		(end 126.28 97.78)
+		(start 119.25 97.5)
+		(end 125.95 97.5)
 		(width 0.25)
 		(locked yes)
 		(layer "F.Cu")
 		(net "+3V3")
-		(uuid "a4a222c9-6263-4c78-bad3-6c6b41cc1280")
+		(uuid "a72ceb4e-62f9-4471-9eee-88af958b781c")
 	)
 	(segment
 		(start 107.3 69.6079)
@@ -30144,6 +30120,15 @@
 		(uuid "fd904796-e9c6-460c-9423-463e32e79fd8")
 	)
 	(via
+		(at 87.9 72.25)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "+3V3")
+		(uuid "1a432538-a22b-4ee9-9a78-27fe76d2a09b")
+	)
+	(via
 		(at 80.9898 70.74)
 		(size 0.6)
 		(drill 0.3)
@@ -30166,15 +30151,6 @@
 		(layers "F.Cu" "B.Cu")
 		(net "+3V3")
 		(uuid "22b7c510-a40d-4349-9e46-16531e058f16")
-	)
-	(via
-		(at 93.7 72.5)
-		(size 0.5)
-		(drill 0.3)
-		(layers "F.Cu" "B.Cu")
-		(locked yes)
-		(net "+3V3")
-		(uuid "33dd5b1c-b87a-44f5-8466-cdc096bd3e90")
 	)
 	(via
 		(at 107 79)
@@ -30211,15 +30187,6 @@
 		(uuid "596cb57d-9264-4ac5-af51-0a76c2e75003")
 	)
 	(via
-		(at 87.9 72.25)
-		(size 0.5)
-		(drill 0.3)
-		(layers "F.Cu" "B.Cu")
-		(locked yes)
-		(net "+3V3")
-		(uuid "5a7fd534-6b4e-46bc-bf57-b3e2f7fefd0a")
-	)
-	(via
 		(at 107 80)
 		(size 0.5)
 		(drill 0.3)
@@ -30237,6 +30204,15 @@
 		(uuid "79672ef6-3ee8-4a7f-9476-2c8c08c04d88")
 	)
 	(via
+		(at 119.25 97.5)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "+3V3")
+		(uuid "82ea48a2-660e-4174-880a-8b507eedafc5")
+	)
+	(via
 		(at 111.8 94.8)
 		(size 0.5)
 		(drill 0.3)
@@ -30246,13 +30222,13 @@
 		(uuid "8f267084-a269-4218-89f7-730d794a135a")
 	)
 	(via
-		(at 119.25 97.5)
+		(at 93.7 72.5)
 		(size 0.5)
 		(drill 0.3)
 		(layers "F.Cu" "B.Cu")
 		(locked yes)
 		(net "+3V3")
-		(uuid "af4720ee-0b4e-47c1-a46e-15ace72253b2")
+		(uuid "b2f87351-e712-4801-ae90-207a23e15c16")
 	)
 	(via
 		(at 107.3 65.66)
@@ -30305,6 +30281,15 @@
 		(layer "B.Cu")
 		(net "+3V3")
 		(uuid "011d3bed-2d7f-49e6-a3b6-4333b68199d4")
+	)
+	(segment
+		(start 88.59 72.01)
+		(end 87.9 72.25)
+		(width 0.25)
+		(locked yes)
+		(layer "B.Cu")
+		(net "+3V3")
+		(uuid "09ff78b8-3faf-4b24-bbf9-610a1ded8a2b")
 	)
 	(segment
 		(start 107.3 65.66)
@@ -30459,15 +30444,6 @@
 		(layer "B.Cu")
 		(net "+3V3")
 		(uuid "41a625f8-77a3-45b4-abc2-c40a9cd69e0e")
-	)
-	(segment
-		(start 118.3 97.4)
-		(end 119.25 97.5)
-		(width 0.25)
-		(locked yes)
-		(layer "B.Cu")
-		(net "+3V3")
-		(uuid "41c15aa0-5406-4e04-987b-38c1894d80d4")
 	)
 	(segment
 		(start 100.763 105.25)
@@ -30689,6 +30665,15 @@
 		(layer "B.Cu")
 		(net "+3V3")
 		(uuid "89c979ff-9d41-4ce5-a1f9-607bbe719114")
+	)
+	(segment
+		(start 118.3 97.4)
+		(end 119.25 97.5)
+		(width 0.25)
+		(locked yes)
+		(layer "B.Cu")
+		(net "+3V3")
+		(uuid "8b748610-deb2-4b96-bdec-87eeff5d8458")
 	)
 	(segment
 		(start 111 101.2)
@@ -30970,15 +30955,6 @@
 		(layer "B.Cu")
 		(net "+3V3")
 		(uuid "e7a0a114-1401-46c9-b890-a10b7b3b8423")
-	)
-	(segment
-		(start 88.59 72.01)
-		(end 87.9 72.25)
-		(width 0.25)
-		(locked yes)
-		(layer "B.Cu")
-		(net "+3V3")
-		(uuid "e91645e1-0641-42b4-8f20-97bc6a811f5e")
 	)
 	(segment
 		(start 114.725 98.6)
@@ -31480,6 +31456,33 @@
 		(uuid "fe215c49-0fa8-41cc-9a26-e696f6bd63b5")
 	)
 	(segment
+		(start 107.75 64.8)
+		(end 105.6 64.8)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "08387458-90ed-4cc5-b84e-44805f5846ef")
+	)
+	(segment
+		(start 125.25 87.1)
+		(end 124.15 86)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "09dafdd2-9183-4034-a7bb-61dd239778f0")
+	)
+	(segment
+		(start 124.15 86)
+		(end 121.2 86)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "194a1d7c-e0c6-4447-bc54-fd5f50ae9324")
+	)
+	(segment
 		(start 119.929 113.6162)
 		(end 120.3128 114)
 		(width 0.15)
@@ -31488,12 +31491,39 @@
 		(uuid "21cebc39-b2d8-4f92-a11f-0a5ffc7c96c2")
 	)
 	(segment
+		(start 120.5 86.7)
+		(end 120.5 95)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "22d4ad5d-a572-4db2-9d7d-e86dae169697")
+	)
+	(segment
+		(start 125.25 91.9)
+		(end 125.25 87.1)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "3fd72ef1-9276-40e2-99a4-2c6ed95cb565")
+	)
+	(segment
 		(start 92.56 101.4338)
 		(end 92.56 88.3925)
 		(width 0.15)
 		(layer "F.Cu")
 		(net "I2C_SDA")
 		(uuid "4f2b4eae-4f54-438e-86a4-586f1cdc9bed")
+	)
+	(segment
+		(start 120.55 99.15)
+		(end 120.55 110.67)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "63ebae01-09e1-41e0-8d20-6a203ca0af2b")
 	)
 	(segment
 		(start 107.7607 108.7921)
@@ -31528,6 +31558,33 @@
 		(uuid "a2e83568-e5e6-4cec-83e2-88da8b464320")
 	)
 	(segment
+		(start 116 67.2)
+		(end 110.15 67.2)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "b73b166b-3ed2-4661-8a59-f8994ab90efd")
+	)
+	(segment
+		(start 120.55 110.67)
+		(end 119.929 111.292)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "b8c7a5dc-f3de-4e6f-aaad-46e30ccb86ef")
+	)
+	(segment
+		(start 121.2 86)
+		(end 120.5 86.7)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "c49289b8-7a13-4ddc-98aa-c8076a8aeafa")
+	)
+	(segment
 		(start 119.929 111.2917)
 		(end 119.929 113.6162)
 		(width 0.15)
@@ -31536,12 +31593,66 @@
 		(uuid "d703ea70-76c5-48ee-bb97-401bf3dd41f8")
 	)
 	(segment
+		(start 120.5 95)
+		(end 119.8 95.7)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "da50d8fd-d5b4-4a2a-a517-2dfd263cc841")
+	)
+	(segment
 		(start 92.78 88.1725)
 		(end 92.78 79.7638)
 		(width 0.15)
 		(layer "F.Cu")
 		(net "I2C_SDA")
 		(uuid "e5d71c32-3f19-4996-b8bb-1d72af400c98")
+	)
+	(segment
+		(start 110.15 67.2)
+		(end 107.75 64.8)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "ebffc6dc-7aed-4944-b7d5-e2d13abf2db6")
+	)
+	(segment
+		(start 116.35 67.55)
+		(end 116 67.2)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "f2470f84-59f2-4aa0-be43-55a0ad0df58e")
+	)
+	(segment
+		(start 119.8 98.4)
+		(end 120.55 99.15)
+		(width 0.15)
+		(locked yes)
+		(layer "F.Cu")
+		(net "I2C_SDA")
+		(uuid "fc978194-c6e9-43ba-99a2-55778dd82e80")
+	)
+	(via
+		(at 119.8 98.4)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "I2C_SDA")
+		(uuid "0af00b1d-c8e3-4a34-a5b9-c66e1f5ff392")
+	)
+	(via
+		(at 125.25 91.9)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "I2C_SDA")
+		(uuid "179ae128-7f41-41ae-906f-028610a1e75a")
 	)
 	(via
 		(at 92.56 101.4338)
@@ -31584,12 +31695,30 @@
 		(uuid "81d91fb3-d68d-4b71-b8f5-1b4fdb241ad4")
 	)
 	(via
+		(at 119.8 95.7)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "I2C_SDA")
+		(uuid "b652bce7-09bb-497a-bb39-d59f31670382")
+	)
+	(via
 		(at 119.929 111.2917)
 		(size 0.5)
 		(drill 0.3)
 		(layers "F.Cu" "B.Cu")
 		(net "I2C_SDA")
 		(uuid "bd0a22f2-95d3-494c-937f-c4d82db5e763")
+	)
+	(via
+		(at 105.6 64.8)
+		(size 0.5)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(locked yes)
+		(net "I2C_SDA")
+		(uuid "f51acc23-05c4-4873-a431-5fa693436710")
 	)
 	(segment
 		(start 91.25 70.74)
@@ -31624,6 +31753,15 @@
 		(uuid "4c2f999f-5781-46a8-9642-8a4b7aea6b71")
 	)
 	(segment
+		(start 119.8 95.7)
+		(end 119.8 98.4)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "I2C_SDA")
+		(uuid "53215ec4-079d-48ac-8d35-8ad721b9aba4")
+	)
+	(segment
 		(start 110.2603 111.2917)
 		(end 107.7607 108.7921)
 		(width 0.15)
@@ -31648,12 +31786,48 @@
 		(uuid "74a90136-f424-4de9-8174-0a44c7568ca3")
 	)
 	(segment
+		(start 93.8 68.9)
+		(end 93 69.7)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "I2C_SDA")
+		(uuid "7652a0a6-e5bf-4a0d-ba14-dc9c0bbc70ce")
+	)
+	(segment
+		(start 125.25 90.99)
+		(end 125.25 91.9)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "I2C_SDA")
+		(uuid "7d54544a-6e7c-428f-b361-a700015dcd8b")
+	)
+	(segment
+		(start 93 69.7)
+		(end 93 71.5)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "I2C_SDA")
+		(uuid "805da20c-5124-4d87-ae42-0d5d774b0347")
+	)
+	(segment
 		(start 99.2375 103.8483)
 		(end 99.3692 103.7166)
 		(width 0.15)
 		(layer "B.Cu")
 		(net "I2C_SDA")
 		(uuid "87cc924a-d3c9-4a59-bf55-cf673829baa0")
+	)
+	(segment
+		(start 105.6 64.8)
+		(end 101.5 68.9)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "I2C_SDA")
+		(uuid "8e673582-acb2-44a8-90ff-3f7f5e5a087b")
 	)
 	(segment
 		(start 92.56 101.4338)
@@ -31694,6 +31868,15 @@
 		(layer "B.Cu")
 		(net "I2C_SDA")
 		(uuid "bb19c6f8-754d-4d97-9e9e-3ee5b2d749ae")
+	)
+	(segment
+		(start 101.5 68.9)
+		(end 93.8 68.9)
+		(width 0.15)
+		(locked yes)
+		(layer "B.Cu")
+		(net "I2C_SDA")
+		(uuid "ceb1d37c-d18e-46ed-a41b-b53072016dce")
 	)
 	(segment
 		(start 91.25 70.74)
@@ -44215,6 +44398,26 @@
 			"f8d22fea-6bc6-4a3b-8f75-676d26d8220e" "f94c7ede-b571-4f59-927a-3e262213e577"
 		)
 	)
+	(group "hw_route late_links"
+		(uuid "873a8bc8-3aba-40d2-b8ad-c4b78c1046dd")
+		(members "08387458-90ed-4cc5-b84e-44805f5846ef" "09dafdd2-9183-4034-a7bb-61dd239778f0"
+			"09ff78b8-3faf-4b24-bbf9-610a1ded8a2b" "0af00b1d-c8e3-4a34-a5b9-c66e1f5ff392"
+			"179ae128-7f41-41ae-906f-028610a1e75a" "194a1d7c-e0c6-4447-bc54-fd5f50ae9324"
+			"1a432538-a22b-4ee9-9a78-27fe76d2a09b" "22d4ad5d-a572-4db2-9d7d-e86dae169697"
+			"37211701-5565-4ea8-af80-e07e1a5fb8d2" "3a635db0-4126-4b8b-983d-76b5f6222b77"
+			"3fd72ef1-9276-40e2-99a4-2c6ed95cb565" "53215ec4-079d-48ac-8d35-8ad721b9aba4"
+			"624c688d-88cb-4724-9c8f-9b7906a9f40e" "63ebae01-09e1-41e0-8d20-6a203ca0af2b"
+			"7652a0a6-e5bf-4a0d-ba14-dc9c0bbc70ce" "7d54544a-6e7c-428f-b361-a700015dcd8b"
+			"805da20c-5124-4d87-ae42-0d5d774b0347" "82ea48a2-660e-4174-880a-8b507eedafc5"
+			"8b748610-deb2-4b96-bdec-87eeff5d8458" "8e673582-acb2-44a8-90ff-3f7f5e5a087b"
+			"a72ceb4e-62f9-4471-9eee-88af958b781c" "b2f87351-e712-4801-ae90-207a23e15c16"
+			"b652bce7-09bb-497a-bb39-d59f31670382" "b73b166b-3ed2-4661-8a59-f8994ab90efd"
+			"b8c7a5dc-f3de-4e6f-aaad-46e30ccb86ef" "c49289b8-7a13-4ddc-98aa-c8076a8aeafa"
+			"ceb1d37c-d18e-46ed-a41b-b53072016dce" "da50d8fd-d5b4-4a2a-a517-2dfd263cc841"
+			"ebffc6dc-7aed-4944-b7d5-e2d13abf2db6" "f2470f84-59f2-4aa0-be43-55a0ad0df58e"
+			"f51acc23-05c4-4873-a431-5fa693436710" "fc978194-c6e9-43ba-99a2-55778dd82e80"
+		)
+	)
 	(group "hw_route vbus_usb"
 		(uuid "894b07e8-6891-4e4e-8304-d29ad71d20ad")
 		(members "0d855462-9882-4c38-a9cf-d32acfc4d066" "0f069712-10b9-4ec6-b290-cb70dfd481c1"
@@ -44313,15 +44516,6 @@
 			"dc71d9ed-e435-46ba-a864-37041ce2638c" "dda9a3c1-b788-49ff-8d00-5a38ece7a36f"
 			"df6533b2-667e-4ce6-89d0-af37006de70a" "e2a8599c-9171-4af3-a81b-592b6c3f702f"
 			"f73c19b2-741f-43e2-972f-918b8d13bf21" "fa02f870-e335-4367-8a08-725f8689b8f0"
-		)
-	)
-	(group "hw_route late_links"
-		(uuid "eede7fae-0ec6-45f6-a86f-f4a2d0d0c283")
-		(members "117d98be-001d-4175-920a-23ed0e544a70" "33dd5b1c-b87a-44f5-8466-cdc096bd3e90"
-			"35b0e943-06e7-4ed7-b4a1-b195e0a64dbc" "41c15aa0-5406-4e04-987b-38c1894d80d4"
-			"5a7fd534-6b4e-46bc-bf57-b3e2f7fefd0a" "7f9dad21-e5b5-49ae-bfeb-b9b9a1f45976"
-			"a4a222c9-6263-4c78-bad3-6c6b41cc1280" "af4720ee-0b4e-47c1-a46e-15ace72253b2"
-			"e91645e1-0641-42b4-8f20-97bc6a811f5e"
 		)
 	)
 	(group "hw_route stitching"
