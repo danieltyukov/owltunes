@@ -8,7 +8,7 @@
 #include "esp_timer.h"
 #include "spotify_auth.h"
 
-#define QUERY_MAX 2048 /* a 1023-character code, the state and Spotify's other parameters */
+#define QUERY_MAX 2048 /* a 1023-character code and the state: the only parameters that reach the owl */
 #define STOP_LOG_EVERY_US (30 * 1000 * 1000) /* a stop that keeps failing is logged this often */
 
 static const char *TAG = "callback";
