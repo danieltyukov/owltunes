@@ -18,7 +18,8 @@ planes); the outer GND pours and the stitching vias come after the session impor
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
 Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
-qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 local_power late_links planes outer_pours stitching.
+qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 local_power late_links planes outer_pours stitching
+pour_vias.
 Needs KiCad's pcbnew Python module.
 """
 
@@ -502,6 +503,15 @@ GROUPS = {
     "outer_pours": [
         ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (-32.0, 44.0)], "F", 0),
         ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (-32.0, 44.0)], "B", 0),
+    ],
+    # One GND via in each region of the outer pours that the tracks round it enclose (review M2):
+    # without a via the filler drops the region as an island. Each sits at the deepest spot of its
+    # region that is outside every courtyard (for the region beside the module's exposed pad,
+    # under the module) and clear of other copper on both outer layers. The first three are for
+    # F.Cu regions, the rest for B.Cu regions; regions under 4 mm2 or too thin for a via stay empty.
+    "pour_vias": [
+        ("GND", "via", [(10.05, 13.99), (21.75, 5.6), (6.67, -6.7), (11.6, -16.82), (-16.47, -9.59),
+                        (-21.36, -3.33), (3.54, 21.57), (-1.38, -6.45), (-9.56, 15.61), (25.35, -6.5)]),
     ],
 }
 
