@@ -7803,7 +7803,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "2k"
+		(property "Value" "3.3k"
 			(at 0 -1.17 180)
 			(layer "B.Fab")
 			(uuid "c9085bf8-d26b-4dd8-9604-b22e879aa27a")
@@ -7852,7 +7852,7 @@
 				(justify mirror)
 			)
 		)
-		(property "LCSC Part #" "C4109"
+		(property "LCSC Part #" "C25890"
 			(at 0 0 180)
 			(layer "B.SilkS")
 			(hide yes)
@@ -7865,7 +7865,7 @@
 				(justify mirror)
 			)
 		)
-		(property "MPN" "0402WGF2001TCE"
+		(property "MPN" "0402WGF3301TCE"
 			(at 0 0 180)
 			(layer "B.SilkS")
 			(hide yes)

@@ -35,9 +35,9 @@ steps that drive pins need a test build that takes its pins from
    protection; see [assembly.md](assembly.md) step 6). Connect the pack with USB plugged in:
    BAT_NTC (U101 pin 1, TS, or RT101's pad on the copper patch side) reads about 0.75 V at 25 C
    (75 uA into RT101's 10k), CHG_STAT (GPIO8) is low while charging, the MAX17048 reports a
-   sensible state of charge, and the charge current measured in the battery lead is about 0.42 A
-   less the system load (on USB the input limit, typically 0.424 A, is below the 0.445 A ICHG
-   setting). CHG_STAT low with no charge current means a TS fault: RT101 open (a lifted or
+   sensible state of charge, and the charge current measured in the battery lead is about 0.27 A
+   (0.24 to 0.30 A, set by R101 3.3k; less if the system load takes the input past its 0.37 to
+   0.48 A limit). CHG_STAT low with no charge current means a TS fault: RT101 open (a lifted or
    tombstoned pad), or the board at RT101 outside +3.5 to 47.2 C (TS outside 0.30 to 2.1 V). Then
    charge a cell from about 3.5 V with a thermocouple taped to it and compare it with RT101's
    temperature after 30 minutes (R = V(TS) / 75 uA; T in kelvin is

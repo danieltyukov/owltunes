@@ -20,7 +20,7 @@ is a header only for now: rev A board support arrives with the P3 board selectio
    |  CC: 5.1k x2
  VBUS_USB --TVS-- Schottky --+              TS: RT101 10k NTC
                              +-- VIN_CHG -- BQ24073 --- VSYS --- TPS63802 --- +3V3 (always on)
- VBUS_DOCK -TVS-- Schottky --+   (ILIM 0.42 A)  |  ICHG 0.45 A    (3.30 V)        |
+ VBUS_DOCK -TVS-- Schottky --+   (ILIM 0.42 A)  |  ICHG 0.27 A    (3.30 V)        |
    (J303 from the dock pads)                    BAT --- JST PH 2-pin: 1S LiPo       +-- TPS22917 -- DISP_3V3
                                                 |                                    |    (AMOLED, touch)
                                           MAX17048 (VBAT)                            +-- ESP32-S3-WROOM-1-N16R8
@@ -68,18 +68,26 @@ Bought separately and fitted at assembly ([assembly.md](assembly.md) steps 6 and
 ## Calculations
 
 Charger (BQ24073, TI SLUS810N section 8.5):
-- Fast charge: ICHG = KISET / RISET = 890 / 2000 = 0.445 A (0.399 to 0.488 A over KISET 797 to 975).
+- Fast charge: ICHG = KISET / RISET = 890 / 3300 = 0.270 A (KISET 797 to 975 and R101 1 %: 0.239
+  to 0.298 A, SLUS810N p. 13). R101 = 3.3k keeps the worst case under 0.5 C of the 700 mAh fallback
+  pack (0.35 A needs RISET of at least 975 / 0.35 / 0.99 = 2.81k; 2.8k to 3k are JLC Extended, 3.3k
+  is the nearest Basic value): 0.43 C worst case on 700 mAh, 0.40 C on 740 mAh.
 - Input limit: IIN = KILIM / RILIM with R102 = 3.6k: 1330, 1525 and 1720 A-ohm (minimum,
   typical, maximum) give 0.369, 0.424 and 0.478 A (0.483 A with the resistor 1 % low), so even the
   worst case stays inside USB 2.0 default power (500 mA), which the firmware declares. USB 2.0
   default power is the target because the board has plain 5.1k Rd on CC1 and CC2 and does not
   read CC, the ESP32-S3 is a USB 2.0 device, and VIN-DPM is off in ILIM mode. A 3.3k ILIM would
-  charge about 9 % faster but reaches 0.52 A at its worst case.
-- The typical input limit (0.424 A) is below ICHG (0.445 A), so on USB the input limit sets the
-  charge current: about 0.42 A less the system load. Faster charging needs CC sensing (rev B).
+  reach 0.52 A at its worst case.
+- ICHG (0.27 A) is below the input limit (0.369 A at its minimum), so the cell charges at ICHG
+  while the system draws less than the difference (about 0.1 to 0.15 A from the input); a heavier
+  load takes its share first and the charge current drops, with the safety timers slowed to match
+  (SLUS810N p. 28).
 - EN2 is tied high through R103, so firmware chooses between the ILIM limit (CHG_SUSPEND low)
   and input suspend (CHG_SUSPEND high).
-- Precharge 88 / 2000 = 44 mA; termination 10 % of ICHG = 45 mA; timers 30 min and 5 h (TMR open).
+- Precharge 88 / 3300 = 27 mA; termination 10 % of ICHG = 27 mA; timers 30 min and 5 h (TMR open;
+  4 to 6 h over tolerance, SLUS810N p. 13). A 740 mAh cell takes roughly 3 h at 0.24 to 0.30 A
+  (an estimate: constant current to about 80 %, then the taper), inside the fast-charge timer's
+  4 h minimum; a load that cuts the charge current slows the timer to match.
 - NTC: TS sources 75 uA (72 to 78 uA) into RT101, a 10k NTC on the board (Sunlord
   SDNT1005X103F3950FTF: B25/50 3950 K, 1 % on R25 and on B), so TS reads 0.75 V at 25 C. The TS
   thresholds are set for the 103AT-2 curve (0 to 50 C, SLUS810N 9.3.6); the steeper B 3950 curve
@@ -101,9 +109,9 @@ Charger (BQ24073, TI SLUS810N section 8.5):
 - Cells are often rated for charging from 0 to 45 C. The cold cut-off stays above 0 C at its
   worst case; the hot one is 47.2 C nominal and up to 51.5 C. Check the bought cell's limit.
 - Dissipation in fast charge: (VIN - VOUT) x IIN + (VOUT - VBAT) x ICHG with OUT at 4.4 V and
-  about 4.6 V at IN. At the typical limit (charge current 0.424 A): 0.2 x 0.424 + 0.9 x 0.424 =
-  0.47 W at VBAT 3.5 V, about 0.68 W at VBAT 3.0 V where fast charge starts; up to about 0.77 W
-  with the worst-case 0.478 A limit at VBAT 3.0 V. The charger regulates at 125 C junction; U101
+  about 4.6 V at IN. Typical (ICHG 0.270 A, no system load): 0.2 x 0.27 + 0.9 x 0.27 = 0.30 W at
+  VBAT 3.5 V, 0.43 W at VBAT 3.0 V where fast charge starts; worst case about 0.51 W (ICHG 0.298 A
+  at VBAT 3.0 V, the input at its 0.478 A limit with the system load). The charger regulates at 125 C junction; U101
   is kept out of the battery footprint.
 - Schottky PMEG2020EH: under 0.38 V at the input limit, so the charger sees about 4.6 V from a
   5.0 V source.
@@ -184,11 +192,9 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
   803030 700 mAh) with a protection circuit and a JST PH 2.0 2-pin plug. J101 is a 2-pin JST PH,
   S2B-PH-SM4-TB (pin 1 VBAT, pin 2 GND). A pack's own NTC wire, if it has one, is not used: the
   board's RT101 is on TS.
-- Charge current against the smaller cell: ICHG is 0.445 A (0.488 A worst case), 0.6 to 0.66 C
-  for 740 mAh and 0.7 C for 700 mAh; on USB the input limit keeps it at about 0.42 A less the
-  system load. The cell must be rated for at least 0.5 A charge; many small cells allow 1 C, some
-  only 0.5 C, so check the listing. A 0.5 C cell needs R101 raised (ICHG = 890 / RISET, for
-  example 3.9k for 0.23 A).
+- Charge current against the smaller cell: ICHG is 0.270 A typical, 0.298 A worst case (R101
+  3.3k): 0.40 C of 740 mAh and 0.43 C of 700 mAh at worst, so any cell rated for 0.5 C charging
+  or more is fine.
 - J101 (battery) has no reverse-polarity protection. Many packs are wired the other way round,
   so check that the plug's red wire lands on the silkscreen `+` (pin 1, with the dot) before
   plugging it in; the housing can be re-pinned (see [assembly.md](assembly.md)).
@@ -217,6 +223,7 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Battery NTC | 10k NTC in the pack, JST PH (8.1) | 2-wire pack on a 2-pin JST PH; RT101 (10k NTC) on the board under the cell | cheap off-the-shelf packs are 2-wire, and the BQ24073 does not charge with TS open. Cost: RT101 reads the board under the cell, so the charge temperature window is approximate (a few degrees warm in fast charge) |
 | Battery size | 1S LiPo about 1000 mAh (803040) | 803030 class, 740 mAh (efaso; EEMB 700 mAh as the fallback) in the 803040 cavity, held by a foam end stop | the only listings found with a stated JST PH 2.0 plug that fit the cavity: the efaso 803040 variant has a 1.0 mm pitch plug, and an 803040 whose protection board sits outside its 40 mm is too long. Cost: about 26 % less capacity, a typical day of 3.5 to 5 days instead of about 6. An 803040 with a PH 2.0 plug and its protection board inside the 40 mm fits the same cavity later |
 | Charger input limit | not stated | 0.424 A typical, 0.478 A worst case (R102 3.6k) | USB 2.0 default power without CC sensing; faster charging needs CC sensing in rev B |
+| Charge current | not stated | 0.270 A typical, 0.298 A worst case (R101 3.3k) | controller ruling, 12 October 2026: at most 0.5 C of the 700 mAh fallback pack in the worst case. Cost: a full charge takes roughly 3 h instead of about 2 h at the earlier 0.445 A |
 | Cover glass retention | not stated | adhesive: glass on an adhesive ring, 1.3 mm retainer ring glued into the lip opening | a snap does not fit the 1.3 mm lip with the bearing behind it. Owner review point: the glass could come loose if a glue joint fails in a drop; a mechanical lock (a taller lip or a bayonet) is a v2 item |
 | Perch USB-C | on the back of the perch (7.3) | right side of the back rest, the plug enters along +X | J1 is an edge-mount receptacle in the tilted rest plane and the perch board is Economic PCBA (top side only). Owner review point: a back exit needs a vertical receptacle on the board's bottom side, hand-soldered or with Standard PCBA, plus a boss on the rest's back; rev B can move it. The side channel takes the largest Type-C overmold (12.35 x 6.5 mm) |
 
@@ -232,7 +239,7 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
   3.3 V.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
 - RT101 against the cell: with the gap pad fitted (Off-board parts), during a USB charge (about
-  0.42 A less the system load) from about 3.5 V, compare RT101's temperature (from the TS
+  0.27 A) from about 3.5 V, compare RT101's temperature (from the TS
   voltage, 75 uA x R) with a thermocouple taped to the cell. If it reads more than a few degrees
   off, check that the pad touches both the patch and the cell, or try a 3 W/mK pad. Check the
   hot cut-off (47.2 C nominal, 43.2 to 51.5 C worst case) against the bought cell's charge

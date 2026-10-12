@@ -30,14 +30,18 @@ height = 1.0
 pins = { 1 = "BAT_NTC", 2 = "VBAT", 3 = "VBAT", 4 = "GND", 5 = "CHG_EN2", 6 = "CHG_SUSPEND", 7 = "CHG_PGOOD", 8 = "GND", 9 = "CHG_STAT", 10 = "VSYS", 11 = "VSYS", 12 = "CHG_ILIM", 13 = "VIN_CHG", 15 = "GND", 16 = "CHG_ISET", 17 = "GND" }
 nc = ["14"]
 
+# R101 sets the fast-charge current, ICHG = KISET / RISET (SLUS810N p. 13: KISET 797, 890, 975 A-ohm).
+# Controller ruling, 12 October 2026: at most 0.5 C of the 700 mAh fallback pack, 0.35 A, even at
+# KISET 975 and the resistor 1 % low, so RISET >= 975 / 0.35 / 0.99 = 2.81k. 2.8k to 3k are JLC
+# Extended; 3.3k is the nearest Basic value: 0.270 A typical, 0.239 to 0.298 A.
 [[part]]
 ref = "R101"
 sheet = "power"
 symbol = "Device:R"
 footprint = "Resistor_SMD:R_0402_1005Metric"
-value = "2k"
-lcsc = "C4109"
-mpn = "0402WGF2001TCE"
+value = "3.3k"
+lcsc = "C25890"
+mpn = "0402WGF3301TCE"
 manufacturer = "UNI-ROYAL"
 side = "back"
 height = 0.4

@@ -8748,7 +8748,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "2k"
+		(property "Value" "3.3k"
 			(at 101.6 118.11 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8792,7 +8792,7 @@
 				)
 			)
 		)
-		(property "LCSC Part #" "C4109"
+		(property "LCSC Part #" "C25890"
 			(at 99.06 116.84 0)
 			(hide yes)
 			(show_name no)
@@ -8803,7 +8803,7 @@
 				)
 			)
 		)
-		(property "MPN" "0402WGF2001TCE"
+		(property "MPN" "0402WGF3301TCE"
 			(at 99.06 116.84 0)
 			(hide yes)
 			(show_name no)
