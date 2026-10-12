@@ -1,3 +1,97 @@
 # Ordering (rev A)
 
-Not written yet: this page is written with the fabrication outputs, before the order.
+Everything for the first build is ordered in one session: both boards and the prints from JLC,
+then the parts that are not on the boards. Upload to JLC before Wednesday 28 October 2026. A
+private order package (shops, prices and the order-day checklist) is kept outside the repository.
+
+## Before uploading
+
+Run these in the repository on the order day and stop at the first failure:
+
+```
+python3 tools/hw/hw_stock.py owl-mainboard --boards 5
+python3 tools/hw/hw_stock.py perch-dock --boards 5
+python3 tools/hw/hw_fab.py owl-mainboard
+python3 tools/hw/hw_fab.py perch-dock
+tools/hw/check_all.sh
+```
+
+Every stock line must read `OK` (a `LOW` part switches to its `alt` in `design.toml`, same
+footprint, and the steps run again). `hw_fab.py` must print `0 fabrication error(s)` with
+`placements top 6, bottom 81` for the main board and `placements top 15, bottom 0` for the perch
+board. The review behind these files is [rev-a-review.md](rev-a-review.md).
+
+## Main board (JLCPCB)
+
+| Setting | Value |
+|---|---|
+| Gerbers | `hardware/owl-mainboard/production/owl-mainboard.zip` from `python3 tools/hw/hw_fab.py owl-mainboard` |
+| Base material, layers, thickness | FR-4, 4 layers, 1.0 mm |
+| Stack-up | JLC04101H-7628 (7628 prepreg 0.2104 mm, core 0.4788 mm), as in the board file; no impedance control (USB is full speed) |
+| Surface, mask, silkscreen | ENIG, green, white |
+| Via covering | Tented |
+| Quantity | 5 (JLC's minimum for bare boards) |
+| Edge rails and fiducials | Added by JLCPCB (the board has no fiducials). Ask for tab routing, not V-cut, in the order remark: the outer pours and the stitching vias sit 0.3 to 0.5 mm from the edge and the outline is rounded. File each tab nub flush before the board goes into the enclosure |
+| Remove order number | Specify a location (text JLCJLCJLCJLC on B.Silkscreen under the battery) |
+| PCB Assembly | Standard, both sides, quantity 3 |
+| Confirm parts placement | Yes |
+| BOM, CPL | `production/bom.csv` (43 rows), `production/positions.csv` (87 parts: 6 top, 81 bottom) |
+| Rotation offsets set | None yet. Checked in JLC's placement preview before paying, part by part; a comparison with JLC's footprints predicts that D101, D102, J101, U202 and U303 need an `FT Rotation Offset`. Each offset that is set goes back through `hw_fab.py` and is listed here |
+
+## Perch board with the dock-pad section (JLCPCB)
+
+| Setting | Value |
+|---|---|
+| Gerbers | `hardware/perch-dock/production/perch-dock.zip` from `python3 tools/hw/hw_fab.py perch-dock` |
+| Layers, thickness | 2, 1.6 mm |
+| Surface, mask | ENIG (gold pads for the pogo contacts), green |
+| Quantity | 5 |
+| Board shape | One design: the dock-pad section hangs on a mouse-bite neck. If JLC asks, it is one design with a breakaway section, not a panel of several designs |
+| PCB Assembly | Economic, top side, quantity 3 |
+| BOM, CPL | `production/bom.csv`, `production/positions.csv` (15 parts, all top) |
+| Rotation offsets set | None yet (checked in the placement preview: J1, J2, D1, D2, LED1, P1 to P3) |
+
+## Prints (JLC3DP, MJF PA12, standard finish, quantity 1 each)
+
+Export the files from the current enclosure code on the order day (`uv run --project enclosure
+python enclosure/owl_v1.py`, and the same for `perch_v1.py` and `ring_test.py`), so the uploads
+carry the latest changes.
+
+The ring test ([ring-test.md](ring-test.md)) has not run yet, and the order is a single session,
+so it buys both ring variants and both magnet carriers. The test then picks ring A (6710 bearing)
+or ring B (printed bushing) and 24 or 32 magnets with the parts in hand; the unused variant is a
+spare. The rings and the bushing sleeve are the same geometry in `v1/` and `ring-test/`, so they
+are printed once and serve both.
+
+| Folder | Files | Colour |
+|---|---|---|
+| `build/enclosure/v1/` | body (with the cable relief behind J303), back_cover (with the Tyukov Inc mark and the slot in the LRA cup for the motor's lead tab), bezel, glass_retainer, ring_a_bearing, ring_b_bushing, bushing_sleeve, beak_key, ear_key_left, ear_key_right, magnet_carrier_24, magnet_carrier_32 | black dyed |
+| `build/enclosure/perch-v1/` | perch_body (with the Tyukov Inc mark on the underside) | black dyed |
+| `build/enclosure/ring-test/` | face_bezel, sensor_jig, coupon_shaft, coupon_bore, magnet_carrier_24, magnet_carrier_32 (these two with polarity bumps, for the test), jig_spacer_1mm, jig_spacer_2mm, jig_spacer_3mm | natural grey |
+
+## Parts that are not on the boards
+
+Quantities are for the first build: 3 assembled main boards, 3 assembled perch boards, one owl
+enclosure and one perch.
+
+| Part | Source | Quantity |
+|---|---|---|
+| Battery: 1S LiPo, 803030 class (an 8 x 30 x 30 mm cell of about 740 mAh; up to 8 x 30 x 40 mm fits the cavity), protection circuit, 2-wire lead on a JST PH 2.0 2-pin plug. J101 pin 1 is VBAT and pin 2 is GND; check every pack's polarity before plugging it in (J101 has no reverse-polarity protection, [assembly.md](assembly.md) step 6). No NTC wire: the charger reads RT101 on the board | any | 2 (one spare) |
+| Thermal gap pad for RT101: soft, electrically insulating silicone, 1.5 mm thick, 1 to 3 W/mK, cut to about 5 x 5 mm ([rev-a.md](rev-a.md), Off-board parts) | any | 1 small sheet |
+| LRA Leader LD0832AA-0099F (C2682305), alternate LD0832AA-0126F (C2942349) | LCSC | 4 |
+| JST SH 1.0 mm 2-pin pigtail, pre-crimped, single ended, about 10 cm, 28 or 30 AWG, for the LRA (soldered to the motor's leads under heat shrink) | any | 1 pack of 10 |
+| JST SH 4-pin cable, 50 mm, pin 1 to pin 1 (Qwiic or STEMMA QT, for example Adafruit 4399), J303 to the dock-pad board | any | 3 |
+| ESP32-S3-WROOM-1U-N16R8 (C3013946), loose: the fallback if the ring test loses more than 6 dB of RSSI, swapped by hand onto one board | LCSC | 2 |
+| 2.4 GHz antenna with a U.FL (IPEX MHF1) plug for the WROOM-1U, for example Molex 146153-0050 (C916292) | LCSC | 2 |
+| VIEWE 1.75 inch AMOLED ALL-UEOL018WV-RA31-A001A (the shop lists ALL-UEOL018VG-RA31-A001A) with its adapter FPC to J301 (31 contacts, 0.3 mm pitch, contacts facing the board) | VIEWE | 2 |
+| Bearing 6710ZZ, 50 x 62 x 6 mm (ring A and the ring test) | any | 2 |
+| N52 disc magnets D3 x 2 mm, axially magnetised (ring carriers) | any | 150 |
+| N52 disc magnets D6 x 2 mm, axially magnetised (dock: 2 in the owl, 2 in the perch) | any | 8 |
+| O-ring NBR 59 x 1.5 mm (ring B drag) | any | 1 pack |
+| Damping grease for camera focus rings (ring B feel) | any | 1 small tube |
+| ISO 7380 M2 button-head screws, black: M2 x 6 (front, 4 per owl) and M2 x 14 (back, 4 per owl); M2 x 8 or M2 x 10 with nuts for the ring-test jig | any | 1 pack each |
+| M2 heat-set inserts, 3.0 mm long, 3.6 mm outside (8 per owl) | any | 1 pack |
+| M2 x 5 self-tapping pan-head screws (perch board) | any | 2 per perch |
+| Steel weight for the perch, 70 x 40 x 9 mm (pocket 72 x 42 x 9.2 mm; 40 x 8 mm flat bar cut to 70 mm works) | any | 1 |
+| Silicone feet for the perch, about 8 to 10 mm across (for example 3M Bumpon SJ5302) | any | 1 sheet (4 per perch) |
+| SparkFun TMAG5273 Qwiic board (SEN-23880) and a Qwiic breadboard cable, for the ring test | any | 1 each |
