@@ -183,3 +183,44 @@ MODULE_SIDE = "back"  # the WROOM-1 sits on the PCB back side; its antenna overh
 DOCK_PAD_PITCH = 4.5
 DOCK_PAD_Y = -31.0
 DOCK_PAD_ORDER = ("PAD_DET", "PAD_GND", "PAD_VBUS")
+
+# LRA: Leader LD0832AA-0099F specification REV.00 (LCSC C2682305), page 13: body 8 +-0.1 x 3.25 +-0.1
+# (plus 0.3 foam on top and 0.15 tape under it), leads 27 +-2 long. At the mounting face the lead tab
+# reaches 5.75 +-0.1 from the motor centre; it and its UV glue are up to 3.5 wide and 2.5 high. The
+# back cover's LRA cup (owl_v1 LRA_*) has a slot through its wall for the tab. The slot points
+# along the leads' way to J302's plug (J302 opens to -x at x 21.4, y -20, so the plug's rear is near
+# x 19.4) as far as the dock magnet boss at (20, -22) allows: at 185 degrees the tab and its glue stay
+# 1.0 from that boss and 1.6 from the board-mount boss at (19, -9); pointed at the plug (220 degrees)
+# or at J302 (250) the tab would sit on the magnet boss.
+LRA_D = 8.0
+LRA_T = 3.25
+LRA_TAB_R = 5.75 + 0.1
+LRA_TAB_W = 3.5
+LRA_TAB_H = 2.5
+LRA_SLOT_W = 4.0  # tab width plus 0.25 per side
+LRA_SLOT_ANGLE_DEG = 185.0  # slot centre line from the motor centre, counter-clockwise from +X (owl coordinates)
+
+# J303 cable relief: the dock link's JST SH 4-pin plug (SHR-04V-S-B, 7.0 wide with its protrusions,
+# 5.0 without, 2.8 high: JST SH catalogue eSH) mates side-on in J303 with its rear close to the body's
+# bottom wall, which leaves the wires little room to turn. Behind J303 the wall's inner face is set
+# back until J303_RELIEF_WALL is left (0.6 deeper in the 1.6 wall), centred on J303's x, as wide as the
+# plug plus 1.0 and from the board's back face J303_RELIEF_H down (J303 is 2.95 high). The relief
+# depends on J303's x only: its y may move along the board.
+J303_RELIEF_W = 7.0 + 1.0
+J303_RELIEF_H = 4.0
+J303_RELIEF_WALL = MJF_STRUCT_WALL  # the owl stands on this wall on the perch seat
+
+# Owner mark, debossed into the owl back cover's outer face and the perch's underside. MJF PA12 detail
+# limits (JLC3DP): 0.5 mm deep, strokes and the gaps between them at least 0.6 mm, cap height at least
+# 4 mm. Font: Inter Bold 4.0 from the fonts-inter package (SIL Open Font Licence); its capitals are 1490
+# of its 2048 units per em high. At a 5 mm cap height Inter Bold has 0.33 mm notches where the arches of
+# n and u meet their stems, which MARK_ROUND fills (the arches are then 0.64 mm at their thinnest), and
+# T, y and u stand 0.53 mm apart as set, so MARK_TRACK spreads the letters.
+MARK_TEXT = "Tyukov Inc"
+MARK_FONT = "/usr/share/fonts/opentype/inter/Inter-Bold.otf"
+MARK_FONT_CAP = 1490 / 2048
+MARK_CAP_H = 5.0
+MARK_DEPTH = 0.5
+MARK_MIN_DETAIL = 0.6
+MARK_ROUND = MARK_MIN_DETAIL / 2  # every glyph is closed by this radius: inside corners rounded, notches under 0.6 filled
+MARK_TRACK = 0.15  # extra space between neighbouring letters

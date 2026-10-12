@@ -7,10 +7,11 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from build123d import Pos, Vector
+from build123d import Box, Pos, Vector, import_step
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import owl_params as P  # noqa: E402
 import owl_v1 as V  # noqa: E402
 import perch_v1 as Q  # noqa: E402
 
@@ -18,6 +19,11 @@ import perch_v1 as Q  # noqa: E402
 @pytest.fixture(scope="module")
 def perch():
     return Q.perch_body()
+
+
+@pytest.fixture(scope="module")
+def plain_perch():
+    return Q.perch_body(mark=False)
 
 
 @pytest.fixture(scope="module")
@@ -138,3 +144,39 @@ def test_docked_owl_compresses_each_pin_to_its_working_height():
         length = Q.BOARD_TOP_INTO - into
         assert length == pytest.approx(Q.PIN_WORK_LEN, abs=0.05)
         assert Q.PIN_FREE_LEN - length >= 0.95
+
+
+def test_mark_is_debossed_into_the_underside(perch, plain_perch):
+    area = sum(f.area for f in V.mark_faces())
+    assert plain_perch.volume - perch.volume == pytest.approx(area * P.MARK_DEPTH, rel=1e-3)
+    cut = (plain_perch - perch).bounding_box()
+    assert cut.min.Z == pytest.approx(0.0, abs=1e-3)
+    assert cut.max.Z == pytest.approx(P.MARK_DEPTH, abs=1e-3)
+    # on the left strip, inside the 1.0 walls to the base's side and the weight pocket, and clear
+    # of the feet at both ends
+    x0, x1 = Q.STRIP_X
+    assert cut.min.X - x0 >= P.MJF_STRUCT_WALL and x1 - cut.max.X >= P.MJF_STRUCT_WALL
+    y0, y1 = Q.underside_y()
+    assert cut.min.Y - y0 >= Q.FOOT_ZONE and y1 - cut.max.Y >= Q.FOOT_ZONE
+    # it reads front to back from the left side: the T comes first, its bar towards the pocket
+    x, y, z = cut.max.X - 0.3, cut.min.Y + 0.3, P.MARK_DEPTH / 2
+    assert not perch.is_inside(Vector(x, y, z))
+    assert perch.is_inside(Vector(x - 2.0, y, z))
+
+
+def test_mark_keeps_solid_material_round_it(perch, plain_perch):
+    # the unmarked perch is solid within 1.0 of the mark and 1.0 above its floor: the mark is clear
+    # of the weight pocket, the base's edges and the USB channel
+    cut = (plain_perch - perch).bounding_box()
+    m = P.MJF_STRUCT_WALL
+    size = (cut.size.X + 2 * m, cut.size.Y + 2 * m, P.MARK_DEPTH + m)
+    block = Pos(cut.center().X, cut.center().Y, size[2] / 2) * Box(*size)
+    assert common_volume(plain_perch, block) == pytest.approx(block.volume, rel=1e-6)
+
+
+def test_export_reads_back_as_one_solid(perch, tmp_path):
+    written = Q.export_all(tmp_path)
+    assert [p.name for p in written] == ["perch_body.step", "perch_body.stl"]
+    back = import_step(str(written[0]))
+    assert len(back.solids()) == 1
+    assert back.volume == pytest.approx(perch.volume, rel=1e-6)

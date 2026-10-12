@@ -4,7 +4,8 @@ buttons.
 v1 is a fit and feel print (MJF PA12): no feather texture yet. The main board, battery and display
 glass are represented by envelopes so the tests can check clearances. The glass goes into the bezel
 from the front on an adhesive ring, then a retainer ring is glued into the lip opening over the
-glass border, so the glass cannot come out even if its adhesive lets go. Run
+glass border, so the glass cannot come out even if its adhesive lets go. The back cover carries
+the owner mark, debossed into its outer face (MARK_* in owl_params.py). Run
 `uv run --project enclosure python enclosure/owl_v1.py` to export STEP and STL files to
 build/enclosure/v1/. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
 """
@@ -16,17 +17,26 @@ import sys
 from pathlib import Path
 
 from build123d import (
+    Align,
     Box,
     Cylinder,
+    Face,
+    Kind,
     Part,
+    Plane,
     Polyline,
     Pos,
     RectangleRounded,
+    Rot,
+    Sketch,
+    Text,
     export_step,
     export_stl,
     extrude,
     make_face,
+    offset,
 )
+from OCP.BRepBuilderAPI import BRepBuilderAPI_NurbsConvert
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import owl_params as P  # noqa: E402
@@ -103,11 +113,16 @@ DOCK_MAGNET_FLOOR = 1.0  # cover skin between each magnet and the perch
 DOCK_MAGNET_WALL = 1.2
 LRA_XY = (26.0, -14.5)  # LD0832AA-0099F, 8 x 3.25 mm, glued into a cup on the cover
 LRA_POCKET_D = 8.3
-LRA_CUP_OD = 10.3  # 1.0 wall
+LRA_CUP_OD = 10.3  # 1.0 wall, slotted for the lead tab (owl_params LRA_SLOT_*)
 LRA_CUP_H = 1.5
 ALIGN_RECESSES = ((-20.0, -34.0), (20.0, -34.0))  # outside the dock-pad board recess
 ALIGN_D = 4.0
 ALIGN_DEPTH = 0.5  # leaves a 1.0 cover floor
+# Owner mark (owl_params MARK_*) on the cover's outer face, reading from behind (along -X), centred
+# on x = 0 at the display centre's height: between the board-mount bosses at y +-9 and far from the
+# screw heads, dock magnets, pad windows and alignment recesses. The plate under it stays 1.0 thick.
+MARK_Y = 0.0
+MARK_PLANE = Plane((0, MARK_Y, BACK_Z), x_dir=(-1, 0, 0), z_dir=(0, 0, -1))
 
 
 def silhouette(inset: float = 0.0):
@@ -175,10 +190,41 @@ def body() -> Part:
         sw = placement(ref)
         slot = (EAR_KEY[0] + 2 * EAR_SLOT_CLEAR, 12.0, EAR_KEY[1] + 2 * EAR_SLOT_CLEAR)
         shell -= Pos(sw.x, sw.y + slot[1] / 2, ear_key_z()) * Box(*slot)
+    # cable relief behind J303: the bottom wall's inner face follows the silhouette inset by
+    # J303_RELIEF_WALL instead of WALL_T over the plug's width, from the board's back face down
+    bottom = C.BODY_CY - C.BODY_H / 2
+    band = Pos(placement("J303").x, bottom + C.WALL_T / 2, PCB_BACK_Z - P.J303_RELIEF_H / 2) * Box(
+        P.J303_RELIEF_W, C.WALL_T + 2.0, P.J303_RELIEF_H
+    )
+    shell -= prism(silhouette(P.J303_RELIEF_WALL), PCB_BACK_Z - P.J303_RELIEF_H, PCB_BACK_Z) & band
     return shell
 
 
-def back_cover() -> Part:
+def mark_faces() -> list[Face]:
+    """The owner mark on the XY plane, reading along +X with its bounding box centred on the origin.
+    Each glyph is closed by MARK_ROUND and the glyphs are spread MARK_TRACK apart (owl_params). The
+    closed outlines are offset curves, which STEP readers drop, so they are converted to B-splines."""
+    if not Path(P.MARK_FONT).is_file():
+        raise FileNotFoundError(f"{P.MARK_FONT} not found: install the fonts-inter package")
+    text = Text(P.MARK_TEXT, P.MARK_CAP_H / P.MARK_FONT_CAP, font_path=P.MARK_FONT, align=(Align.CENTER, Align.CENTER))
+    glyphs = sorted(text.faces(), key=lambda f: f.center().X)
+    mid = (len(glyphs) - 1) / 2
+    r = P.MARK_ROUND
+    out = []
+    for i, g in enumerate(glyphs):
+        closed = offset(offset(g, r, kind=Kind.ARC), -r, kind=Kind.ARC).face()
+        out.append(Pos((i - mid) * P.MARK_TRACK, 0) * Face(BRepBuilderAPI_NurbsConvert(closed.wrapped, True).Shape()))
+    return out
+
+
+def mark_cut(plane: Plane) -> Part:
+    """Cutting tool that debosses the mark MARK_DEPTH into a face on `plane`, whose normal points out
+    of the part; the text reads along the plane's x with the letter tops towards its y."""
+    start = plane.offset(EPS).location
+    return extrude(Sketch([start * f for f in mark_faces()]), amount=P.MARK_DEPTH + EPS, dir=-plane.z_dir)
+
+
+def back_cover(mark: bool = True) -> Part:
     plate = prism(silhouette(C.WALL_T + 0.1), BACK_Z, BATTERY_BACK_Z)
     for x, y in C.MOUNT_HOLES:
         plate += by_depth(x, y, BOSS_R, BATTERY_BACK_Z - EPS, PCB_BACK_Z)
@@ -202,8 +248,18 @@ def back_cover() -> Part:
         plate -= by_depth(x, y, DOCK_MAGNET_D / 2, BACK_Z + DOCK_MAGNET_FLOOR, magnet_top + EPS)
     plate += by_depth(*LRA_XY, LRA_CUP_OD / 2, BATTERY_BACK_Z - EPS, BATTERY_BACK_Z + LRA_CUP_H)
     plate -= by_depth(*LRA_XY, LRA_POCKET_D / 2, BATTERY_BACK_Z, BATTERY_BACK_Z + LRA_CUP_H + EPS)
+    # slot through the cup wall for the motor's lead tab, down to the plate
+    r0, r1 = LRA_POCKET_D / 2 - 0.5, LRA_CUP_OD / 2 + 0.5
+    plate -= (
+        Pos(*LRA_XY, BATTERY_BACK_Z + (LRA_CUP_H + EPS) / 2)
+        * Rot(0, 0, P.LRA_SLOT_ANGLE_DEG)
+        * Pos((r0 + r1) / 2, 0, 0)
+        * Box(r1 - r0, P.LRA_SLOT_W, LRA_CUP_H + EPS)
+    )
     for x, y in ALIGN_RECESSES:
         plate -= by_depth(x, y, ALIGN_D / 2, BACK_Z - EPS, BACK_Z + ALIGN_DEPTH)
+    if mark:
+        plate -= mark_cut(MARK_PLANE)
     return plate
 
 

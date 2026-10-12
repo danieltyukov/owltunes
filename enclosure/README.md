@@ -12,6 +12,9 @@ build123d sources for the ring test prints, enclosure v1 and the perch. All dime
 | `uv run --project enclosure python enclosure/owl_v1.py` | Exports enclosure v1 to `build/enclosure/v1/` |
 | `uv run --project enclosure python enclosure/perch_v1.py` | Exports the perch v1 body to `build/enclosure/perch-v1/` |
 
+The owner mark debossed into the back cover and the perch is set in Inter Bold from the
+`fonts-inter` package (`sudo apt install fonts-inter`); those two parts do not build without it.
+
 Exports go to `build/`, which is not tracked. Licence: CERN-OHL-P-2.0 (`LICENSE-HARDWARE`), except
 `ring_analysis.py`, which is software under MIT (`LICENSE`).
 
