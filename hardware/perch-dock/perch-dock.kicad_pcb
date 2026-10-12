@@ -3517,6 +3517,18 @@
 				)
 			)
 		)
+		(property "FT Position Offset" "0,1.571"
+			(at 0 0 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "dc48a9c5-2878-427e-8b06-67534b1bf6e8")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/6a3141fb-b0c5-4b80-95ea-be34186c275e/9619dc5e-a53a-421e-9429-142369d1c04b")
 		(sheetname "/perch/")
 		(sheetfile "perch.kicad_sch")

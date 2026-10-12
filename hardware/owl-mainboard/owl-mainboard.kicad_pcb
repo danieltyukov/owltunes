@@ -3545,6 +3545,18 @@
 				(justify mirror)
 			)
 		)
+		(property "FT Position Offset" "0,1.571"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "7f3fe373-5db4-4318-8359-f05d7182feda")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/a859415a-f165-4418-b711-7bb21928059d/a56d2d50-ec4e-4f07-bf83-51dc327042e7")
 		(sheetname "/mcu_usb/")
 		(sheetfile "mcu_usb.kicad_sch")
@@ -18465,6 +18477,18 @@
 			(layer "B.SilkS")
 			(hide yes)
 			(uuid "d3c3f3f8-901d-4139-9e90-88fed9fd3725")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "FT Position Offset" "0,-3.627"
+			(at 0 0 0)
+			(layer "B.SilkS")
+			(hide yes)
+			(uuid "8bb5ae59-4587-404e-9082-c75be36f7f5d")
 			(effects
 				(font
 					(size 1.27 1.27)

@@ -4,8 +4,9 @@
 Each part that is assembled (assembled = true, the default) must have a non-empty mpn in
 design.toml and carry the non-empty fields "LCSC Part #" and "MPN" in the schematic, equal to
 design.toml, and the LCSC number must look like C followed by digits. Test points, mounting holes and fiducials set assembled = false.
-A part with rotation_offset in design.toml carries it as the field "FT Rotation Offset" (the
-Fabrication Toolkit's CPL rotation fix); no other part carries that field.
+A part with rotation_offset or position_offset in design.toml carries it as the field
+"FT Rotation Offset" or "FT Position Offset" (the Fabrication Toolkit's CPL fixes); no other part
+carries those fields.
 
 Usage: python3 tools/hw/hw_bom.py owl-mainboard [--sheets power,mcu_usb]
 """
@@ -21,6 +22,7 @@ from pathlib import Path
 from hw_netlist import ROOT, export_netlist, load_design, read_netlist
 
 LCSC_RE = re.compile(r"^C\d+$")
+TOOLKIT_FIELDS = (("FT Rotation Offset", "rotation_offset"), ("FT Position Offset", "position_offset"))
 
 
 def check(design: dict, comps: dict[str, dict], sheets: set[str] | None = None) -> list[str]:
@@ -40,9 +42,10 @@ def check(design: dict, comps: dict[str, dict], sheets: set[str] | None = None) 
         for field, key in (("LCSC Part #", "lcsc"), ("MPN", "mpn")):
             if not comp["fields"].get(field, "").strip() or comp["fields"].get(field, "") != part.get(key, ""):
                 errors.append(f"{ref}: field {field!r} is {comp['fields'].get(field)!r}, design says {part.get(key)!r}")
-        offset = str(part["rotation_offset"]) if "rotation_offset" in part else None
-        if comp["fields"].get("FT Rotation Offset") != offset:
-            errors.append(f"{ref}: field 'FT Rotation Offset' is {comp['fields'].get('FT Rotation Offset')!r}, design says {offset!r}")
+        for field, key in TOOLKIT_FIELDS:
+            want = str(part[key]) if key in part else None
+            if comp["fields"].get(field) != want:
+                errors.append(f"{ref}: field {field!r} is {comp['fields'].get(field)!r}, design says {want!r}")
     return errors
 
 

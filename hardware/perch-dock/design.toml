@@ -1,6 +1,9 @@
 # OwlTunes perch board rev A with the snap-off owl dock-pad section.
 # tools/hw/hw_netlist.py and tools/hw/hw_bom.py check the schematic against this file.
 # The two sections share one PCB but no nets: the pad section's nets all start with PAD_.
+# position_offset is the field "FT Position Offset" ("x,y" in mm, footprint frame) that moves the
+# CPL point from the KiCad anchor to the origin of the part's EasyEDA footprint (JLC's placement
+# reference), found by a pad-by-pad match of the two footprints; JLC's preview confirms it.
 board = "perch-dock"
 
 # ---------------------------------------------------------------------------------------------
@@ -17,6 +20,9 @@ lcsc = "C165948"
 mpn = "TYPE-C-31-M-12"
 manufacturer = "Korean Hroparts Elec"
 alt = "C5337088 TYPE-C-31-M-12A, same footprint"
+# EasyEDA's TYPE-C-31-M-12 origin sits near the pad pattern's centre, 1.571 mm from KiCad's (the
+# receptacle body centre) toward the signal pad row
+position_offset = "0,1.571"
 side = "front"
 height = 3.26
 pins = { A1 = "GND", A12 = "GND", B1 = "GND", B12 = "GND", A4 = "VBUS_IN", A9 = "VBUS_IN", B4 = "VBUS_IN", B9 = "VBUS_IN", A5 = "PERCH_CC1", B5 = "PERCH_CC2", SH = "GND" }

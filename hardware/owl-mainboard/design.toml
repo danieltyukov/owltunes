@@ -7,6 +7,8 @@
 # (JLC's zero) maps onto the KiCad footprint; each one is set from a pad-by-pad match of the two
 # footprints (Task 12 part B, 12 October 2026) and confirmed in JLC's placement preview. A part
 # switched to its alt has its own EasyEDA footprint, so its offset must be derived again.
+# position_offset is the field "FT Position Offset" ("x,y" in mm, footprint frame) that moves the
+# CPL point from the KiCad anchor to the EasyEDA footprint's origin, found by the same match.
 board = "owl-mainboard"
 
 # ---------------------------------------------------------------------------------------------
@@ -601,6 +603,9 @@ lcsc = "C2913202"
 mpn = "ESP32-S3-WROOM-1-N16R8"
 manufacturer = "Espressif Systems"
 alt = "C3013946 ESP32-S3-WROOM-1U-N16R8: same pads, CPL Y offset 3.15 mm towards the pins, needs a U.FL antenna"
+# EasyEDA's WROOM-1 origin sits near the pad pattern's centre, 3.627 mm from KiCad's (the module
+# centre) away from the antenna end
+position_offset = "0,-3.627"
 side = "back"
 height = 3.1
 pins = { 1 = "GND", 2 = "+3V3", 3 = "ESP_EN", 4 = "BTN_BEAK", 5 = "HALL_INT", 6 = "IMU_INT1", 7 = "CHG_PGOOD", 8 = "XTAL32_P", 9 = "XTAL32_N", 10 = "EXP_A", 11 = "EXP_B", 12 = "CHG_STAT", 13 = "USB_DM", 14 = "USB_DP", 15 = "BTN_EAR_R", 16 = "DISP_EN", 17 = "LCD_D3", 18 = "LCD_CS", 19 = "LCD_D0", 20 = "LCD_CLK", 21 = "LCD_D1", 22 = "LCD_D2", 23 = "TP_INT", 24 = "TP_SDA", 25 = "TP_SCL", 26 = "CHG_SUSPEND", 27 = "BOOT", 31 = "LCD_TE", 32 = "LCD_RST", 33 = "TP_RST", 34 = "I2C_SCL", 35 = "I2C_SDA", 36 = "U0RXD", 37 = "U0TXD", 38 = "BTN_EAR_L", 39 = "DOCK_DET", 40 = "GND", 41 = "GND" }
@@ -737,6 +742,9 @@ lcsc = "C165948"
 mpn = "TYPE-C-31-M-12"
 manufacturer = "Korean Hroparts Elec"
 alt = "C5337088 TYPE-C-31-M-12A, same footprint"
+# EasyEDA's TYPE-C-31-M-12 origin sits near the pad pattern's centre, 1.571 mm from KiCad's (the
+# receptacle body centre) toward the signal pad row
+position_offset = "0,1.571"
 side = "back"
 height = 3.26
 pins = { A1 = "GND", A12 = "GND", B1 = "GND", B12 = "GND", A4 = "VBUS_USB", A9 = "VBUS_USB", B4 = "VBUS_USB", B9 = "VBUS_USB", A5 = "USB_CC1", B5 = "USB_CC2", A6 = "USB_DP_CONN", B6 = "USB_DP_CONN", A7 = "USB_DM_CONN", B7 = "USB_DM_CONN", SH = "GND" }

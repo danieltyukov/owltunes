@@ -37,6 +37,7 @@ board. The review behind these files is [rev-a-review.md](rev-a-review.md).
 | Confirm parts placement | Yes |
 | BOM, CPL | `production/bom.csv` (43 rows), `production/positions.csv` (87 parts: 6 top, 81 bottom) |
 | Rotation offsets set | D101 180, D102 180, J101 180, U202 90, U303 270 (`FT Rotation Offset`, from `rotation_offset` in design.toml): offset set from the EasyEDA pad match; confirm in the preview. Method: each part's EasyEDA footprint, which JLC places from, compared pad by pad with the KiCad footprint, less the Fabrication Toolkit's own table rotation ([rev-a-review.md](rev-a-review.md), Findings fixed). The 90 and 270 on the bottom-side U202 and U303 assume JLC turns bottom parts the way the toolkit does: if either shows 180 degrees off, use the other sign (270 for U202, 90 for U303). Check every other polarised part in the preview too, before paying; a change goes back through `hw_fab.py` and is listed here |
+| Position offsets set | U201 0,-3.627 and J201 0,1.571 (`FT Position Offset`, from `position_offset` in design.toml): offset set from the EasyEDA pad match; confirm in the preview. The toolkit places the CPL point on the KiCad anchor (the body centre for these two), JLC on the EasyEDA footprint's origin (near the pad pattern's centre). The preview checks the positions of U201 and J201 as well as every rotation |
 
 ## Perch board with the dock-pad section (JLCPCB)
 
@@ -49,7 +50,8 @@ board. The review behind these files is [rev-a-review.md](rev-a-review.md).
 | Board shape | One design: the dock-pad section hangs on a mouse-bite neck. If JLC asks, it is one design with a breakaway section, not a panel of several designs |
 | PCB Assembly | Economic, top side, quantity 3 |
 | BOM, CPL | `production/bom.csv`, `production/positions.csv` (15 parts, all top) |
-| Rotation offsets set | None yet (checked in the placement preview: J1, J2, D1, D2, LED1, P1 to P3) |
+| Rotation offsets set | None (checked in the placement preview: J1, J2, D1, D2, LED1, P1 to P3) |
+| Position offsets set | J1 `FT Position Offset` 0,1.571 (from `position_offset` in design.toml): offset set from the EasyEDA pad match; confirm in the preview that J1 sits on its pads |
 
 ## Prints (JLC3DP, MJF PA12, standard finish, quantity 1 each)
 

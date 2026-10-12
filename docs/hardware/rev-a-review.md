@@ -63,6 +63,9 @@ Verdict: ready to order, subject to the placement preview rotation check at orde
   position file on the board and on the symbols, so schematic parity stays at 0.
 - No rotation table entry of the toolkit matches a perch footprint, so the CPL rotation is the
   KiCad rotation. Polarised parts to check in the placement preview: J1, J2, D1, D2, LED1, P1 to P3.
+- J1 carries `FT Position Offset` 0,1.571 (12 October 2026, main board section, Findings fixed):
+  its CPL point is the EasyEDA footprint's origin, 1.571 mm toward the board centre from the KiCad
+  anchor. The preview checks its position as well as its rotation.
 
 ## Main board (owl-mainboard, 4 layers, 1.0 mm, 61.8 x 79.8 mm)
 
@@ -142,6 +145,20 @@ The rest match: U102, U103, U304 and J301 were drawn in EasyEDA's orientation, U
 the SOT-23-6 "BR" footprint the toolkit's 180 fits, U301's TSSOP fits the toolkit's 270, and Y201
 differs only in pad numbering (no polarity). The preview still has the last word.
 
+Position offsets (fix round 1). The toolkit puts each SMD part's CPL point on the KiCad
+footprint's anchor, while JLC places its EasyEDA footprint by that footprint's origin. Fitting
+every EasyEDA footprint onto the board pads by pad number puts the two within 0.075 mm for all
+parts but three, where KiCad's anchor is the body centre and EasyEDA's origin is near the pad
+pattern's centre. Those get an `FT Position Offset` (design.toml `position_offset`, symbol, and
+footprint through `hw_sync.py`, pinned by the same checks), worked through the toolkit's formula
+for their side and rotation:
+
+| Ref | Offset | CPL before, after |
+|---|---|---|
+| U201 (ESP32-S3-WROOM-1, C2913202) | 0,-3.627 | (0, 30.35) to (0, 26.723), 3.627 mm toward the board centre |
+| J201 (TYPE-C-31-M-12, C165948) | 0,1.571 | (-12, -33.8) to (-12, -32.229), 1.571 mm toward the board centre |
+| Perch J1 (TYPE-C-31-M-12, C165948) | 0,1.571 | (13.8, -1.5) to (12.229, -1.5), 1.571 mm toward the board centre |
+
 Nothing else on the board changed in this review. Fixed before it, in task 10 part C and its polish
 round, from the same analyzers and the part C review: GND return vias within 1 mm of every USB via
 (RP-001 on the USB nets), stale zone fills after the late hand links, partial copies of hand copper
@@ -186,7 +203,7 @@ moved out from under the H2 cover boss, and labels for the power test pads.
 | TPS63802 channel vias near pad 8 | The two GND vias in U103's centre channel sit 0.089 mm from pad 8's mask opening. They are tented and on the same net (GND) as pad 8, so a mask sliver lost there cannot short anything. JLC's DFM may still flag it. | Look at U103 under the loupe (bringup.md step 1). |
 | Slow nets cross the In2 +3V3 boundary under the module | DISP_EN runs 12.0 mm along the 0.2 mm gap between the In2 GND and +3V3 pours at y 18.83; I2C_SDA, HALL_INT, TP_RST, EXP_A, EXP_B, IMU_INT1 and ESP_EN cross x = +-8.4 or y = 18.8. All are static or slow, In1 GND lies under every F.Cu run, and the B.Cu runs there sit over the +3V3 pour, which the module's decoupling ties to GND. QSPI and USB never leave GND reference. | Sensor bus rise time at 400 kHz (bringup.md step 5). |
 | No fiducials on the board | The order selects edge rails with fiducials added by JLCPCB. The rails must be tab-routed, not V-cut: the outer pours and the stitching vias sit 0.3 to 0.5 mm from the edge, under the 0.4 mm JLC keeps from a V-cut line, and the outline is rounded. | File each tab nub flush before the board goes into the enclosure (it fits closely). |
-| Part rotations not yet seen in JLC's preview | The preview needs the owner's JLC sign-in. The five offsets above come from the footprint comparison, which assumes JLC's zero is the EasyEDA footprint's and that JLC reads bottom rotations as the toolkit does; the private order notes list every polarised part with its expected orientation. | Checked in the preview before paying; any change goes back through `hw_fab.py` and is recorded in [ordering.md](ordering.md). |
+| Part rotations and positions not yet seen in JLC's preview | The preview needs the owner's JLC sign-in. The five rotation offsets and the three position offsets (U201, J201, perch J1) above come from the footprint comparison, which assumes JLC's zero and origin are the EasyEDA footprint's and that JLC reads bottom rotations as the toolkit does; the private order notes list every polarised part with its expected orientation, and the positions of U201, J201 and J1. | Checked in the preview before paying; any change goes back through `hw_fab.py` and is recorded in [ordering.md](ordering.md). |
 
 ### Analyses not run, and why
 
@@ -202,8 +219,9 @@ moved out from under the H2 cover boss, and labels for the power test pads.
 - The Fabrication Toolkit names the archive after the title block; `hw_fab.py` renames it to
   `owl-mainboard.zip` and restores `owl-mainboard.kicad_pro`, which pcbnew reorders when it saves
   the board.
-- CPL coordinates are owl millimetres from the board's auxiliary origin (100, 100), Y up. Bottom
-  rotations are the toolkit's (180 minus the KiCad rotation, plus its table offsets for SOT-23,
-  JST_PH_S and TSSOP footprints), plus each part's `FT Rotation Offset`.
+- CPL coordinates are owl millimetres from the board's auxiliary origin (100, 100), Y up, at each
+  footprint's anchor plus its `FT Position Offset` (U201, J201). Bottom rotations are the
+  toolkit's (180 minus the KiCad rotation, plus its table offsets for SOT-23, JST_PH_S and TSSOP
+  footprints), plus each part's `FT Rotation Offset`.
 - 42 reference designators are hidden on the silkscreen for lack of room; the assembly drawing
   comes from the Fab layers.

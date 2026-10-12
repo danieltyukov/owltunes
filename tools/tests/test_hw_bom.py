@@ -40,6 +40,16 @@ class BomCheckTest(unittest.TestCase):
         self.assertEqual(errors, ["U1: field 'FT Rotation Offset' is None, design says '90'",
                                   "R1: field 'FT Rotation Offset' is '270', design says None"])
 
+    def test_position_offset_field_must_equal_the_design(self):
+        design = {"part": [{"ref": "U1", "lcsc": "C1", "mpn": "A", "position_offset": "0,-3.627"},
+                           {"ref": "J1", "lcsc": "C2", "mpn": "B", "position_offset": "0,1.571"},
+                           {"ref": "R1", "lcsc": "C3", "mpn": "C"}]}
+        comps = {"U1": {"fields": {"LCSC Part #": "C1", "MPN": "A", "FT Position Offset": "0,-3.627"}},
+                 "J1": {"fields": {"LCSC Part #": "C2", "MPN": "B", "FT Position Offset": "0,-1.571"}},
+                 "R1": {"fields": {"LCSC Part #": "C3", "MPN": "C", "FT Position Offset": "1,0"}}}
+        self.assertEqual(check(design, comps), ["J1: field 'FT Position Offset' is '0,-1.571', design says '0,1.571'",
+                                                "R1: field 'FT Position Offset' is '1,0', design says None"])
+
     def test_sheet_filter_skips_other_sheets(self):
         design = {"part": [{"ref": "R1", "sheet": "power", "lcsc": "C1", "mpn": "A"},
                            {"ref": "R2", "sheet": "periph", "lcsc": "bad", "mpn": ""}]}

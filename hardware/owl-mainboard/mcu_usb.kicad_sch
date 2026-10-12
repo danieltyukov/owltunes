@@ -8000,6 +8000,17 @@
 				)
 			)
 		)
+		(property "FT Position Offset" "0,-3.627"
+			(at 228.6 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(pin "1"
 			(uuid "c0340fed-68b7-4b9d-8b1a-b6fc332c0138")
 		)
@@ -12100,6 +12111,17 @@
 			)
 		)
 		(property "Manufacturer" "Korean Hroparts Elec"
+			(at 35.56 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "FT Position Offset" "0,1.571"
 			(at 35.56 71.12 0)
 			(hide yes)
 			(show_name no)
