@@ -89,7 +89,6 @@ enclosure and one perch.
 | 2.4 GHz antenna with a U.FL (IPEX MHF1) plug for the WROOM-1U, for example Molex 146153-0050 (C916292) | LCSC | 2 |
 | VIEWE 1.75 inch AMOLED ALL-UEOL018WV-RA31-A001A (the shop lists ALL-UEOL018VG-RA31-A001A) with its adapter FPC to J301 (31 contacts, 0.3 mm pitch, contacts facing the board) | VIEWE | 2 |
 | Bearing 6710ZZ, 50 x 62 x 6 mm (ring A and the ring test) | any | 2 |
-| 6710 plastic bearing (POM races, glass balls), 50 x 62 x 6 mm (ring A plastic variant in the ring test) | any | 1 |
 | N52 disc magnets D3 x 2 mm, axially magnetised (ring carriers) | any | 150 |
 | N52 disc magnets D6 x 2 mm, axially magnetised (dock: 2 in the owl, 2 in the perch) | any | 8 |
 | O-ring NBR 59 x 1.5 mm (ring B drag) | any | 1 pack |
@@ -102,6 +101,7 @@ enclosure and one perch.
 | SparkFun TMAG5273 Qwiic board (SEN-23880) and a Qwiic breadboard cable, for the ring test | any | 1 each |
 | Cyanoacrylate glue (magnets, ring-test parts; keep it away from the cover glass) | any | 1 |
 
-The ring test's RSSI runs (M4 in [ring-test.md](ring-test.md)) use an assembled main board: its
-ESP32-S3-WROOM-1 PCB antenna is the "ESP32-S3 board with a WROOM-1 PCB antenna" that ring-test.md
-asks for, so no separate ESP32-S3 board is bought.
+The ring test ([ring-test.md](ring-test.md)) uses the steel 6710ZZ for ring A and the printed
+bushing as the metal-free ring B; no plastic 6710 is bought (ruling R14). If the steel bearing
+costs more RSSI than ring-test.md allows, ring B is chosen. The RSSI runs (M4) use the owner's
+Arduino Nano ESP32 (NORA-W106, PCB antenna), measured relative: with and without the ring stack.
