@@ -13,14 +13,15 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "hardware" / "owl-mainboard" / "design.toml"
 ALL_SHEETS = {"power", "mcu_usb", "periph"}
-RAILS = {"+3V3", "DISP_3V3", "VSYS", "VBAT", "VIN_CHG"}
+RAILS = {"+3V3", "DISP_3V3", "DISP_1V8", "VSYS", "VBAT", "VIN_CHG"}
 
-# VIEWE ALL-UEOL018WV-RA31-A001A spec V1.0, page 7 (I/O connection), and page 12 (QSPI wiring).
-PANEL = {1: "GND", 2: "TP_INT", 3: "TP_RST", 4: "TP_SDA", 5: "TP_SCL", 6: "DISP_3V3", 7: "GND",
-         8: "DISP_3V3", 9: "DISP_3V3", 10: "DISP_3V3", 11: "DISP_3V3", 12: "GND", 13: None,
-         14: "LCD_RST", 15: "LCD_CS", 16: "LCD_D0", 17: "LCD_D1", 18: "LCD_CLK", 19: "LCD_D3",
-         20: "LCD_D2", 21: "LCD_TE", 22: "GND", 23: None, 24: None, 25: "GND", 26: None, 27: None,
-         28: "GND", 29: None, 30: None, 31: "GND"}
+# VIEWE ALL-UEOL018VG-RA31-A001A spec V1.1, page 7 (I/O connection), and page 12 (QSPI wiring).
+# The touch pins are on the 1.8 V side of U305 (VIEWE, 13 October 2026).
+PANEL = {1: "GND", 2: "TP_INT_1V8", 3: "TP_RST_1V8", 4: "TP_SDA_1V8", 5: "TP_SCL_1V8",
+         6: "DISP_3V3", 7: "GND", 8: "DISP_3V3", 9: "DISP_3V3", 10: "DISP_3V3", 11: "DISP_3V3",
+         12: "GND", 13: None, 14: "LCD_RST", 15: "LCD_CS", 16: "LCD_D0", 17: "LCD_D1",
+         18: "LCD_CLK", 19: "LCD_D3", 20: "LCD_D2", 21: "LCD_TE", 22: "GND", 23: None, 24: None,
+         25: "GND", 26: None, 27: None, 28: "GND", 29: None, 30: None, 31: "GND"}
 
 
 def load():
@@ -101,12 +102,38 @@ class DesignTest(unittest.TestCase):
         for sig in ("TP_SDA", "TP_SCL", "TP_INT"):
             self.assertTrue(resistors_between(self.parts, "DISP_3V3", sig), sig)
             self.assertFalse(resistors_between(self.parts, "+3V3", sig), sig)
+        for sig in ("TP_SDA_1V8", "TP_SCL_1V8", "TP_INT_1V8", "TP_RST_1V8"):
+            self.assertTrue(resistors_between(self.parts, "DISP_1V8", sig), sig)
+            self.assertFalse(resistors_between(self.parts, "DISP_3V3", sig), sig)
+            self.assertFalse(resistors_between(self.parts, "+3V3", sig), sig)
         for sig in ("I2C_SDA", "I2C_SCL"):
             self.assertTrue(resistors_between(self.parts, "+3V3", sig), sig)
             self.assertFalse(resistors_between(self.parts, "DISP_3V3", sig), sig)
             for ref in {pin.split(".")[0] for pin in self.nets[sig]}:
                 supplies = set(self.parts[ref].get("pins", {}).values()) & RAILS
                 self.assertNotIn("DISP_3V3", supplies, f"{ref} on {sig} must not be powered from DISP_3V3")
+
+    def test_touch_side_runs_from_the_panel_rail(self):
+        # DISP_1V8 comes from DISP_3V3 and U305's refB is DISP_3V3, so with the panel off nothing
+        # can hold the touch controller up (Review Focus 2).
+        self.need("periph")
+        p = self.parts
+        self.assertEqual((p["U306"]["pins"]["3"], p["U306"]["pins"]["2"]), ("DISP_3V3", "DISP_1V8"))
+        u = p["U305"]["pins"]
+        self.assertEqual((u["14"], u["1"], u["8"]), ("DISP_3V3", "DISP_1V8", "DISP_1V8"))
+        touch = {n for n in self.nets if n.startswith("TP_") and n.endswith("_1V8")}
+        self.assertEqual(touch, {"TP_SDA_1V8", "TP_SCL_1V8", "TP_INT_1V8", "TP_RST_1V8"})
+        for net in touch:
+            allowed = {"J301", "U305", *resistors_between(p, "DISP_1V8", net)}
+            for ref in {pin.split(".")[0] for pin in self.nets[net]}:
+                self.assertIn(ref, allowed, net)
+        self.assertTrue(resistors_between(p, "DISP_1V8", "GND"))
+        on_rail = {pin.split(".")[0] for pin in self.nets["DISP_1V8"]}
+        resistors = {r for r in on_rail if p[r]["symbol"] == "Device:R"}
+        others = {r for r in resistors if not set(p[r]["pins"].values()) & (touch | {"GND"})}
+        self.assertEqual(others, {"R315"})
+        self.assertEqual(set(p["R315"]["pins"].values()), {"DISP_1V8", "DISP_3V3"})
+        self.assertFalse(p["R315"].get("assembled", True))
 
     def test_wake_nets_have_pullups(self):
         self.need(*ALL_SHEETS)

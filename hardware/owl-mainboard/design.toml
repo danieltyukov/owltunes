@@ -1060,16 +1060,18 @@ pins = { 1 = "U0RXD" }
 # Sheet periph: display FPC, touch bus, haptics, ring sensor, IMU, light sensor, dock link
 # ---------------------------------------------------------------------------------------------
 
-# J301 follows the Waveshare ESP32-S3-Touch-AMOLED-1.75 J3: connector pin k carries panel pin
-# 32 - k (the bottom-contact connector takes the FPC contacts down, which mirrors its order).
-# Panel pins (VIEWE spec page 7): 1 GND, 2 TP_INT, 3 TP_RST, 4 TP_SDA, 5 TP_SCL, 6 TP_3.3V,
-# 7 GND, 8 IOVCC, 9 VCI, 10 VBAT, 11 VCI_EN, 12 GND, 13 MTP_PWR (open), 14 RESET, 15 CSX,
-# 16 SDI = QSPI D0, 17 DCX = QSPI D1, 18 SCL, 19 D(1) = QSPI D3, 20 D(0) = QSPI D2, 21 TE,
-# 22 GND, 23 to 30 MIPI (open), 25 and 28 GND, 31 GND.
-# Panel supplies (ruling R18): VCI, IOVCC, VCI_EN, VBAT and TP_3.3V all run from DISP_3V3 and the
-# touch bus is pulled up to DISP_3V3, as on the Waveshare kit. The VIEWE application circuit
-# (page 12) gives VBAT 3.3 to 5.5 V, but its pin table (page 7) lists VBAT 3.7 to 4.5 V and its
-# drawing notes touch I2C at 1.8 V. Both are open items for bring-up (VSYS bodge to VBAT possible).
+# J301 takes VIEWE's standard adapter FPC3-HD143Y002M (straight through, 31 contacts at 0.3 mm)
+# at rotation 270 on the front. The adapter's U-turn turns its contacts to face the board, as the
+# bottom-contact FH26W needs, and J301's pins run the other way along the band from the panel's,
+# so connector pin k carries panel pin 32 - k, as on the Waveshare ESP32-S3-Touch-AMOLED-1.75 J3.
+# Panel pins (VIEWE ALL-UEOL018VG-RA31-A001A spec V1.1 page 7): 1 GND, 2 TP_INT, 3 TP_RST,
+# 4 TP_SDA, 5 TP_SCL, 6 TP_3.3V, 7 GND, 8 IOVCC, 9 VCI, 10 VBAT, 11 VCI_EN, 12 GND, 13 MTP_PWR
+# (open), 14 RESET, 15 CSX, 16 SDI = QSPI D0, 17 DCX = QSPI D1, 18 SCL, 19 D(1) = QSPI D3,
+# 20 D(0) = QSPI D2, 21 TE, 22 GND, 23 to 30 MIPI (open), 25 and 28 GND, 31 GND.
+# Panel supplies (ruling R18): VCI, IOVCC, VCI_EN, VBAT and TP_3.3V all run from DISP_3V3. The
+# touch lines (panel pins 2 to 5) are at 1.8 V, on the panel side of U305 (TP_*_1V8, below).
+# VBAT stays an open item (VIEWE question 4): the application circuit (page 12) gives 3.3 to
+# 5.5 V, the pin table (page 7) 3.7 to 4.5 V (VSYS bodge to VBAT possible at bring-up).
 [[part]]
 ref = "J301"
 sheet = "periph"
@@ -1082,7 +1084,7 @@ manufacturer = "Hirose"
 alt = "C3168451 FH26W-31S-0.3SHW(97), same part on another reel"
 side = "front"
 height = 1.0
-pins = { 1 = "GND", 4 = "GND", 7 = "GND", 10 = "GND", 11 = "LCD_TE", 12 = "LCD_D2", 13 = "LCD_D3", 14 = "LCD_CLK", 15 = "LCD_D1", 16 = "LCD_D0", 17 = "LCD_CS", 18 = "LCD_RST", 20 = "GND", 21 = "DISP_3V3", 22 = "DISP_3V3", 23 = "DISP_3V3", 24 = "DISP_3V3", 25 = "GND", 26 = "DISP_3V3", 27 = "TP_SCL", 28 = "TP_SDA", 29 = "TP_RST", 30 = "TP_INT", 31 = "GND", MP = "GND" }
+pins = { 1 = "GND", 4 = "GND", 7 = "GND", 10 = "GND", 11 = "LCD_TE", 12 = "LCD_D2", 13 = "LCD_D3", 14 = "LCD_CLK", 15 = "LCD_D1", 16 = "LCD_D0", 17 = "LCD_CS", 18 = "LCD_RST", 20 = "GND", 21 = "DISP_3V3", 22 = "DISP_3V3", 23 = "DISP_3V3", 24 = "DISP_3V3", 25 = "GND", 26 = "DISP_3V3", 27 = "TP_SCL_1V8", 28 = "TP_SDA_1V8", 29 = "TP_RST_1V8", 30 = "TP_INT_1V8", 31 = "GND", MP = "GND" }
 nc = ["2", "3", "5", "6", "8", "9", "19"]
 
 [[part]]
@@ -1111,8 +1113,8 @@ side = "front"
 height = 0.6
 pins = { 1 = "DISP_3V3", 2 = "GND" }
 
-# Touch bus (I2C1): pull-ups to the switched DISP_3V3, so a powered-off CST9217 sees no voltage
-# on its pins and cannot be back-powered through them (Review Focus 2).
+# Touch bus (I2C1), ESP32-S3 side of U305: pull-ups to the switched DISP_3V3, so they have no
+# supply while the panel is off (Review Focus 2). The CST820 (0x15) is on U305's 1.8 V side.
 [[part]]
 ref = "R301"
 sheet = "periph"
@@ -1151,6 +1153,150 @@ manufacturer = "UNI-ROYAL"
 side = "back"
 height = 0.4
 pins = { 1 = "DISP_3V3", 2 = "TP_INT" }
+
+# Touch level shift (VIEWE, 13 October 2026: the CST820's I2C may not be pulled up to 3.3 V; the
+# drawing's touch table says "I2C voltage: 1.8V"). U306 makes DISP_1V8 from DISP_3V3, so it is off
+# with the panel. U305 passes SDA, SCL, INT and RST between the ESP32-S3 side (TP_*, pull-ups to
+# DISP_3V3) and the panel side (TP_*_1V8, pull-ups to DISP_1V8). refB on DISP_3V3 and EN on refA:
+# with DISP_3V3 off every channel is high impedance (Ioff 1 uA), so no ESP32-S3 pin can hold the
+# touch controller up (Review Focus 2). refB on +3V3 would push up to 3.5 uA into the dead DISP_1V8.
+[[part]]
+ref = "U305"
+sheet = "periph"
+symbol = "owltunes:LSF0204PWR"
+footprint = "Package_SO:TSSOP-14_4.4x5mm_P0.65mm"
+value = "LSF0204PWR"
+lcsc = "C202288"
+mpn = "LSF0204PWR"
+manufacturer = "Texas Instruments"
+alt = "C2677502 LSF0204QPWRQ1, same pins; not LSF0204D (EN active low)"
+side = "front"
+height = 1.2
+pins = { 1 = "DISP_1V8", 2 = "TP_SDA_1V8", 3 = "TP_SCL_1V8", 4 = "TP_INT_1V8", 5 = "TP_RST_1V8", 7 = "GND", 8 = "DISP_1V8", 10 = "TP_RST", 11 = "TP_INT", 12 = "TP_SCL", 13 = "TP_SDA", 14 = "DISP_3V3" }
+nc = ["6", "9"]
+
+[[part]]
+ref = "U306"
+sheet = "periph"
+symbol = "Regulator_Linear:XC6206PxxxMR"
+footprint = "Package_TO_SOT_SMD:SOT-23-3"
+value = "XC6206P182MR"
+lcsc = "C21659"
+mpn = "XC6206P182MR"
+manufacturer = "Torex Semiconductor"
+alt = "C347373 UMW XC6206P182MR, same SOT-23 pins (VSS 1, VOUT 2, VIN 3)"
+side = "front"
+height = 1.3
+pins = { 1 = "GND", 2 = "DISP_1V8", 3 = "DISP_3V3" }
+
+[[part]]
+ref = "C311"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1uF"
+lcsc = "C52923"
+mpn = "CL05A105KA5NQNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "front"
+height = 0.6
+pins = { 1 = "DISP_3V3", 2 = "GND" }
+
+[[part]]
+ref = "C312"
+sheet = "periph"
+symbol = "Device:C"
+footprint = "Capacitor_SMD:C_0402_1005Metric"
+value = "1uF"
+lcsc = "C52923"
+mpn = "CL05A105KA5NQNC"
+manufacturer = "Samsung Electro-Mechanics"
+side = "front"
+height = 0.6
+pins = { 1 = "DISP_1V8", 2 = "GND" }
+
+# R310 takes U305's refB to refA current (ICCBA, at most 3.5 uA), which the XC6206 cannot
+# sink: without a load DISP_1V8 would drift above 1.8 V.
+[[part]]
+ref = "R310"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "100k"
+lcsc = "C25741"
+mpn = "0402WGF1003TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "DISP_1V8", 2 = "GND" }
+
+[[part]]
+ref = "R311"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "DISP_1V8", 2 = "TP_SDA_1V8" }
+
+[[part]]
+ref = "R312"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "4.7k"
+lcsc = "C25900"
+mpn = "0402WGF4701TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "DISP_1V8", 2 = "TP_SCL_1V8" }
+
+[[part]]
+ref = "R313"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "DISP_1V8", 2 = "TP_INT_1V8" }
+
+[[part]]
+ref = "R314"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "10k"
+lcsc = "C25744"
+mpn = "0402WGF1002TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+pins = { 1 = "DISP_1V8", 2 = "TP_RST_1V8" }
+
+# R315 is not fitted: the bring-up fallback to a 3.3 V touch bus if the CST820 does not answer
+# at 1.8 V (U305 then works as a plain bus switch, outside its translation conditions).
+[[part]]
+ref = "R315"
+sheet = "periph"
+symbol = "Device:R"
+footprint = "Resistor_SMD:R_0402_1005Metric"
+value = "0R"
+lcsc = "C17168"
+mpn = "0402WGF0000TCE"
+manufacturer = "UNI-ROYAL"
+side = "front"
+height = 0.4
+assembled = false
+pins = { 1 = "DISP_3V3", 2 = "DISP_1V8" }
 
 # DRV2605L on +3V3 with EN tied high: SDA, SCL, EN and IN/TRIG may not exceed VDD + 0.3 V
 # (SLOS854D section 6.1), so it stays powered while the sensor bus is. Standby by register
