@@ -75,9 +75,17 @@ static void test_sensor_bus_addresses_are_unique(void)
             TEST_ASSERT_NOT_EQUAL(addr[i], addr[j]);
         }
     }
-    /* CST9217 shares 0x5A with the DRV2605L, which is why touch has its own bus. */
-    TEST_ASSERT_EQUAL(OWL_I2C_ADDR_DRV2605L, OWL_I2C_ADDR_CST9217);
+    TEST_ASSERT_EQUAL(0x15, OWL_I2C_ADDR_CST820);
+    for (size_t i = 0; i < N_ELEMS(addr); i++) {
+        TEST_ASSERT_NOT_EQUAL(addr[i], OWL_I2C_ADDR_CST820);
+    }
     TEST_ASSERT_NOT_EQUAL(OWL_PIN_I2C_SDA, OWL_PIN_TP_SDA);
+}
+
+static void test_display_bus_clock_is_within_the_panel_limit(void)
+{
+    TEST_ASSERT_TRUE(OWL_LCD_QSPI_HZ <= OWL_LCD_QSPI_MAX_HZ);
+    TEST_ASSERT_EQUAL(0, 80000000 % OWL_LCD_QSPI_HZ);
 }
 
 static void test_docked_reading_falls_in_the_perch_window(void)
@@ -98,6 +106,7 @@ int main(void)
     RUN_TEST(test_strap_pins);
     RUN_TEST(test_display_uses_the_fspi_iomux_pins);
     RUN_TEST(test_sensor_bus_addresses_are_unique);
+    RUN_TEST(test_display_bus_clock_is_within_the_panel_limit);
     RUN_TEST(test_docked_reading_falls_in_the_perch_window);
     return UNITY_END();
 }

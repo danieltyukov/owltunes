@@ -8,7 +8,10 @@
  * must sit on the module pin of net <NET>), and firmware/test_host/test_board_reva.c checks the
  * ESP32-S3 rules: strapping pins, RTC wake pins, ADC1, the pins taken by the octal PSRAM. */
 
-/* Display: CO5300 QSPI on the FSPI IO_MUX pins, so the bus can run at 80 MHz. */
+/* Display: CO5300 QSPI on the FSPI IO_MUX pins; the panel allows at most 50 MHz for writes and
+ * 10 MHz for reads (VIEWE V1.1 p.11), so the bus runs at 40 MHz (80 MHz SPI clock divided by 2). */
+#define OWL_LCD_QSPI_HZ 40000000
+#define OWL_LCD_QSPI_MAX_HZ 50000000
 #define OWL_PIN_LCD_CS 10
 #define OWL_PIN_LCD_CLK 12
 #define OWL_PIN_LCD_D0 11
@@ -21,12 +24,15 @@
  * GPIO46 is a strapping pin and must be low at reset. */
 #define OWL_PIN_DISP_EN 46
 
-/* Touch: CST9217 on its own I2C bus (I2C1) with 4.7k pull-ups to DISP_3V3. */
+/* Touch: CST820 (0x15) on its own I2C bus (I2C1), through U305 (LSF0204) to its 1.8 V side:
+ * 4.7k pull-ups to DISP_3V3 here, 4.7k to DISP_1V8 on the panel side; at most 400 kHz and at least
+ * 4.5 us between STOP and START. */
 #define OWL_PIN_TP_SDA 47
 #define OWL_PIN_TP_SCL 48
-#define OWL_PIN_TP_INT 21 /* 10k pull-up to DISP_3V3 */
-#define OWL_PIN_TP_RST 40 /* active low */
-#define OWL_I2C_ADDR_CST9217 0x5A
+#define OWL_PIN_TP_INT 21 /* 10k pull-up to DISP_3V3, falling edge */
+#define OWL_PIN_TP_RST 40 /* active low, through U305 */
+#define OWL_I2C_ADDR_CST820 0x15
+#define OWL_TOUCH_RESET_WAIT_MS 100 /* CST820 Tron: wait after releasing TP_RST */
 
 /* Always-on sensor bus (I2C0) with 4.7k pull-ups to +3V3. Measure the rise time at 400 kHz at
  * bring-up; if it is too slow, run at 100 kHz or fit 2.2k pull-ups (not lower). */
@@ -96,7 +102,9 @@
  * LCD_CS, LCD_CLK and LCD_D0 to D3 low or high impedance, and turn off the internal pull-ups on
  * TP_SDA, TP_SCL, TP_INT and LCD_TE; 4 DISP_EN low. Keep these levels through deep sleep with the
  * pad hold, because GPIO38 to 40, 47 and 48 are not RTC pads.
- * Power-up: DISP_EN high, wait 10 ms (DISP_3V3 ramps in about 2 ms), then release the resets.
+ * Power-up: DISP_EN high with TP_RST and LCD_RST low, wait 10 ms (DISP_3V3 ramps in about 2 ms),
+ * release both, first panel command 10 ms later, first touch transaction OWL_TOUCH_RESET_WAIT_MS
+ * after releasing TP_RST.
  *
  * Before arming ext1: set IMU_INT1 push-pull and active low (again after any LIS2DW12 reset),
  * and keep the TMAG5273 interrupt in latched mode so a short pulse is not missed. */
