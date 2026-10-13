@@ -99,13 +99,12 @@ PLACE = {
     # U305's A side (pins 1 to 7) faces J301. The 1.8 V pull-ups stand below it, pad 2 up, in pin
     # order from the west (RST, INT, SCL, SDA for pins 5 to 2), so their tracks come down under the
     # package without crossing. The row sits at y -5.6 to clear U305's courtyard and U303's GND via
-    # at (1.4, -4.3), with a gap round the IMU_INT1 via at (2.48, -6.43). R310, the DISP_1V8
-    # bleeder, ends it at the west with its GND pad up below pin 7 (GND), 0.2 mm higher to keep
-    # off the via at (-1.38, -6.45). C312, the DISP_1V8 star, sits under pin 8 beside U306's VOUT
-    # (pin 2). R315 (not fitted) and C311 sit below U306, R315 between VOUT and C311's DISP_3V3
-    # pad, which VIN (pin 3) comes down to, so U306's reference fits on its right. No pad covers a
-    # via that has no tracks (the pour vias): saving the board gives such a via the net of the pad
-    # over it.
+    # at (1.4, -4.3) (hw_route.py local_power). R310, the DISP_1V8 bleeder, ends it at the west
+    # with its GND pad up below pin 7 (GND). C312, the DISP_1V8 star, sits under pin 8 beside
+    # U306's VOUT (pin 2). R315 (not fitted) and C311 sit below U306, R315 between VOUT and C311's
+    # DISP_3V3 pad, which VIN (pin 3) comes down to, so U306's reference fits on its right. No pad
+    # may cover a via that has no tracks (the pour vias): saving the board gives such a via the
+    # net of the pad over it.
     "U305": (2.0, -1.6, 0, "front"),
     "R310": (-1.88, -5.4, 90, "front"),
     "R314": (-0.7, -5.6, 90, "front"),

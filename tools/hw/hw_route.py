@@ -578,13 +578,16 @@ GROUPS = {
         ("GND", "pour", [(-32.0, -38.0), (32.0, -38.0), (32.0, 44.0), (-32.0, 44.0)], "B", 0),
     ],
     # One GND via in each region of the outer pours that the tracks round it enclose (review M2):
-    # without a via the filler drops the region as an island. Each sits at the deepest spot of its
-    # region that is outside every courtyard (for the region beside the module's exposed pad,
-    # under the module) and clear of other copper on both outer layers. The first three are for
-    # F.Cu regions, the rest for B.Cu regions; regions under 4 mm2 or too thin for a via stay empty.
+    # without a via the filler drops the region as an island (or, if a GND pad is in it, leaves it
+    # unconnected: C301 and C302 north of U305). Each sits at the deepest spot of its region that
+    # is outside every courtyard except the module's (vias beside its exposed pad sit under it)
+    # and clear of other copper on both outer layers, found again after J301 moved and the touch
+    # level shift went in. The first nine are for F.Cu regions, the rest for B.Cu regions; regions
+    # under 4 mm2 or with no spot that fits a via stay empty.
     "pour_vias": [
-        ("GND", "via", [(10.05, 13.99), (21.75, 5.6), (6.67, -6.7), (11.6, -16.82), (-16.47, -9.59),
-                        (-21.36, -3.33), (3.54, 21.57), (-1.38, -6.45), (-9.56, 15.61), (25.35, -6.5)]),
+        ("GND", "via", [(-15.84, -3.38), (0.36, 5.51), (21.79, 5.5), (6.55, 4.85), (10.05, 11.31), (-1.4, 9.86),
+                        (6.0, 15.76), (-2.65, 16.65), (-11.66, 26.23), (11.6, -16.83), (3.8, 13.55), (1.39, 8.75),
+                        (8.4, 16.25), (5.14, 21.45), (5.94, 26.28)]),
     ],
 }
 

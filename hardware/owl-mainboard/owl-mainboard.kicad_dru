@@ -41,3 +41,10 @@
 (rule "C202 GND pad joins by its track"
 	(condition "A.memberOfFootprint('C202') && A.Pad_Number == '2'")
 	(constraint zone_connection none))
+# C312's GND pad (DISP_1V8 decoupling) reaches GND through its own track to the via beside it
+# (tools/hw/hw_route.py touch_shift); C312's DISP_1V8 pad, the DISP_1V8 runs to U306 and the
+# pull-up row and the I2C_SCL via below it leave the F.Cu pour no room for a spoke, so the pour
+# keeps off the pad.
+(rule "C312 GND pad joins by its track"
+	(condition "A.memberOfFootprint('C312') && A.Pad_Number == '2'")
+	(constraint zone_connection none))
