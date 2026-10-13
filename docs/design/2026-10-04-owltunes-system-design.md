@@ -201,7 +201,7 @@ needs a PCB change and is therefore decided before PCB rev A is ordered.
 |---|---|---|
 | MCU | ESP32-S3-WROOM-1-N16R8 | 16 MB flash, 8 MB octal PSRAM, Wi-Fi 4, BLE 5, native USB |
 | Low-power clock | 32.768 kHz crystal | Cuts BLE light-sleep current from about 3.3 mA to about 0.23 mA |
-| Display | 1.75 inch round AMOLED, 466 x 466, CO5300 over QSPI, CST9217 touch, 31-pin FPC | Same panel family as the Waveshare ESP32-S3-Touch-AMOLED-1.75 dev kit; pinout taken from the purchased panel's datasheet |
+| Display | 1.75 inch round AMOLED, 466 x 466, CO5300 over QSPI, CST820 touch, 31-pin FPC | Same panel family as the Waveshare ESP32-S3-Touch-AMOLED-1.75 dev kit; pinout taken from the purchased panel's datasheet |
 | Display power | Load switch (TPS22917 or SY6280A) | Full power-off in sleep |
 | Ring sensing | TMAG5273A2 3D Hall sensor, magnets in the ring | Wake-on-rotation at about 1 uA |
 | Haptics | DRV2605L + 8 mm coin LRA on a 2-pin connector | Detents, bumps, confirmations |

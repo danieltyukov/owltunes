@@ -76,10 +76,12 @@ from the ring test; see [ring-test.md](ring-test.md).
    four ISO 7380 M2 x 6 from the front through the bezel lugs and the board into the cover
    standoffs, and four ISO 7380 M2 x 14 from the back through the cover spacers and the board into
    the body bosses. The back screw heads sit just below the cover's back face.
-9. **Display.** The cover glass is laminated to the panel. Insert the panel's adapter FPC into
-   J301 contacts down (the connector is bottom contact) and close the latch; check that the FPC's
-   pin 1 marking is at the J301 `31` end (connector pin k = panel pin 32 - k). Fold the flex
-   through the notch at the top of the bezel and lower the display into the bezel from the
-   front: the panel goes into its pocket and the glass border rests on a ring of the 0.2 mm tape
+9. **Display.** The cover glass is laminated to the panel. Lay the panel face down on a cloth and
+   plug the adapter FPC into the panel connector first (contacts towards the panel, the
+   positioning line at the connector face). Then put the adapter's free end into J301 through the
+   bezel opening (contacts down, the connector is bottom contact; pin 1 marking at J301's `31` end,
+   which is the south end; connector pin k = panel pin 32 - k) and close the latch. Lower the
+   display into the bezel from the front so the adapter forms its U-turn towards 9 o'clock over the
+   H2 lug: the panel goes into its pocket and the glass border rests on a ring of the 0.2 mm tape
    on the ledge. Then glue the 1.3 mm retainer ring into the lip opening over the glass border,
    keeping glue off the viewing area.
