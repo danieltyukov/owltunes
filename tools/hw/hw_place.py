@@ -169,6 +169,31 @@ REF_SIZE = 0.8  # JLC minimum silkscreen text height (owl-mainboard.kicad_dru)
 REF_THICKNESS = 0.15
 SILK_GAP = 0.15
 
+# Reference spots set by hand, placed before the search below: owl (x, y) of the text, then
+# "left" for text that starts there, or 90 for text that runs up the board (centred otherwise).
+# On the front east of J301 the search put R314's reference under R310, where it read as R310's,
+# and found no room for C302, C312 and R311 to R313. The row below U305 takes one reference
+# standing under each part: the glyphs are 0.99 mm wide, but the search measures a text by its
+# 1.46 mm box, which the 1.2 mm pitch cannot give. DRC checks these spots (silk to pad, silk
+# overlap) on the glyphs themselves.
+REF_AT = {
+    "C301": (0.16, 3.0, "left"),
+    "C302": (0.16, 1.9, "left"),
+    "U305": (2.0, -1.6),
+    "R301": (9.28, 0.65, "left"),
+    "R302": (9.28, -0.95, "left"),
+    "R303": (9.28, -2.55, "left"),
+    "U306": (10.4, -4.85, "left"),
+    "R310": (-1.88, -8.2, 90),
+    "R314": (-0.7, -8.2, 90),
+    "R313": (0.5, -8.2, 90),
+    "R312": (1.7, -8.2, 90),
+    "R311": (3.25, -8.2, 90),
+    "C312": (5.2, -8.2, 90),
+    "R315": (7.4, -8.55),
+    "C311": (10.85, -7.15, 90),  # stands beside it, off the H4 bezel lug (from x 12.3)
+}
+
 
 def box(item) -> tuple[float, float, float, float]:
     bb = item.BBox() if isinstance(item, pcbnew.SHAPE_POLY_SET) else item.GetBoundingBox()
@@ -183,7 +208,7 @@ def place_references(board) -> list[str]:
     """Put each reference designator on its side's silkscreen next to the part, clear of every
     pad, hole, other reference, footprint silkscreen drawing and board silkscreen text or mark
     (tools/hw/hw_silk.py, the J101 marks); hide it (the F.Fab or B.Fab copy stays) where nothing
-    fits."""
+    fits. The references in REF_AT go first, at their own spots, unchecked."""
     outline = pcbnew.SHAPE_POLY_SET()
     board.GetBoardPolygonOutlines(outline, False)
     copper = {False: [], True: []}
@@ -199,7 +224,7 @@ def place_references(board) -> list[str]:
         if d.GetLayer() in silk:
             taken[silk[d.GetLayer()]].append(box(d))
     hidden = []
-    for fp in sorted(board.GetFootprints(), key=lambda f: f.GetReference()):
+    for fp in sorted(board.GetFootprints(), key=lambda f: (f.GetReference() not in REF_AT, f.GetReference())):
         ref, back = fp.Reference(), fp.IsFlipped()
         fp.BuildCourtyardCaches()
         ref.SetLayer(pcbnew.B_SilkS if back else pcbnew.F_SilkS)
@@ -214,6 +239,9 @@ def place_references(board) -> list[str]:
                  (cx0 - 0.6, my, 90), (cx1 + 0.6, my, 90),
                  (cx0 - 0.4, cy0 - 0.6, "right"), (cx1 + 0.4, cy0 - 0.6, "left"),
                  (cx0 - 0.4, cy1 + 0.6, "right"), (cx1 + 0.4, cy1 + 0.6, "left"), (mx, my), (mx, my, 90)]
+        fixed = REF_AT.get(fp.GetReference())
+        if fixed:
+            spots = [(100 + fixed[0], 100 - fixed[1], *fixed[2:])]
         for spot in spots:
             ref.SetTextAngleDegrees(spot[2] if len(spot) == 3 and spot[2] == 90 else 0)
             ref.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_CENTER)
@@ -225,7 +253,8 @@ def place_references(board) -> list[str]:
             t = box(ref)
             inside = all(outline.Contains(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
                          for x, y in ((t[0] - 0.3, t[1] - 0.3), (t[2] + 0.3, t[1] - 0.3), (t[2] + 0.3, t[3] + 0.3), (t[0] - 0.3, t[3] + 0.3)))
-            if inside and not any(hits(t, c) for c in copper[back]) and not any(hits(t, o, 0.1) for o in taken[back]):
+            if fixed or (inside and not any(hits(t, c) for c in copper[back])
+                         and not any(hits(t, o, 0.1) for o in taken[back])):
                 taken[back].append(t)
                 break
         else:
