@@ -404,13 +404,14 @@ GROUPS = {
     #   package; the pull-up row (R310, R314 to R311) straight along y -6.11 and up past R311 to
     #   C312.
     # - DISP_3V3 on from the disp_3v3 run's pocket via P: B.Cu east (north of U305) to a via that
-    #   feeds U305 pin 14 (refB) from above, north to E west of the USB pair, F.Cu over it at
-    #   y 6.0 and down at x 9.0 through R301 to R303, U306 VIN, C311 and R315 (a few mA).
+    #   feeds U305 pin 14 (refB) from above, north at x 4.75 to E (west of the USB pair, leaving
+    #   IMU_INT1 a B.Cu lane beside the pair), F.Cu over the pair at y 6.0 and down at x 9.0
+    #   through R301 to R303, U306 VIN, C311 and R315 (a few mA).
     # - B side: pins 13 to 11 to the 3.3 V pull-ups R301 to R303. R301 to R303 sit east of the
     #   pins, so only TP_SDA (the top one) can leave north on F.Cu; TP_SCL, TP_INT and TP_RST drop
     #   to B.Cu in the channel east of the USB pair (vias at x 6.6), run north under R301 to R303
     #   and come back up north of R301. All four run west under the DISP_3V3 crossing (y 2.0 to
-    #   3.8), north at x 2.5 to 4.3, west above the QSPI vias (y 11.55 to 13.05); SDA, SCL and INT
+    #   3.8), north at x 2.4 to 4.2, west above the QSPI vias (y 11.55 to 13.05); SDA, SCL and INT
     #   drop to B.Cu below module pins 24, 25 and 23, TP_RST goes on north on F.Cu (it crosses
     #   DISP_EN's B.Cu run) to a via east of module pin 33.
     # - GND vias at U305 pin 7 with R310, C312, U306 pin 1 and C311.
@@ -431,28 +432,28 @@ GROUPS = {
         ("DISP_1V8", 0.25, [(4.5, -3.55), (3.75, -3.55), (3.75, 0.35), (-0.5, 0.35)], "F"),
         ("DISP_1V8", 0.25, [(-1.88, -5.91), (-1.5, -6.11), (3.25, -6.11), (3.6, -6.11), (4.25, -5.5), (4.25, -4.92),
                             (5.2, -4.92)], "F"),
-        ("DISP_3V3", 0.3, [(-2.35, 1.25), (-1.9, 1.6), (5.0, 1.6), (5.0, 6.0)]),
+        ("DISP_3V3", 0.3, [(-2.35, 1.25), (-1.9, 1.6), (4.75, 1.6), (4.75, 6.0)]),
         ("DISP_3V3", 0.3, [(4.6, 1.6), (4.6, 1.0)]),
         ("DISP_3V3", 0.3, [(4.6, 1.0), (4.6, 0.45)], "F"),
-        ("DISP_3V3", 0.3, [(5.0, 6.0), (8.6, 6.0), (9.0, 5.6), (9.0, 0.65), (9.0, -0.95), (9.0, -2.55),
+        ("DISP_3V3", 0.3, [(4.75, 6.0), (8.6, 6.0), (9.0, 5.6), (9.0, 0.65), (9.0, -0.95), (9.0, -2.55),
                            (9.0, -7.15)], "F"),
         ("DISP_3V3", 0.25, [(8.41, 0.65), (9.0, 0.65)], "F"),
         ("DISP_3V3", 0.25, [(8.41, -0.95), (9.0, -0.95)], "F"),
         ("DISP_3V3", 0.25, [(8.41, -2.55), (9.0, -2.55)], "F"),
         ("DISP_3V3", 0.25, [(8.92, -7.15), (8.4, -7.35), (7.91, -7.35)], "F"),
-        ("DISP_3V3", "via", [(4.6, 1.0), (5.0, 6.0)]),
+        ("DISP_3V3", "via", [(4.6, 1.0), (4.75, 6.0)]),
         ("TP_SDA", 0.1, [(5.4, -0.3), (6.35, -0.3), (7.0, 0.35), (7.39, 0.65)], "F"),
         ("TP_SCL", 0.1, [(5.4, -0.95), (7.39, -0.95)], "F"),
         ("TP_INT", 0.1, [(5.4, -1.6), (6.3, -1.6), (7.0, -2.3), (7.39, -2.55)], "F"),
-        ("TP_SDA", 0.1, [(7.39, 0.65), (7.39, 1.1), (5.7, 1.1), (5.7, 2.0), (2.5, 2.0), (2.5, 11.55),
+        ("TP_SDA", 0.1, [(7.39, 0.65), (7.39, 1.1), (5.7, 1.1), (5.7, 2.0), (2.4, 2.0), (2.4, 11.55),
                          (-4.445, 11.55)], "F"),
         ("TP_SCL", 0.1, [(6.6, -0.95), (6.6, 1.6)]),
-        ("TP_SCL", 0.1, [(6.6, 1.6), (6.6, 2.6), (3.1, 2.6), (3.1, 12.05), (-5.715, 12.05)], "F"),
+        ("TP_SCL", 0.1, [(6.6, 1.6), (6.6, 2.6), (3.0, 2.6), (3.0, 12.05), (-5.715, 12.05)], "F"),
         ("TP_INT", 0.1, [(6.6, -1.9), (7.85, -1.9), (7.85, 2.0)]),
-        ("TP_INT", 0.1, [(7.85, 2.0), (7.85, 3.2), (3.7, 3.2), (3.7, 12.55), (-3.175, 12.55)], "F"),
+        ("TP_INT", 0.1, [(7.85, 2.0), (7.85, 3.2), (3.6, 3.2), (3.6, 12.55), (-3.175, 12.55)], "F"),
         ("TP_RST", 0.1, [(5.4, -2.25), (6.1, -2.25), (6.6, -2.75), (6.6, -2.85)], "F"),
         ("TP_RST", 0.1, [(6.6, -2.85), (8.35, -2.85), (8.35, 3.0)]),
-        ("TP_RST", 0.1, [(8.35, 3.0), (8.35, 3.8), (4.3, 3.8), (4.3, 13.05), (-6.6, 13.05), (-6.6, 26.0),
+        ("TP_RST", 0.1, [(8.35, 3.0), (8.35, 3.8), (4.2, 3.8), (4.2, 13.05), (-6.6, 13.05), (-6.6, 26.0),
                          (-7.32, 26.72)], "F"),
         ("TP_RST", 0.1, [(-7.32, 26.72), (-8.75, 26.72)]),
         ("TP_SDA", 0.1, [(-4.445, 11.55), (-4.445, 17.85)]),
@@ -507,6 +508,10 @@ GROUPS = {
     #   (21.65, 13.3) and south at x 20.5, a B.Cu hop under the VSYS and +3V3 F.Cu runs (between
     #   the +3V3 via beside TP104 and TP103), F.Cu south at x 20.55 to the bus via at
     #   (19.929, -11.292) on the U301 side.
+    # - IMU_INT1 (since the touch level shift took its old F.Cu path): from U303 pin 12 east at
+    #   y -6.33 (above I2C_SCL), up a 0.1 mm B.Cu lane at x 5.3 between DISP_3V3's run to E and the
+    #   USB pair, past U305 and the QSPI lanes, a via below module pin 16 and F.Cu on to its run
+    #   from module pin 6.
     "late_links": [
         ("+3V3", 0.25, [(-11.41, 27.99), (-12.1, 27.75)]),
         ("+3V3", 0.25, [(-12.1, 27.75), (-11.85, 27.5), (-6.3, 27.5)], "F"),
@@ -522,6 +527,10 @@ GROUPS = {
         ("I2C_SDA", 0.15, [(19.8, 4.3), (19.8, 1.6)]),
         ("I2C_SDA", 0.15, [(19.8, 1.6), (20.55, 0.85), (20.55, -10.67), (19.929, -11.292)], "F"),
         ("I2C_SDA", "via", [(5.6, 35.2), (25.25, 8.1), (19.8, 4.3), (19.8, 1.6)]),
+        ("IMU_INT1", 0.15, [(-0.25, -5.763), (-0.25, -6.177), (-0.093, -6.334), (3.7, -6.334), (4.3, -5.73)]),
+        ("IMU_INT1", 0.1, [(4.3, -5.73), (5.3, -4.73), (5.3, 16.4)]),
+        ("IMU_INT1", 0.15, [(5.3, 16.4), (5.3, 20.6), (6.416, 21.244)], "F"),
+        ("IMU_INT1", "via", [(5.3, 16.4)]),
     ],
     # Inner planes. In1 is solid GND. In2 is GND too (the reference for the B.Cu parts: U101,
     # U103 and their caps, the crystal, the QSPI block and the USB corridor) except for a +3V3
