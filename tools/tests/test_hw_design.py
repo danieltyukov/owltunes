@@ -121,6 +121,10 @@ class DesignTest(unittest.TestCase):
         self.assertEqual((p["U306"]["pins"]["3"], p["U306"]["pins"]["2"]), ("DISP_3V3", "DISP_1V8"))
         u = p["U305"]["pins"]
         self.assertEqual((u["14"], u["1"], u["8"]), ("DISP_3V3", "DISP_1V8", "DISP_1V8"))
+        # Each channel passes An to Bn (SLVSCP5H table 6-1: A1 to A4 are pins 2 to 5, B1 to B4 pins
+        # 13 to 10), so each A pin carries the 1.8 V copy of its B pin's signal.
+        for a, b in (("2", "13"), ("3", "12"), ("4", "11"), ("5", "10")):
+            self.assertEqual(u[a], u[b] + "_1V8", f"U305 pin {a} against pin {b}")
         touch = {n for n in self.nets if n.startswith("TP_") and n.endswith("_1V8")}
         self.assertEqual(touch, {"TP_SDA_1V8", "TP_SCL_1V8", "TP_INT_1V8", "TP_RST_1V8"})
         for net in touch:
