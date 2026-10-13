@@ -100,7 +100,10 @@ PLACE = {
     # order from the west (RST, INT, SCL, SDA for pins 5 to 2), so their tracks come down under the
     # package without crossing. The row sits at y -5.6 to clear U305's courtyard and U303's GND via
     # at (1.4, -4.3) (hw_route.py local_power). R310, the DISP_1V8 bleeder, ends it at the west
-    # with its GND pad up below pin 7 (GND). C312, the DISP_1V8 star, sits under pin 8 beside
+    # with its GND pad up below pin 7 (GND). R310 sits 0.2 mm above the row (y -5.4) and R311 is
+    # 1.55 mm from R312 against the row's 1.2 mm pitch: both are kept from the earlier layout and
+    # shape DISP_1V8's jog at (-1.88, -5.91) to (-1.5, -6.11) (hw_route.py touch_shift), so moving
+    # either means rerouting that run. C312, the DISP_1V8 star, sits under pin 8 beside
     # U306's VOUT (pin 2). R315 (not fitted) and C311 sit below U306, R315 between VOUT and C311's
     # DISP_3V3 pad, which VIN (pin 3) comes down to, so U306's reference fits on its right. No pad
     # may cover a via that has no tracks (the pour vias): saving the board gives such a via the

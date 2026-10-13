@@ -237,9 +237,11 @@ GROUPS = {
     # and CLK vias, so the two sets never cross. The D2, CLK and D0 trombones (B.Cu, between the
     # module and their vias) keep every length within 5 mm of LCD_CLK. TE leaves the module's left
     # column, drops to F.Cu there and comes down at x -10.25 into its pad. A GND via between the
-    # CLK and D0 vias carries their return between In2 (under B.Cu) and In1 (under F.Cu). An F.Cu
-    # keep-out (j301_comb) holds every other route, Freerouting's included, out from between
-    # J301's rows and pads.
+    # CLK and D0 vias carries their return between In2 (under B.Cu) and In1 (under F.Cu), and
+    # rev A's GND via beside TE's via carries TE's. The west row vias under the FPC lead-in have no
+    # room for their own: In1 and In2 are both GND there, and those lanes return through J301's
+    # GND vias. An F.Cu keep-out (j301_comb) holds every other route, Freerouting's included, out
+    # from between J301's rows and pads.
     "qspi": [
         ("LCD_D2", 0.1, [(-1.905, 17.85)] + meander(-1.905, 14.5, -2.9, -0.95, 3) + [(-1.905, 11.0)]),
         ("LCD_CLK", 0.1, [(0.635, 17.85)] + meander(0.635, 14.0, -0.33, 1.6, 4) + [(0.635, 11.0)]),
@@ -262,7 +264,7 @@ GROUPS = {
         ("LCD_CS", "via", [(-8.0, 3.92)]),
         ("LCD_D3", "via", [(-7.4, 5.12)]),
         ("LCD_TE", "via", [(-10.25, 24.18)]),
-        ("GND", "via", [(1.27, 10.3)]),
+        ("GND", "via", [(1.27, 10.3), (-11.0, 24.18)]),
         ("", "keepout", j301_comb(), "F"),
     ],
     # BAT_NTC from U101 pin 1 (TS) to RT101, the board NTC under the middle of the cell (the pack
@@ -511,7 +513,7 @@ GROUPS = {
     #   the +3V3 via beside TP104 and TP103), F.Cu south at x 20.55 to the bus via at
     #   (19.929, -11.292) on the U301 side.
     # - IMU_INT1 (since the touch level shift took its old F.Cu path): from U303 pin 12 east at
-    #   y -6.33 (above I2C_SCL), up a 0.1 mm B.Cu lane at x 5.3 between DISP_3V3's run to E and the
+    #   y -6.33 (above I2C_SCL), up a 0.15 mm B.Cu lane at x 5.3 between DISP_3V3's run to E and the
     #   USB pair, past U305 and the QSPI lanes, a via below module pin 16 and F.Cu on to its run
     #   from module pin 6.
     "late_links": [
@@ -530,7 +532,7 @@ GROUPS = {
         ("I2C_SDA", 0.15, [(19.8, 1.6), (20.55, 0.85), (20.55, -10.67), (19.929, -11.292)], "F"),
         ("I2C_SDA", "via", [(5.6, 35.2), (25.25, 8.1), (19.8, 4.3), (19.8, 1.6)]),
         ("IMU_INT1", 0.15, [(-0.25, -5.763), (-0.25, -6.177), (-0.093, -6.334), (3.7, -6.334), (4.3, -5.73)]),
-        ("IMU_INT1", 0.1, [(4.3, -5.73), (5.3, -4.73), (5.3, 16.4)]),
+        ("IMU_INT1", 0.15, [(4.3, -5.73), (5.3, -4.73), (5.3, 16.4)]),
         ("IMU_INT1", 0.15, [(5.3, 16.4), (5.3, 20.6), (6.416, 21.244)], "F"),
         ("IMU_INT1", "via", [(5.3, 16.4)]),
     ],
