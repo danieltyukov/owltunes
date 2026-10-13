@@ -90,13 +90,38 @@ PLACE = {
     "C111": (-11.6, 12.4, 0, "back"),
     "C112": (-14.2, 12.4, 0, "back"),
     "TP105": (-8.6, 9.6, 0, "back"),
-    # Display FPC decoupling on the front, below J301's DISP_3V3 pins (the flex enters from above).
-    "C302": (-2.25, 9.1, 0, "front"),
-    "C301": (-2.25, 8.0, 0, "front"),
-    # Touch pull-ups behind J301.
-    "R301": (-5.0, 12.0, 90, "back"),
-    "R302": (-6.2, 12.0, 90, "back"),
-    "R303": (-7.4, 12.0, 90, "back"),
+    # Display FPC decoupling on the front, east of J301's DISP_3V3 pins 22, 24 and 26 (J301 sits at
+    # (-5.0, 4.22) rot 270 with its rows along y and the flex entering from the west), pad 1
+    # towards J301 and outside the strip x -3.7 to -2.4 where J301's back-flip actuator opens.
+    "C301": (-1.2, 3.0, 0, "front"),
+    "C302": (-1.2, 1.9, 0, "front"),
+    # Touch translator and its 1.8 V rail east of J301, outside the actuator strip x -3.7 to -2.4.
+    # U305's A side (pins 1 to 7) faces J301. The 1.8 V pull-ups stand below it, pad 2 up, in pin
+    # order from the west (RST, INT, SCL, SDA for pins 5 to 2), so their tracks come down under the
+    # package without crossing. The row sits at y -5.6 to clear U305's courtyard and U303's GND via
+    # at (1.4, -4.3), with a gap round the IMU_INT1 via at (2.48, -6.43). R310, the DISP_1V8
+    # bleeder, ends it at the west with its GND pad up below pin 7 (GND), 0.2 mm higher to keep
+    # off the via at (-1.38, -6.45). C312, the DISP_1V8 star, sits under pin 8 beside U306's VOUT
+    # (pin 2). R315 (not fitted) and C311 sit below U306, R315 between VOUT and C311's DISP_3V3
+    # pad, which VIN (pin 3) comes down to, so U306's reference fits on its right. No pad covers a
+    # via that has no tracks (the pour vias): saving the board gives such a via the net of the pad
+    # over it.
+    "U305": (2.0, -1.6, 0, "front"),
+    "R310": (-1.88, -5.4, 90, "front"),
+    "R314": (-0.7, -5.6, 90, "front"),
+    "R313": (0.5, -5.6, 90, "front"),
+    "R312": (1.7, -5.6, 90, "front"),
+    "R311": (3.25, -5.6, 90, "front"),
+    "C312": (5.2, -5.4, 270, "front"),
+    "U306": (8.0, -4.85, 0, "front"),
+    "R315": (7.4, -7.35, 180, "front"),
+    "C311": (9.4, -7.15, 0, "front"),
+    # ESP32-S3 side touch pull-ups beside U305's B pins (pins 13 to 11), pad 2 towards them with
+    # room between for the B side's vias, 1.6 mm apart so each reference fits beside its part. On
+    # the front they leave the back free for the QSPI lanes between the module and J301.
+    "R301": (7.9, 0.65, 180, "front"),
+    "R302": (7.9, -0.95, 180, "front"),
+    "R303": (7.9, -2.55, 180, "front"),
     # Haptics next to J302: LRA_P and LRA_N (pins 7 and 9) face the connector; C304 spans VDD
     # pin 10 and GND pin 8 on the outer side, C303 at REG.
     "U301": (25.0, -14.0, 0, "back"),

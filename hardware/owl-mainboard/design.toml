@@ -1124,7 +1124,7 @@ value = "4.7k"
 lcsc = "C25900"
 mpn = "0402WGF4701TCE"
 manufacturer = "UNI-ROYAL"
-side = "back"
+side = "front"
 height = 0.4
 pins = { 1 = "DISP_3V3", 2 = "TP_SDA" }
 
@@ -1137,7 +1137,7 @@ value = "4.7k"
 lcsc = "C25900"
 mpn = "0402WGF4701TCE"
 manufacturer = "UNI-ROYAL"
-side = "back"
+side = "front"
 height = 0.4
 pins = { 1 = "DISP_3V3", 2 = "TP_SCL" }
 
@@ -1150,7 +1150,7 @@ value = "10k"
 lcsc = "C25744"
 mpn = "0402WGF1002TCE"
 manufacturer = "UNI-ROYAL"
-side = "back"
+side = "front"
 height = 0.4
 pins = { 1 = "DISP_3V3", 2 = "TP_INT" }
 

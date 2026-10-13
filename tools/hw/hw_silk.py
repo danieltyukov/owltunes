@@ -61,9 +61,10 @@ MARKS = {
         # U201's own pin 1 triangle sits at the module corner over the antenna notch, so the
         # board edge cuts it; this dot beside pin 1 (8.75, 35.61) marks it on the board.
         ("dot", "B", 10.1, 35.85, 0.2),
-        # J301 (front): pin 1 (its footprint also has a dot there) and pin 31 at the far end.
-        ("1", "F", 4.5, 15.45, 0.8),
-        ("31", "F", -4.5, 15.45, 0.8),
+        # J301 (front, rows along y): pin 1 (-6.44, 8.72) at the top end (its footprint also has a
+        # dot there) and pin 31 (-6.44, -0.28) at the bottom end, each beyond its mounting pad.
+        ("1", "F", -5.0, 10.7, 0.8),
+        ("31", "F", -5.0, -2.3, 0.8),
     ],
     "perch-dock": [
         # Owner mark on the top, below the pogo pins and clear of the snap-off neck.
