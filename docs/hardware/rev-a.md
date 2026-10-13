@@ -243,14 +243,14 @@ S-bend down to J301 at owl (-5.00, 4.22). Lengths along the flex's mid-plane, be
 
 | Segment | Length (mm) | Note |
 |---|---|---|
-| Inside the panel connector | 2.50 | |
+| Inside the panel connector | 2.50 | not counted: the 24.148 starts at the connector face |
 | Plug-end stiffener, straight out | 2.50 | s 14.96 to 17.46, depth 2.8 |
 | U-turn outward and back, R 2.0 | 6.28 | depth 2.8 to 6.8, contacts now towards the board |
 | Straight run over the H2 screw head | 3.6 to 4.1 | depth 6.8 |
 | S-bend down, two arcs R 2.0 of 78.5 degrees | 5.48 | depth 6.8 to 10.0 |
 | Lead-in on the board, last 2.50 is the stiffener | 2.5 to 3.0 | to J301's entry face |
 | Inside J301 | 2.50 | |
-| Sum | 23.38 | adapter 24.148: 0.77 mm slack, taken up by the U-turn growing outward |
+| Sum | 23.38 | the rows below the first, with the straight run and the lead-in together 6.62 wherever the S-bend sits (4.1 with 2.5, down to 3.6 with 3.0); adapter 24.148: 0.77 mm slack, taken up by the U-turn growing outward |
 
 `enclosure/tests/test_pcb_contract.py` (`test_display_adapter_reaches_j301`) computes this from the
 constants in `enclosure/owl_params.py`: 0.766 mm of slack nominal and 0.016 mm at the tolerance
@@ -273,8 +273,18 @@ The physical check in the open items below settles both.
 
 - Adapter fit check, before the board is ordered (about 10 minutes). Build the route with a real
   VIEWE adapter, or with a 1:1 paper strip 9.6 mm wide and 26.65 mm long (24.148 + 2.50) with 5.00 mm
-  stiffener ends, against a 1:1 print of the board front around J301 (hardware/owl-mainboard/fab or
-  the release files) and the printed bezel with the H2 screw fitted. Measure the panel connector's
+  stiffener ends, against a 1:1 print of the board front around J301 and the printed bezel with the
+  H2 screw fitted. The print is one A4 page; make it from the repository root with
+
+  ```
+  kicad-cli pcb export pdf --mode-single --scale 1 --ibt \
+    --drawing-sheet hardware/owl-mainboard/j301-fit-check.kicad_wks \
+    -l Edge.Cuts,F.Cu,F.Silkscreen,F.Fab,F.Courtyard,User.Comments \
+    -o private/orders/j301-adapter-check-1to1.pdf hardware/owl-mainboard/owl-mainboard.kicad_pcb
+  ```
+
+  and print it at actual size, not fit to page. Check the scale on paper before use: the two bars
+  on the page are 10 mm, and the board outline is 61.8 mm wide. Measure the panel connector's
   front face from the display centre and the adapter's depth at it. Confirm 0 to 1.4 mm of slack at
   J301 x -5.00; otherwise move J301 by the difference before ordering the board. The panels and
   adapters can be ordered first and this check run before the board order, or everything can be
