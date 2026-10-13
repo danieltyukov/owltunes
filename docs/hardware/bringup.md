@@ -28,8 +28,12 @@ steps that drive pins need a test build that takes its pins from
    panel on (below 0.1 V with it off). Release LCD_RST and initialise the CO5300 over QSPI at 40 MHz
    (the panel allows 50 MHz for writes; do not go to 80). SDA and SCL swing 0 to 1.8 V at J301 and 0
    to 3.3 V at R301 and R302. A touch bus scan on GPIO47 (SDA) and GPIO48 (SCL) finds 0x15 at least
-   100 ms after releasing TP_RST. If it does not, fit R315 (0R, DISP_3V3 to DISP_1V8; see the open
-   items in [rev-a.md](rev-a.md)) before anything else. Then run the power-down order from
+   100 ms after releasing TP_RST. If it does not, check in this order: TP_RST_1V8 is high at J301
+   pin 29 after the release; SDA and SCL idle at 1.8 V at J301 and the scope shows an ACK; the
+   100 ms wait after TP_RST is kept; DISP_1V8 reads 1.80 V at C312. Fitting R315 (0R, DISP_3V3 to
+   DISP_1V8; see the open items in [rev-a.md](rev-a.md)) is the last resort: it goes against VIEWE's
+   statement that the I2C lines cannot be pulled up to 3.3 V and may damage the panel's touch
+   controller. Then run the power-down order from
    `board_owltunes_reva.h` and check that DISP_3V3 falls to near 0 V and stays there: anything above
    about 0.1 V means an I/O pin is feeding the panel.
 7. **Haptics.** DRV2605L auto-calibration for the LRA: rated voltage 1.8 V rms, 235 Hz,

@@ -18,7 +18,6 @@ from pathlib import Path
 
 from hw_netlist import ROOT
 
-# The main board's date moved on with the touch level shift (VIEWE, 13 October 2026).
 BOARDS = {
     "owl-mainboard": ("OwlTunes main board", ["power", "mcu_usb", "periph"], "2026-10-13"),
     "perch-dock": ("OwlTunes perch board", ["perch", "owl_pads"], "2026-10-11"),

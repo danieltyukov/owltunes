@@ -23,7 +23,7 @@ seen from the ESP32-S3. "Wake source" marks the seven ext1 `ANY_LOW` deep-sleep 
 | 9 | 17 | `LCD_D3` | QSPI data | FSPI IO_MUX (FSPIHD) |
 | 10 | 18 | `LCD_CS` | Out, active low | FSPI IO_MUX (FSPICS0) |
 | 11 | 19 | `LCD_D0` | QSPI data | FSPI IO_MUX (FSPID) |
-| 12 | 20 | `LCD_CLK` | Out | FSPI IO_MUX (FSPICLK), up to 80 MHz |
+| 12 | 20 | `LCD_CLK` | Out | FSPI IO_MUX (FSPICLK), 40 MHz (the panel allows 50 MHz for writes) |
 | 13 | 21 | `LCD_D1` | QSPI data | FSPI IO_MUX (FSPIQ) |
 | 14 | 22 | `LCD_D2` | QSPI data | FSPI IO_MUX (FSPIWP) |
 | 15 | 8 | `XTAL32_P` | Crystal | 32.768 kHz crystal Y201, 18 pF to GND |
@@ -68,4 +68,6 @@ display off and sleep-in, wait 120 ms; drive `LCD_RST` and `TP_RST` low; hold `L
 `LCD_CLK` and `LCD_D0` to `LCD_D3` low or high impedance and turn off the internal pull-ups on
 `TP_SDA`, `TP_SCL`, `TP_INT` and `LCD_TE`; then `DISP_EN` low. Keep these levels through deep
 sleep with the pad hold, because GPIO38 to 40, 47 and 48 are not RTC pads. To power it up:
-`DISP_EN` high, wait 10 ms, then release the resets.
+`DISP_EN` high with `TP_RST` and `LCD_RST` held low, wait 10 ms (`DISP_3V3` ramps in about
+2 ms), then release both. The first panel command comes 10 ms later, and the first touch
+transaction `OWL_TOUCH_RESET_WAIT_MS` (100 ms) after releasing `TP_RST`.

@@ -137,8 +137,9 @@ def pcb_front_depth(hall_gap: float = HALL_GAP_NOMINAL) -> float:
 
 # Display adapter FPC: VIEWE's standard adapter from the panel's 31-pin connector to J301 (VIEWE
 # drawings and reply of 13 October 2026). The panel connector's reference point on VIEWE's
-# connector-position drawing (a back view) is its centre, 13.04 left of and 4.22 above the display
-# centre; panel pin 1 is at the band's bottom edge. The adapter leaves the connector towards 9 o clock
+# connector-position drawing (a back view) is its centre, 13.04 right of the display centre on the
+# drawing (a back view, so towards 9 o clock seen from the front) and 4.22 above it; panel pin 1 is
+# at the band's bottom edge. The adapter leaves the connector towards 9 o clock
 # and reaches J301 with one U-turn and an S-bend (enclosure/tests/test_pcb_contract.py).
 PANEL_CONN_X = -13.04
 PANEL_CONN_Y = 4.22

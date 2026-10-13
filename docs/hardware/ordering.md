@@ -6,7 +6,8 @@ private order package (shops, prices and the order-day checklist) is kept outsid
 
 ## Before uploading
 
-Run these in the repository on the order day and stop at the first failure:
+Decide on the adapter fit check first (rev-a.md, Open items). Then run these in the
+repository on the order day and stop at the first failure:
 
 ```
 python3 tools/hw/hw_stock.py owl-mainboard --boards 5
@@ -18,7 +19,7 @@ tools/hw/check_all.sh
 
 Every stock line must read `OK` (a `LOW` part switches to its `alt` in `design.toml`, same
 footprint, and the steps run again). `hw_fab.py` must print `0 fabrication error(s)` with
-`placements top 6, bottom 81` for the main board and `placements top 15, bottom 0` for the perch
+`placements top 18, bottom 78` for the main board and `placements top 15, bottom 0` for the perch
 board. The review behind these files is [rev-a-review.md](rev-a-review.md).
 
 ## Main board (JLCPCB)
