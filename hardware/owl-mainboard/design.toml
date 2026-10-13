@@ -1070,8 +1070,9 @@ pins = { 1 = "U0RXD" }
 # 20 D(0) = QSPI D2, 21 TE, 22 GND, 23 to 30 MIPI (open), 25 and 28 GND, 31 GND.
 # Panel supplies (ruling R18): VCI, IOVCC, VCI_EN, VBAT and TP_3.3V all run from DISP_3V3. The
 # touch lines (panel pins 2 to 5) are at 1.8 V, on the panel side of U305 (TP_*_1V8, below).
-# VBAT stays an open item (VIEWE question 4): the application circuit (page 12) gives 3.3 to
-# 5.5 V, the pin table (page 7) 3.7 to 4.5 V (VSYS bodge to VBAT possible at bring-up).
+# VBAT stays an open item: VIEWE is still being asked whether the pin wants 3.3 V or 3.7 to 4.5 V.
+# The application circuit (page 12) gives 3.3 to 5.5 V, the pin table (page 7) 3.7 to 4.5 V (VSYS
+# bodge to VBAT possible at bring-up).
 [[part]]
 ref = "J301"
 sheet = "periph"
