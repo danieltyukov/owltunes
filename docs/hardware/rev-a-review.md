@@ -72,9 +72,9 @@ Verdict: ready to order, subject to the placement preview rotation check at orde
 ## Main board (owl-mainboard, 4 layers, 1.0 mm, 61.8 x 79.8 mm)
 
 Verdict: ready to order, subject to the placement preview rotation check at order time and the
-adapter fit check choice (rev-a.md, Open items) (the rotation check is listed in
-the private order notes; five rotation offsets are already set from the footprint comparison
-below). Blockers: none.
+adapter fit check choice in rev-a.md's Open items. The rotation check is listed in the private
+order notes; five rotation offsets are already set from the footprint comparison below. Blockers:
+none.
 
 Reviewed on the fabrication files of 12 October 2026 (`python3 tools/hw/hw_fab.py owl-mainboard`
 on commit 3c914ce, board unchanged by the run; regenerated after the rotation offsets, with

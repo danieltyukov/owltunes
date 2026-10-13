@@ -173,9 +173,10 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 - Panel power-down: display off and sleep-in, wait 120 ms; drive LCD_RST and TP_RST low; hold
   LCD_CS, LCD_CLK and LCD_D0 to D3 low or high impedance and turn off the internal pull-ups on
   TP_SDA, TP_SCL, TP_INT and LCD_TE; keep those levels through deep sleep with the pad hold
-  (GPIO38 to 40, 47 and 48 are not RTC pads); then DISP_EN low. Power-up: DISP_EN high with TP_RST and LCD_RST low, wait 10 ms (DISP_3V3 ramps in about 2 ms),
-  release both, first panel command 10 ms later, first touch transaction 100 ms
-  (OWL_TOUCH_RESET_WAIT_MS) after releasing TP_RST.
+  (GPIO38 to 40, 47 and 48 are not RTC pads); then DISP_EN low. Power-up: DISP_EN high with
+  TP_RST and LCD_RST low, wait 10 ms (DISP_3V3 ramps in about 2 ms), release both, first panel
+  command 10 ms later, first touch transaction 100 ms (OWL_TOUCH_RESET_WAIT_MS) after releasing
+  TP_RST.
 - IMU_INT1: set the LIS2DW12 interrupt push-pull and active low (H_LACTIVE = 1) before ext1 is
   armed, and again after any LIS2DW12 reset (it comes out of reset driving INT1 low).
 - HALL_INT: use the TMAG5273 latched interrupt mode; the pulse mode is only 10 us wide.
