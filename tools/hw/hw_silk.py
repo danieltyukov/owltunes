@@ -26,7 +26,7 @@ import pcbnew
 
 from hw_contract import keepout_poly, overlap_mm2
 from hw_netlist import ROOT
-from hw_titleblock import DATE, LICENCE
+from hw_titleblock import BOARDS, LICENCE
 
 GROUP = "hw_silk"
 STROKE = 0.15  # JLC minimum silkscreen line width
@@ -41,7 +41,7 @@ MARKS = {
         ("Tyukov Inc", "B", -26.0, 7.0, 1.0),
         ("OwlTunes rev A", "B", -22.5, 5.0, 1.0),
         (LICENCE, "B", -22.5, 3.35, 0.8),
-        (DATE, "B", -22.5, 2.15, 0.8),
+        (BOARDS["owl-mainboard"][2], "B", -22.5, 2.15, 0.8),
         # JLC prints the order number here (ordering.md: "Specify a location"); under the cell.
         ("JLCJLCJLCJLC", "B", -6.0, -18.0, 0.8),
         # Connectors and test pads.

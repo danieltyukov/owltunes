@@ -2,9 +2,9 @@
 """Set or check the title blocks of a board's schematics and PCB.
 
 Every KiCad file of a board carries a title block with the board and sheet title, Rev A, the
-company, comment 1 (the hardware licence) and the date. The blocks are written by editing the
-(title_block ...) S-expression directly, because KiCad has no command line for it. The PCB title
-also names the Fabrication Toolkit zip.
+company, comment 1 (the hardware licence) and the board's date, the day its design last changed.
+The blocks are written by editing the (title_block ...) S-expression directly, because KiCad has
+no command line for it. The PCB title also names the Fabrication Toolkit zip.
 
 Usage: python3 tools/hw/hw_titleblock.py [--check] owl-mainboard
 """
@@ -18,25 +18,25 @@ from pathlib import Path
 
 from hw_netlist import ROOT
 
+# The main board's date moved on with the touch level shift (VIEWE, 13 October 2026).
 BOARDS = {
-    "owl-mainboard": ("OwlTunes main board", ["power", "mcu_usb", "periph"]),
-    "perch-dock": ("OwlTunes perch board", ["perch", "owl_pads"]),
+    "owl-mainboard": ("OwlTunes main board", ["power", "mcu_usb", "periph"], "2026-10-13"),
+    "perch-dock": ("OwlTunes perch board", ["perch", "owl_pads"], "2026-10-11"),
 }
 REV = "A"
 COMPANY = "OwlTunes"
 LICENCE = "CERN-OHL-P-2.0"
-DATE = "2026-10-11"
 
 BLOCK_RE = re.compile(r"[ \t]*\(title_block\b.*?\n[ \t]*\)[ \t]*\n", re.S)
 BLOCK_ONE_LINE_RE = re.compile(r"[ \t]*\(title_block\b[^\n]*\)[ \t]*\n")
 PAPER_RE = re.compile(r"(\(paper\b[^\n]*\)[ \t]*\n)")
 
 
-def block(title: str) -> str:
+def block(title: str, date: str) -> str:
     return (
         "\t(title_block\n"
         f'\t\t(title "{title}")\n'
-        f'\t\t(date "{DATE}")\n'
+        f'\t\t(date "{date}")\n'
         f'\t\t(rev "{REV}")\n'
         f'\t\t(company "{COMPANY}")\n'
         f'\t\t(comment 1 "{LICENCE}")\n'
@@ -49,9 +49,9 @@ def strip_block(text: str) -> str:
     return BLOCK_ONE_LINE_RE.sub("", text, count=1)
 
 
-def apply(text: str, title: str) -> str:
+def apply(text: str, title: str, date: str) -> str:
     text = strip_block(text)
-    new, n = PAPER_RE.subn(lambda m: m.group(1) + block(title), text, count=1)
+    new, n = PAPER_RE.subn(lambda m: m.group(1) + block(title, date), text, count=1)
     if n != 1:
         raise ValueError("no (paper ...) line to anchor the title block")
     return new
@@ -69,14 +69,14 @@ def read_block(text: str) -> dict[str, str]:
     return out
 
 
-def check_text(text: str, title: str) -> list[str]:
+def check_text(text: str, title: str, date: str) -> list[str]:
     got = read_block(text)
-    want = {"title": title, "date": DATE, "rev": REV, "company": COMPANY, "comment1": LICENCE}
+    want = {"title": title, "date": date, "rev": REV, "company": COMPANY, "comment1": LICENCE}
     return [f"title block {k} is {got.get(k)!r}, expected {v!r}" for k, v in want.items() if got.get(k) != v]
 
 
 def targets(board: str) -> list[tuple[Path, str]]:
-    name, sheets = BOARDS[board]
+    name, sheets, _ = BOARDS[board]
     folder = ROOT / "hardware" / board
     out = [(folder / f"{board}.kicad_sch", name), (folder / f"{board}.kicad_pcb", name)]
     out += [(folder / f"{s}.kicad_sch", f"{name}: {s}") for s in sheets]
@@ -88,13 +88,14 @@ def main(argv: list[str]) -> int:
     ap.add_argument("board")
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args(argv)
+    date = BOARDS[args.board][2]
     errors = []
     for path, title in targets(args.board):
         text = path.read_text()
         if args.check:
-            errors += [f"{path.name}: {e}" for e in check_text(text, title)]
+            errors += [f"{path.name}: {e}" for e in check_text(text, title, date)]
         else:
-            path.write_text(apply(text, title))
+            path.write_text(apply(text, title, date))
     if args.check:
         for e in errors:
             print(e)
