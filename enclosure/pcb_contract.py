@@ -102,10 +102,12 @@ PLACEMENTS = (
     Placement("SW202", 20.0, EAR_SWITCH_Y, 0.0, "back", 4.7, 2.9, 1.35,
               "right ear switch, knob faces up, key runs behind the board", knob=EVQ_KNOB),
     Placement("U304", 17.0, 31.5, 0.0, "front", 2.1, 2.1, 0.65, "ambient light sensor behind the brow window"),
-    # rot 180: the FH26W takes the FPC from footprint +v, which then faces up, so the flex that
-    # folds over the panel's top edge runs straight down into it (at rot 0 it would need a fold).
-    Placement("J301", 0.0, 12.0, 180.0, "front", 11.5, 5.6, 1.0,
-              "display FPC, entry faces the panel's top edge; reach provisional until the paper FPC check", cv=1.0),
+    # rot 270: the FH26W takes the FPC from footprint +v, which then faces 9 o clock, towards the
+    # panel's connector at (P.PANEL_CONN_X, P.PANEL_CONN_Y), with pin 1 at the +y end. VIEWE's
+    # standard adapter comes back to it after one U-turn, so J301 pin k meets panel pin 32 - k, and at
+    # x -5.0 it has 0.77 mm to spare (test_display_adapter_reaches_j301).
+    Placement("J301", -5.0, 4.22, 270.0, "front", 11.5, 5.6, 1.0,
+              "display FPC, entry faces 9 o clock: VIEWE adapter, one U-turn and an S-bend (owl_params ADAPTER_*)", cv=1.0),
     Placement("J101", 22.0, 18.0, 90.0, "back", 9.9, 7.6, 4.8, "battery connector, wires run down to the pack", cv=0.6),
     # J303 at y -30.825: its courtyard top sits on the battery zone's edge (y -27.5), which leaves the
     # mated plug's cable about 2.0 mm to bend before the body's bottom wall (inner face y -37.4).
@@ -238,9 +240,10 @@ def lug_polygon(x: float, y: float, margin: float = BOSS_CLEAR) -> list[tuple[fl
 
 def keepouts() -> list[dict]:
     """Board areas no part may cover, in owl coordinates. Back: the cover boss behind every hole.
-    Front: the body bosses at H5 to H8, the bezel lugs at H1 to H4, and the annulus under the bezel
-    tube, magnet carrier and ring (the carrier flange runs 0.3 mm in front of the board). Both
-    sides: the strips beside the antenna notch edges (U201 itself is exempt)."""
+    Front: the body bosses at H5 to H8, the bezel lugs at H1 to H4, the annulus under the bezel
+    tube, magnet carrier and ring (the carrier flange runs 0.3 mm in front of the board), and the
+    display adapter's way down to J301 (J301 itself is exempt). Both sides: the strips beside the
+    antenna notch edges (U201 itself is exempt)."""
     out = []
     holes = [(f"H{i + 1}", xy) for i, xy in enumerate(MOUNT_HOLES + BODY_HOLES)]
     for ref, (x, y) in holes:
@@ -255,6 +258,10 @@ def keepouts() -> list[dict]:
                         "points": lug_polygon(x, y)})
     out.append({"name": "bezel tube, magnet carrier and ring", "side": "front", "kind": "annulus",
                 "x": 0.0, "y": 0.0, "r_in": P.PANEL_POCKET_D / 2 - BOSS_CLEAR, "r_out": RING_CLEAR_R})
+    # The adapter's S-bend and lead-in come down onto the board between the H2 lug and J301's entry
+    # face, over the 9.6 mm band plus about 0.5 mm either side. Parts only: tented vias may sit under it.
+    out.append({"name": "display adapter path", "ref": "J301", "side": "front", "kind": "polygon",
+                "points": [(-14.0, -1.1), (-6.9, -1.1), (-6.9, 9.5), (-14.0, 9.5)]})
     top = BODY_CY + BODY_H / 2 - PCB_INSET
     for side in ("front", "back"):
         for sign, where in ((-1, "left"), (1, "right")):

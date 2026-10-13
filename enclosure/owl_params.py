@@ -17,8 +17,9 @@ here before the main board is ordered. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE
 MJF_MIN_WALL = 0.8
 MJF_STRUCT_WALL = 1.0
 
-# Display: VIEWE ALL-UEOL018WV-RA31-A001A specification V1.0 (2024-09-04), pages 4 and 6.
-GLASS_D = 48.16  # cover glass diameter ("C.G 48.16")
+# Display: VIEWE ALL-UEOL018VG-RA31-A001A specification V1.1 (2026-07-30), pages 4 and 6, with the
+# 48.16 mm cover glass VIEWE confirmed on 13 October 2026 (the specification draws a 52.6 mm glass).
+GLASS_D = 48.16  # cover glass diameter (VIEWE reply of 13 October 2026)
 GLASS_T = 1.10  # cover glass thickness ("C.G 1.1")
 DISPLAY_STACK_T = 2.07  # glass, OCA, panel and foam ("Total 2.07")
 VIEW_D = 44.16  # viewing area ("V.A 44.16")
@@ -132,6 +133,25 @@ def pcb_front_depth(hall_gap: float = HALL_GAP_NOMINAL) -> float:
     """Depth of the main PCB's front surface for a given magnet-to-Hall-element gap, with the
     TMAG5273 on the back side (the element sits HALL_ELEMENT_H behind the back surface)."""
     return magnet_face_depth() + hall_gap - HALL_ELEMENT_H - PCB_T
+
+
+# Display adapter FPC: VIEWE's standard adapter from the panel's 31-pin connector to J301 (VIEWE
+# drawings and reply of 13 October 2026). The panel connector's reference point on VIEWE's
+# connector-position drawing (a back view) is its centre, 13.04 left of and 4.22 above the display
+# centre; panel pin 1 is at the band's bottom edge. The adapter leaves the connector towards 9 o clock
+# and reaches J301 with one U-turn and an S-bend (enclosure/tests/test_pcb_contract.py).
+PANEL_CONN_X = -13.04
+PANEL_CONN_Y = 4.22
+PANEL_CONN_H = 1.0  # connector height
+PANEL_CONN_FACE = 1.92  # front face beyond the centre: assumed, FH26W-type body as on J301's footprint; measure
+ADAPTER_L = 24.148  # from the panel connector's front face to the end of the fingers
+ADAPTER_W = 9.60  # +-0.1 (Hirose asks +-0.05 for J301's FH26W: measure a few)
+ADAPTER_T = 0.20  # +-0.03
+ADAPTER_STIFFENER_L = 5.00  # PI stiffener at each end, positioning line 2.50 from the finger ends
+ADAPTER_INSERT = 2.50  # into each connector, up to the positioning line
+ADAPTER_BEND_R = 2.0  # 10 times the thickness
+ADAPTER_PANEL_DEPTH = 2.8  # +-0.2, flex mid-plane at the panel connector: stack 2.07, stiffener, slot 0.5 above the connector base
+J301_FPC_DEPTH = pcb_front_depth() - 0.5  # flex mid-plane at J301: FPC plane 0.4 above the board (Hirose EDC3-323714-05) plus half the flex
 
 
 # SparkFun Linear 3D Hall-Effect Sensor TMAG5273 (Qwiic), SEN-23880, 1 x 1 inch board.
