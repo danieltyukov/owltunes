@@ -300,7 +300,8 @@ The physical check in the open items below settles both.
   translation conditions.
 - Open questions to VIEWE: the order code of the 48.16 mm glass version; whether TP_INT and TP_RST
   share the 1.8 V limit; where the panel connector's front face sits and the tolerance of
-  24.148 mm; and the VBAT pin level.
+  24.148 mm; whether both adapter ends carry the stiffener and whether 2.50 mm is the full
+  insertion depth; and the VBAT pin level.
 - Panel VBAT at 3.3 V: the VIEWE pin table gives VBAT 3.7 to 4.5 V and its application circuit
   3.3 to 5.5 V; the Waveshare kit runs it at 3.3 V. Asked VIEWE (the VBAT pin level). If the panel
   misbehaves, feed VBAT from VSYS with a bodge wire.
