@@ -83,10 +83,11 @@ datasheets read for every IC (table below).
 
 Refreshed on 14 October 2026 for the VIEWE VG change (J301 moved to owl (-5.00, 4.22) at rotation
 270, U305 and U306 added with their parts, the QSPI and displaced nets rerouted), on the board of
-commit 24491c9 and its fabrication files: ERC, DRC, zone fills, `hw_fab.py`, the Gerber,
-schematic, PCB, cross, EMC and thermal analyzers, SPICE and the stock check were run again, and
-the rows below that give their results, name J301, U305 or U306, or list nets by routing follow
-those runs. The other rows are from 12 October.
+commit 24491c9 and its fabrication files. Run again: ERC, DRC, zone fills, `hw_fab.py`, the
+Gerber, schematic, PCB, cross, EMC and thermal analyzers, SPICE and the stock check. Their rows
+below, the J301, U305 and U306 rows of the datasheet table, the findings whose counts or nets
+changed, the In2 +3V3 boundary risk and the hidden reference count follow those runs; everything
+else is as reviewed on 12 October.
 
 ### Blockers
 
@@ -155,7 +156,7 @@ offset a part needs is the EasyEDA-to-KiCad angle less the table's angle. Five p
 The rest match: U102, U103, U304 and J301 were drawn in EasyEDA's orientation, U104 and U302 use
 the SOT-23-6 "BR" footprint the toolkit's 180 fits, U301's TSSOP fits the toolkit's 270, and Y201
 differs only in pad numbering (no polarity). U305 and U306, added on the front with the VIEWE VG
-change, were compared the same way when they were added: U305's TSSOP-14 "BL" footprint fits the
+change, were compared the same way on 13 October: U305's TSSOP-14 "BL" footprint fits the
 toolkit's 270 and U306's SOT-23-3 "BR" footprint its 180, so neither needs an offset. The preview
 still has the last word.
 
