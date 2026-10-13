@@ -236,9 +236,10 @@ GROUPS = {
     # the FPC lead-in (tented) and into their pads on F.Cu from the west. D1 drops between the D2
     # and CLK vias, so the two sets never cross. The D2, CLK and D0 trombones (B.Cu, between the
     # module and their vias) keep every length within 5 mm of LCD_CLK. TE leaves the module's left
-    # column, drops to F.Cu there and comes down at x -10.25 into its pad. An F.Cu keep-out
-    # (j301_comb) holds every other route, Freerouting's included, out from between J301's rows
-    # and pads.
+    # column, drops to F.Cu there and comes down at x -10.25 into its pad. A GND via between the
+    # CLK and D0 vias carries their return between In2 (under B.Cu) and In1 (under F.Cu). An F.Cu
+    # keep-out (j301_comb) holds every other route, Freerouting's included, out from between
+    # J301's rows and pads.
     "qspi": [
         ("LCD_D2", 0.1, [(-1.905, 17.85)] + meander(-1.905, 14.5, -2.9, -0.95, 3) + [(-1.905, 11.0)]),
         ("LCD_CLK", 0.1, [(0.635, 17.85)] + meander(0.635, 14.0, -0.33, 1.6, 4) + [(0.635, 11.0)]),
@@ -261,6 +262,7 @@ GROUPS = {
         ("LCD_CS", "via", [(-8.0, 3.92)]),
         ("LCD_D3", "via", [(-7.4, 5.12)]),
         ("LCD_TE", "via", [(-10.25, 24.18)]),
+        ("GND", "via", [(1.27, 10.3)]),
         ("", "keepout", j301_comb(), "F"),
     ],
     # BAT_NTC from U101 pin 1 (TS) to RT101, the board NTC under the middle of the cell (the pack
@@ -582,12 +584,13 @@ GROUPS = {
     # unconnected: C301 and C302 north of U305). Each sits at the deepest spot of its region that
     # is outside every courtyard except the module's (vias beside its exposed pad sit under it)
     # and clear of other copper on both outer layers, found again after J301 moved and the touch
-    # level shift went in. The first nine are for F.Cu regions, the rest for B.Cu regions; regions
-    # under 4 mm2 or with no spot that fits a via stay empty.
+    # level shift went in (the last one, beside D101, is the earlier search's and still stands).
+    # The first nine are for F.Cu regions, the rest for B.Cu regions; regions under 4 mm2 or with
+    # no spot that fits a via stay empty.
     "pour_vias": [
         ("GND", "via", [(-15.84, -3.38), (0.36, 5.51), (21.79, 5.5), (6.55, 4.85), (10.05, 11.31), (-1.4, 9.86),
                         (6.0, 15.76), (-2.65, 16.65), (-11.66, 26.23), (11.6, -16.83), (3.8, 13.55), (1.39, 8.75),
-                        (8.4, 16.25), (5.14, 21.45), (5.94, 26.28)]),
+                        (8.4, 16.25), (5.14, 21.45), (5.94, 26.28), (25.35, -6.5)]),
     ],
 }
 
