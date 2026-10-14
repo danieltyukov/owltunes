@@ -1,0 +1,511 @@
+/* Landing page. Each section takes its background from the render it shows, so the photographs
+   sit in the page without a frame: AMOLED black, the denim of the pocket shot and the grey sweep
+   of the exploded view. Amber is the owl UI's own accent and is kept for things you can press. */
+
+@font-face {
+  font-family: "Inter Display";
+  src: url("/fonts/InterDisplay-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root {
+  --amoled: #000000;
+  --amber: #ffb627;
+  --moon: #f4ede1;
+  --feather: #a89f94;
+  --bark: #2f2a26;
+  --denim: #1c2a42;
+  --sweep: #ebebeb;
+  --ink: #16171a;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--amoled);
+  color: var(--moon);
+  font: 400 1.125rem/1.6 "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.wrap {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 48rem) {
+  .wrap {
+    padding: 0 2.5rem;
+  }
+}
+
+h1,
+h2 {
+  font-family: "Inter Display", "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(3rem, 9vw, 7.5rem);
+  line-height: 0.95;
+  max-width: 11ch;
+}
+
+h2 {
+  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  line-height: 1.02;
+  margin-bottom: 1rem;
+}
+
+p {
+  max-width: 36rem;
+  margin: 0 0 1rem;
+}
+
+/* Header */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 16px;
+}
+
+@media (min-width: 48rem) {
+  .bar {
+    padding: 1.25rem 2.5rem;
+  }
+}
+
+.wordmark {
+  font-family: "Inter Display", "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.bar nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 0.95rem;
+}
+
+.bar nav a:not(.pill) {
+  color: var(--feather);
+  text-decoration: none;
+}
+
+.bar nav a:not(.pill):hover {
+  color: var(--moon);
+}
+
+@media (max-width: 40rem) {
+  .bar nav a:not(.pill) {
+    display: none;
+  }
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.6rem 1.15rem;
+  border-radius: 999px;
+  background: var(--amber);
+  color: var(--amoled);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pill.quiet {
+  background: transparent;
+  color: var(--moon);
+  box-shadow: inset 0 0 0 1px var(--bark);
+}
+
+.pill.quiet:hover {
+  box-shadow: inset 0 0 0 1px var(--feather);
+}
+
+/* Hero: the headline, then the launch shot rising out of the black. */
+
+.hero {
+  padding-top: clamp(2.5rem, 8vw, 6rem);
+}
+
+.lede {
+  margin-top: 1.5rem;
+  font-size: clamp(1.125rem, 1.8vw, 1.35rem);
+  color: var(--feather);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.hero-shot {
+  width: 100%;
+  margin-top: clamp(1rem, 4vw, 3rem);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+}
+
+/* Desk photograph, full bleed, with its caption under it. */
+
+.photo {
+  padding: clamp(3rem, 8vw, 7rem) 0;
+}
+
+.photo img {
+  width: 100%;
+}
+
+.caption {
+  margin-top: 2rem;
+}
+
+/* Pocket, on denim. */
+
+.pocket {
+  background: var(--denim);
+  padding: clamp(3rem, 8vw, 7rem) 0;
+}
+
+.split {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (min-width: 56rem) {
+  .split {
+    grid-template-columns: 1.35fr 1fr;
+    gap: 4rem;
+  }
+}
+
+.pocket img {
+  border-radius: 1.5rem;
+}
+
+/* The ring you can turn. Its ticks rotate with the value, like the owl's ring under a thumb. */
+
+.use {
+  padding: clamp(4rem, 10vw, 8rem) 0;
+}
+
+.dial {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+}
+
+.ring {
+  position: relative;
+  width: min(20rem, 80vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.ring:active {
+  cursor: grabbing;
+}
+
+.ring:focus-visible {
+  outline-offset: 6px;
+  border-radius: 50%;
+}
+
+.ring svg {
+  position: absolute;
+  inset: 12%;
+}
+
+.track {
+  fill: none;
+  stroke: var(--bark);
+  stroke-width: 7;
+}
+
+.arc {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.knob {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from -1deg, #4a443e 0deg 2deg, transparent 2deg 15deg),
+    radial-gradient(circle, transparent 66%, #0d0d0f 66.5%, #1a1a1d 100%);
+  mask-image: radial-gradient(circle, transparent 66%, #000 66.5%);
+}
+
+.readout {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  margin: 0;
+  max-width: none;
+  text-align: center;
+  font-family: "Inter Display", "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(3rem, 8vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.unit {
+  display: block;
+  margin-top: 0.4rem;
+  font: 400 0.9rem/1 "Inter", system-ui, sans-serif;
+  letter-spacing: 0;
+  color: var(--feather);
+}
+
+.dial figcaption {
+  max-width: 20rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--feather);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: minmax(9rem, auto) 1fr;
+  gap: 0.85rem 1.5rem;
+  margin: 2rem 0 0;
+}
+
+.controls dt {
+  font-weight: 600;
+}
+
+.controls dd {
+  margin: 0;
+  color: var(--feather);
+}
+
+/* Round screens, each in a thin bezel. */
+
+.screens {
+  padding: 0 0 clamp(4rem, 10vw, 8rem);
+}
+
+.faces {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(1rem, 3vw, 2.5rem);
+  margin: 3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 48rem) {
+  .faces {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.faces img {
+  border-radius: 50%;
+  box-shadow: 0 0 0 6px #0b0b0c, 0 0 0 7px var(--bark);
+}
+
+/* Inside, on the grey of the exploded render. */
+
+.inside {
+  background: var(--sweep);
+  color: var(--ink);
+  padding-bottom: clamp(4rem, 10vw, 8rem);
+}
+
+.inside img {
+  width: 100%;
+  mask-image: linear-gradient(to bottom, #000 85%, transparent);
+}
+
+/* On a phone the wide renders crop to 4:3 around the owl, so it is not lost in the frame. */
+@media (max-width: 40rem) {
+  .hero-shot,
+  .photo img {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+}
+
+.specs {
+  display: grid;
+  gap: 0 3rem;
+  margin: 2.5rem 0 0;
+}
+
+@media (min-width: 48rem) {
+  .specs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.specs div {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid rgba(22, 23, 26, 0.18);
+}
+
+.specs dt {
+  font-weight: 600;
+}
+
+.specs dd {
+  margin: 0;
+}
+
+/* The Car Thing comparison. */
+
+.last {
+  padding: clamp(4rem, 10vw, 8rem) 0 2rem;
+}
+
+table {
+  width: 100%;
+  max-width: 52rem;
+  margin-top: 2.5rem;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+th,
+td {
+  padding: 0.8rem 1rem 0.8rem 0;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--bark);
+}
+
+thead th {
+  border-top: 0;
+  color: var(--feather);
+  font-weight: 400;
+}
+
+thead td {
+  border-top: 0;
+}
+
+tbody td:first-of-type {
+  color: var(--feather);
+}
+
+tbody td:last-of-type {
+  color: var(--moon);
+}
+
+/* Where it stands: done, now, next. */
+
+.status {
+  padding: clamp(3rem, 8vw, 6rem) 0;
+}
+
+.steps {
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  max-width: 44rem;
+}
+
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  padding: 1rem 0;
+  border-top: 1px solid var(--bark);
+  color: var(--feather);
+}
+
+.steps li::before {
+  content: counter(step);
+  font-family: "Inter Display", "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.steps p {
+  margin: 0;
+}
+
+.steps strong {
+  color: var(--moon);
+  font-weight: 600;
+}
+
+.foot {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+  font-size: 0.9rem;
+  color: var(--feather);
+  border-top: 1px solid var(--bark);
+}

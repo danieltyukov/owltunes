@@ -3,15 +3,188 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>OwlTunes</title>
-    <link rel="stylesheet" href="./src/style.css" />
+    <meta name="description" content="OwlTunes is an open source Spotify remote with a round AMOLED face and a ring you turn for volume. It charges on a perch at your desk and goes in your pocket." />
+    <meta name="theme-color" content="#000000" />
+    <title>OwlTunes: a Spotify remote you turn</title>
+    <link rel="preload" href="fonts/InterDisplay-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="./src/landing.css" />
+    <script type="module" src="./src/landing.ts"></script>
   </head>
   <body>
+    <header class="bar">
+      <a class="wordmark" href="./">OwlTunes</a>
+      <nav aria-label="Sections">
+        <a href="#use">How it works</a>
+        <a href="#inside">Inside</a>
+        <a href="https://github.com/danieltyukov/owltunes">GitHub</a>
+        <a class="pill" href="./setup/">Set up your owl</a>
+      </nav>
+    </header>
+
     <main>
-      <h1>OwlTunes</h1>
-      <p>An owl-shaped remote for Spotify, for the desk and the pocket. It is open source: the firmware, this site and the hardware designs are on GitHub.</p>
-      <p><a class="button" href="./setup/">Set up your owl</a></p>
-      <p class="note"><a href="https://github.com/danieltyukov/owltunes">Source on GitHub</a></p>
+      <section class="hero">
+        <div class="wrap">
+          <h1>Your music, one turn away.</h1>
+          <p class="lede">
+            OwlTunes is a Spotify remote with a round AMOLED face and a ring you turn for volume. It
+            charges on its perch by your desk and goes in your pocket when you leave.
+          </p>
+          <p class="actions">
+            <a class="pill" href="./setup/">Set up your owl</a>
+            <a class="pill quiet" href="https://github.com/danieltyukov/owltunes">Read the source</a>
+          </p>
+        </div>
+        <img class="hero-shot" src="img/render-hero.jpg" width="1920" height="1080"
+          alt="The owl docked on its perch, showing the track that is playing" />
+      </section>
+
+      <section class="photo" aria-labelledby="desk-title">
+        <img src="img/render-desk.jpg" width="1920" height="1080" loading="lazy"
+          alt="The owl on its perch on an oak desk, next to a mug and a phone" />
+        <div class="wrap caption">
+          <h2 id="desk-title">At your desk</h2>
+          <p>
+            On the perch it charges through spring contacts and stays on as a small display for what
+            is playing. The perch is weighted and holds the owl with magnets, so turning the ring does
+            not move it.
+          </p>
+        </div>
+      </section>
+
+      <section class="pocket" aria-labelledby="pocket-title">
+        <div class="wrap split">
+          <img src="img/render-pocket.jpg" width="1920" height="1080" loading="lazy"
+            alt="The owl slid into the pocket of a pair of jeans" />
+          <div>
+            <h2 id="pocket-title">In your pocket</h2>
+            <p>
+              Lift it off the perch and it runs on its own battery. It reaches Spotify over your home
+              Wi-Fi or your phone's hotspot. With no internet at all, the ears and the beak still work
+              as Bluetooth media keys.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="use" class="use" aria-labelledby="use-title">
+        <div class="wrap split">
+          <figure class="dial">
+            <div id="ring" class="ring" role="slider" tabindex="0" aria-label="Volume"
+              aria-valuemin="0" aria-valuemax="100" aria-valuenow="62">
+              <svg viewBox="0 0 200 200" aria-hidden="true">
+                <circle class="track" cx="100" cy="100" r="78" />
+                <circle id="ring-arc" class="arc" cx="100" cy="100" r="78" pathLength="100"
+                  stroke-dasharray="62 100" transform="rotate(-90 100 100)" />
+              </svg>
+              <div id="ring-knob" class="knob" aria-hidden="true"></div>
+              <p class="readout"><span id="ring-value">62</span><span class="unit">volume</span></p>
+            </div>
+            <figcaption>Drag the ring, scroll, or use the arrow keys. Each click is 2 percent.</figcaption>
+          </figure>
+          <div>
+            <h2 id="use-title">Made to use without looking</h2>
+            <dl class="controls">
+              <dt>Ring</dt>
+              <dd>Volume, or scroll a list with a click for every item</dd>
+              <dt>Tap the cover</dt>
+              <dd>Play or pause</dd>
+              <dt>Left or right ear</dt>
+              <dd>Previous or next track</dd>
+              <dt>Hold the left ear and turn</dt>
+              <dd>Pick one of eight presets, release to play it</dd>
+              <dt>Hold the right ear</dt>
+              <dd>Like the track</dd>
+              <dt>Beak</dt>
+              <dd>Back; hold it for Now Playing</dd>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="screens" aria-labelledby="screens-title">
+        <div class="wrap">
+          <h2 id="screens-title">Drawn for a round screen</h2>
+          <p>
+            Now playing, your playlists, the preset wheel and the device picker, laid out for a 466 by
+            466 AMOLED where black pixels are simply off. These are frames from the simulator, which
+            runs the same UI code as the owl.
+          </p>
+          <ul class="faces">
+            <li><img src="img/now_playing.png" width="466" height="466" loading="lazy" alt="Now playing" /></li>
+            <li><img src="img/playlists.png" width="466" height="466" loading="lazy" alt="Playlists" /></li>
+            <li><img src="img/presets_wheel.png" width="466" height="466" loading="lazy" alt="Preset wheel" /></li>
+            <li><img src="img/no_device.png" width="466" height="466" loading="lazy" alt="Looking for your phone" /></li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="inside" class="inside" aria-labelledby="inside-title">
+        <img src="img/render-exploded.jpg" width="1920" height="1080" loading="lazy"
+          alt="Exploded view: cover glass, screen, bezel, ring, body, main board, battery and back cover" />
+        <div class="wrap">
+          <h2 id="inside-title">Inside</h2>
+          <p>
+            A 4-layer board around an ESP32-S3, a magnetic ring read by a Hall sensor, and a small
+            linear motor that gives every detent its click, in a nylon enclosure printed by MJF. The
+            renders on this page come from the same KiCad and CAD files that go to the factory.
+          </p>
+          <dl class="specs">
+            <div><dt>Display</dt><dd>1.75 inch round AMOLED, 466 x 466, touch</dd></div>
+            <div><dt>Controls</dt><dd>Haptic ring, two ear buttons, beak button</dd></div>
+            <div><dt>Processor</dt><dd>ESP32-S3, 16 MB flash, 8 MB PSRAM</dd></div>
+            <div><dt>Connectivity</dt><dd>Wi-Fi, Bluetooth LE</dd></div>
+            <div><dt>Sensors</dt><dd>Ring position, motion, ambient light</dd></div>
+            <div><dt>Power</dt><dd>LiPo battery, USB-C, perch charging</dd></div>
+            <div><dt>Size</dt><dd>66 x 84 x 24 mm</dd></div>
+            <div><dt>Perch</dt><dd>Weighted, magnetic, tilted 17.5 degrees</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="last" aria-labelledby="last-title">
+        <div class="wrap">
+          <h2 id="last-title">Nobody can switch it off</h2>
+          <p>
+            Spotify disabled every Car Thing in December 2024. OwlTunes keeps what matters on your
+            side: firmware you can build and flash yourself, boards and an enclosure you can order from
+            the files in the repository, and buttons that keep working without internet.
+          </p>
+          <table>
+            <thead>
+              <tr><td></td><th scope="col">Car Thing</th><th scope="col">OwlTunes</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Power</th><td>USB cable in the car</td><td>Battery, plus a charging perch</td></tr>
+              <tr><th scope="row">Connection</th><td>Through the phone app</td><td>Straight to Spotify over Wi-Fi</td></tr>
+              <tr><th scope="row">Offline</th><td>Stopped working</td><td>Bluetooth media keys</td></tr>
+              <tr><th scope="row">Output</th><td>The phone</td><td>Any Spotify Connect device</td></tr>
+              <tr><th scope="row">Source</th><td>Closed, switched off remotely</td><td>Open, updated from public releases</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="status" aria-labelledby="status-title">
+        <div class="wrap">
+          <h2 id="status-title">Where it stands</h2>
+          <ol class="steps">
+            <li><p><strong>Firmware</strong> runs on an ESP32-S3 dev board against a real Spotify account.</p></li>
+            <li><p><strong>Hardware rev A</strong> is designed and checked, and the first boards are being ordered.</p></li>
+            <li><p><strong>Next</strong>: the first assembled owls, bring-up, then tuning the ring and its haptics.</p></li>
+          </ol>
+        </div>
+      </section>
     </main>
+
+    <footer class="wrap foot">
+      <p>
+        <a href="https://github.com/danieltyukov/owltunes">Source on GitHub</a>.
+        Software under MIT, hardware and enclosure under CERN-OHL-P-2.0.
+      </p>
+      <p>
+        OwlTunes is an independent, non-commercial project. It is not affiliated with, endorsed by or
+        sponsored by Spotify. Spotify is a trademark of Spotify AB.
+      </p>
+    </footer>
   </body>
 </html>
