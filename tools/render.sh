@@ -8,8 +8,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${ROOT}/build/render"
-SAMPLES="${SAMPLES:-384}"
-SIZE="${SIZE:-2400x1350}"
+SAMPLES="${SAMPLES:-256}"
+SIZE="${SIZE:-1920x1080}"
 scenes=("$@")
 [[ ${#scenes[@]} -gt 0 ]] || scenes=(hero desk pocket exploded)
 
