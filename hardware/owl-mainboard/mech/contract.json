@@ -225,6 +225,30 @@
     },
     {
       "kind": "polygon",
+      "name": "display adapter path",
+      "points": [
+        [
+          86.0,
+          101.1
+        ],
+        [
+          93.1,
+          101.1
+        ],
+        [
+          93.1,
+          90.5
+        ],
+        [
+          86.0,
+          90.5
+        ]
+      ],
+      "ref": "J301",
+      "side": "front"
+    },
+    {
+      "kind": "polygon",
       "name": "antenna notch strip left",
       "points": [
         [
@@ -656,16 +680,16 @@
       "cv": 1.0,
       "h": 5.6,
       "height": 1.0,
-      "kicad_x": 100.0,
-      "kicad_y": 88.0,
+      "kicad_x": 95.0,
+      "kicad_y": 95.78,
       "knob": [],
       "ref": "J301",
-      "rot": 180.0,
+      "rot": 270.0,
       "side": "front",
       "w": 11.5,
-      "why": "display FPC, entry faces the panel's top edge; reach provisional until the paper FPC check",
-      "x": 0.0,
-      "y": 12.0
+      "why": "display FPC, entry faces 9 o clock: VIEWE adapter, one U-turn and an S-bend (owl_params ADAPTER_*)",
+      "x": -5.0,
+      "y": 4.22
     },
     {
       "cu": 0.0,

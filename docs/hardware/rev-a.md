@@ -27,7 +27,8 @@ is a header only for now: rev A board support arrives with the P3 board selectio
                                                 |                                    |    (AMOLED, touch)
                                           MAX17048 (VBAT)                            +-- ESP32-S3-WROOM-1-N16R8
  Sensor I2C (+3V3): TMAG5273A2 0x35, MAX17048 0x36, LIS2DW12 0x19, OPT3001 0x44, DRV2605L 0x5A
- Touch I2C (DISP_3V3): CST9217 0x5A.  QSPI (FSPI IO_MUX pins 9 to 14): CO5300 AMOLED.
+ Touch I2C: ESP32-S3 side on DISP_3V3 --- U305 LSF0204 --- panel side on DISP_1V8 (U306 from DISP_3V3):
+ CST820 0x15.  QSPI (FSPI IO_MUX pins 9 to 14, 40 MHz): CO5300 AMOLED.
 ```
 
 ## Mechanical stack (depth behind the cover glass front, mm)
@@ -148,7 +149,7 @@ The divider draws 30 uA, only while docked (on external power).
 
 | State | Spec | Rev A estimate | Basis |
 |---|---|---|---|
-| Screen on, Wi-Fi active | 110 to 180 mA | about 105 to 180 mA | ESP32-S3 Wi-Fi modem sleep 40 to 60 mA, panel 30 to 75 mA (VIEWE: 75 mA full red), touch 4 mA, at 3.3 V through the 90 % buck-boost |
+| Screen on, Wi-Fi active | 110 to 180 mA | about 105 to 180 mA | ESP32-S3 Wi-Fi modem sleep 40 to 60 mA, panel 30 to 75 mA (VIEWE: 75 mA full red), touch 1.9 mA typical (plus 18 uA in R310 while the panel is on), at 3.3 V through the 90 % buck-boost |
 | Screen off, Wi-Fi associated | about 3 mA | about 3 mA | Espressif light sleep with DTIM 3, 32.768 kHz crystal fitted |
 | Wi-Fi off, BLE advertising | 0.5 to 1 mA | about 0.5 to 1 mA | Espressif BLE light sleep figures |
 | Deep sleep | about 30 uA | about 44 uA | below |
@@ -172,8 +173,10 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 - Panel power-down: display off and sleep-in, wait 120 ms; drive LCD_RST and TP_RST low; hold
   LCD_CS, LCD_CLK and LCD_D0 to D3 low or high impedance and turn off the internal pull-ups on
   TP_SDA, TP_SCL, TP_INT and LCD_TE; keep those levels through deep sleep with the pad hold
-  (GPIO38 to 40, 47 and 48 are not RTC pads); then DISP_EN low. Power-up: DISP_EN high, wait
-  10 ms, release the resets.
+  (GPIO38 to 40, 47 and 48 are not RTC pads); then DISP_EN low. Power-up: DISP_EN high with
+  TP_RST and LCD_RST low, wait 10 ms (DISP_3V3 ramps in about 2 ms), release both, first panel
+  command 10 ms later, first touch transaction 100 ms (OWL_TOUCH_RESET_WAIT_MS) after releasing
+  TP_RST.
 - IMU_INT1: set the LIS2DW12 interrupt push-pull and active low (H_LACTIVE = 1) before ext1 is
   armed, and again after any LIS2DW12 reset (it comes out of reset driving INT1 low).
 - HALL_INT: use the TMAG5273 latched interrupt mode; the pulse mode is only 10 us wide.
@@ -217,7 +220,10 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Item | Spec | Rev A | Why |
 |---|---|---|---|
 | Panel supplies | VCI and IOVCC | VCI, IOVCC, VCI_EN, VBAT, TP_3.3V all on DISP_3V3 | VIEWE panel has a VBAT pin for its own boost; the Waveshare kit feeds it 3.3 V |
-| I2C | one bus implied | two buses | touch is powered off with the panel; CST9217 and DRV2605L share 0x5A |
+| I2C | one bus implied | two buses | touch is powered off with the panel, and it sits on its own 1.8 V side behind U305; the CST820 (0x15) no longer shares an address with the DRV2605L (0x5A), so the second bus is for power-down and level, not for an address clash |
+| Touch level | touch on DISP_3V3 | CST820 at 1.8 V: U306 XC6206P182MR makes DISP_1V8 from DISP_3V3, U305 LSF0204 translates SDA, SCL, INT and RST (TP_*_1V8, 4.7k and 10k pull-ups to DISP_1V8) | the CST820 at 0x15 must see 1.8 V (VIEWE drawing note). Both new parts are JLC Extended and have no Basic or Preferred equivalent. With DISP_3V3 off every translator pin is high impedance, so no GPIO can back-power the touch controller. Fallback: fit R315 (0R, not assembled) to put DISP_1V8 at 3.3 V |
+| J301 position | top edge of the panel, rotation 180 | owl (-5.00, 4.22), rotation 270, front side | VIEWE's standard adapter FPC (USD 0.80) reaches it with one U-turn and one S-bend; see Display adapter route |
+| Panel QSPI clock | not stated (rev A header: 80 MHz) | 40 MHz | the panel allows 50 MHz for writes; the board runs the QSPI at 40 MHz |
 | TMAG5273 | on the PCB | back side of the board | lets the board front sit 0.3 mm behind the carrier flange |
 | Dock pads | on the main board | separate dock-pad board, cabled to J303 | the main board is about 11 mm in front of the back surface |
 | Antenna keep-out | 15 mm from the ring | not reachable in 66 x 84 mm | to be measured in the ring test (RSSI with and without the ring stack); WROOM-1U fallback on the same pads |
@@ -229,16 +235,77 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Cover glass retention | not stated | adhesive: glass on an adhesive ring, 1.3 mm retainer ring glued into the lip opening | a snap does not fit the 1.3 mm lip with the bearing behind it. Owner review point: the glass could come loose if a glue joint fails in a drop; a mechanical lock (a taller lip or a bayonet) is a v2 item |
 | Perch USB-C | on the back of the perch (7.3) | right side of the back rest, the plug enters along +X | J1 is an edge-mount receptacle in the tilted rest plane and the perch board is Economic PCBA (top side only). Owner review point: a back exit needs a vertical receptacle on the board's bottom side, hand-soldered or with Standard PCBA, plus a boss on the rest's back; rev B can move it. The side channel takes the largest Type-C overmold (12.35 x 6.5 mm) |
 
+## Display adapter route
+
+The panel's standard adapter FPC (31 contacts at 0.30 mm, 9.60 mm wide, 0.20 mm thick, 24.148 mm from
+the panel connector's front face to the end of the fingers, 5.00 mm stiffeners at the finger ends)
+plugs into the panel connector, makes a U-turn towards 9 o'clock over the H2 screw head, and an
+S-bend down to J301 at owl (-5.00, 4.22). Lengths along the flex's mid-plane, bend radius 2.0 mm
+(10 x thickness), s = distance from the display centre towards 9 o'clock:
+
+| Segment | Length (mm) | Note |
+|---|---|---|
+| Inside the panel connector | 2.50 | not counted: the 24.148 starts at the connector face |
+| Plug-end stiffener, straight out | 2.50 | s 14.96 to 17.46, depth 2.8 |
+| U-turn outward and back, R 2.0 | 6.28 | depth 2.8 to 6.8, contacts now towards the board |
+| Straight run over the H2 screw head | 3.6 to 4.1 | depth 6.8 |
+| S-bend down, two arcs R 2.0 of 78.5 degrees | 5.48 | depth 6.8 to 10.0 |
+| Lead-in on the board, last 2.50 is the stiffener | 2.5 to 3.0 | to J301's entry face |
+| Inside J301 | 2.50 | |
+| Sum | 23.38 | the rows below the first, with the straight run and the lead-in together 6.62 wherever the S-bend sits (4.1 with 2.5, down to 3.6 with 3.0); adapter 24.148: 0.77 mm slack, taken up by the U-turn growing outward |
+
+`enclosure/tests/test_pcb_contract.py` (`test_display_adapter_reaches_j301`) computes this from the
+constants in `enclosure/owl_params.py`: 0.766 mm of slack nominal and 0.016 mm at the tolerance
+corner (connector face 0.6 mm further out, adapter 0.15 mm short). The S-bend may start anywhere in
+a window of s 13.34 to 13.85. The U-turn apex is at radius 21.89 mm (the bezel bore allows 23.1) and
+its underside clears the H2 screw head by 0.30 mm.
+
+Two inputs are estimates, because VIEWE does not dimension them: the panel connector's front face
+(taken as 14.96 mm from the centre, covered 14.5 to 15.55) and the adapter's mid-plane depth at the
+panel connector, 2.8 +- 0.2 mm. The route is sensitive to both:
+
+- At 2.6 mm depth the stacked worst corner (connector face 0.6 mm further out, adapter 0.15 mm
+  short) leaves -0.15 mm of slack, so the adapter would be too short.
+- At 3.0 mm depth the clearance over the H2 screw head drops to 0.10 mm. A wafer-head M2 at H2 is
+  the fallback.
+
+The physical check in the open items below settles both.
+
 ## Open items checked at bring-up
 
-- Display FPC route against a real panel: the adapter FPC length is the one dimension the panel
-  datasheet does not give. If placement could not check it with a panel, J301's position is
-  unconfirmed.
+- Adapter fit check, before the board is ordered (about 10 minutes). Build the route with a real
+  VIEWE adapter, or with a 1:1 paper strip 9.6 mm wide and 26.65 mm long (24.148 + 2.50) with 5.00 mm
+  stiffener ends, against a 1:1 print of the board front around J301 and the printed bezel with the
+  H2 screw fitted. The print is one A4 page; make it from the repository root with
+
+  ```
+  kicad-cli pcb export pdf --mode-single --scale 1 --ibt \
+    --drawing-sheet hardware/owl-mainboard/j301-fit-check.kicad_wks \
+    -l Edge.Cuts,F.Cu,F.Silkscreen,F.Fab,F.Courtyard,User.Comments \
+    -o private/orders/j301-adapter-check-1to1.pdf hardware/owl-mainboard/owl-mainboard.kicad_pcb
+  ```
+
+  and print it at actual size, not fit to page. Check the scale on paper before use: the two bars
+  on the page are 10 mm, so check them first; the thin grey outline outside the red copper is
+  61.8 mm wide. Measure the panel connector's
+  front face from the display centre and the adapter's depth at it. Confirm 0 to 1.4 mm of slack at
+  J301 x -5.00; otherwise move J301 by the difference before ordering the board. The panels and
+  adapters can be ordered first and this check run before the board order, or everything can be
+  ordered at once and the computed slack relied on (see Display adapter route).
+- Touch I2C level: the CST820 at 0x15 runs at 1.8 V behind U305 (resolved in the design). If the
+  scan at bring-up does not find 0x15, check TP_RST_1V8 high at J301 pin 29 after the release, SDA
+  and SCL idle at 1.8 V at J301 with an ACK on the scope, the 100 ms wait after TP_RST, and DISP_1V8
+  at C312. Fitting R315 (0R, DISP_3V3 to DISP_1V8) is the last resort: it goes against VIEWE's
+  statement of 13 October 2026 that the I2C lines cannot be pulled up to 3.3 V, may damage the
+  panel's touch controller, and puts the bus at 3.3 V on both sides of U305, outside the LSF0204's
+  translation conditions.
+- Open questions to VIEWE: the order code of the 48.16 mm glass version; whether TP_INT and TP_RST
+  share the 1.8 V limit; where the panel connector's front face sits and the tolerance of
+  24.148 mm; whether both adapter ends carry the stiffener and whether 2.50 mm is the full
+  insertion depth; and the VBAT pin level.
 - Panel VBAT at 3.3 V: the VIEWE pin table gives VBAT 3.7 to 4.5 V and its application circuit
-  3.3 to 5.5 V; the Waveshare kit runs it at 3.3 V. If the panel misbehaves, feed VBAT from VSYS
-  with a bodge wire.
-- Touch I2C at 3.3 V: the VIEWE drawing notes touch I2C at 1.8 V; the Waveshare kit runs it at
-  3.3 V.
+  3.3 to 5.5 V; the Waveshare kit runs it at 3.3 V. Asked VIEWE (the VBAT pin level). If the panel
+  misbehaves, feed VBAT from VSYS with a bodge wire.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
 - RT101 against the cell: with the gap pad fitted (Off-board parts), during a USB charge (about
   0.27 A) from about 3.5 V, compare RT101's temperature (from the TS

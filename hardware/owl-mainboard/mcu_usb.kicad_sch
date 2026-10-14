@@ -6,7 +6,7 @@
 	(paper "A3")
 	(title_block
 		(title "OwlTunes main board: mcu_usb")
-		(date "2026-10-11")
+		(date "2026-10-13")
 		(rev "A")
 		(company "OwlTunes")
 		(comment 1 "CERN-OHL-P-2.0")
@@ -5680,7 +5680,7 @@
 				)
 				(uuid "a1022558-45ab-5f1d-8447-da590a098422")
 			)
-			(table_cell "CST9217 INT, 10k pull-up to DISP_3V3"
+			(table_cell "CST820 INT through U305, 10k pull-up to DISP_3V3"
 				(exclude_from_sim no)
 				(at 327.66 81.28 0)
 				(size 76.2 2.54)
@@ -5952,7 +5952,7 @@
 				)
 				(uuid "9d3adbfd-4fb8-5748-87e3-4a43a9733488")
 			)
-			(table_cell "CST9217 reset, low before DISP_EN goes low"
+			(table_cell "CST820 reset through U305, low before DISP_EN goes low"
 				(exclude_from_sim no)
 				(at 327.66 91.44 0)
 				(size 76.2 2.54)
@@ -6428,7 +6428,7 @@
 				)
 				(uuid "cc7369d2-b9aa-5fa6-a622-c3f0498a1539")
 			)
-			(table_cell "I2C1 touch bus, 4.7k to DISP_3V3"
+			(table_cell "I2C1 touch bus (CST820 0x15) through U305, 4.7k to DISP_3V3"
 				(exclude_from_sim no)
 				(at 327.66 109.22 0)
 				(size 76.2 2.54)
@@ -6496,7 +6496,7 @@
 				)
 				(uuid "f22714f9-5f00-5412-9c8e-a124e73c060e")
 			)
-			(table_cell "I2C1 touch bus, 4.7k to DISP_3V3"
+			(table_cell "I2C1 touch bus (CST820 0x15) through U305, 4.7k to DISP_3V3"
 				(exclude_from_sim no)
 				(at 327.66 111.76 0)
 				(size 76.2 2.54)

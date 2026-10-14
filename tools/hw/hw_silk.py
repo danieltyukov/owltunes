@@ -26,7 +26,7 @@ import pcbnew
 
 from hw_contract import keepout_poly, overlap_mm2
 from hw_netlist import ROOT
-from hw_titleblock import DATE, LICENCE
+from hw_titleblock import BOARDS, LICENCE
 
 GROUP = "hw_silk"
 STROKE = 0.15  # JLC minimum silkscreen line width
@@ -41,7 +41,7 @@ MARKS = {
         ("Tyukov Inc", "B", -26.0, 7.0, 1.0),
         ("OwlTunes rev A", "B", -22.5, 5.0, 1.0),
         (LICENCE, "B", -22.5, 3.35, 0.8),
-        (DATE, "B", -22.5, 2.15, 0.8),
+        (BOARDS["owl-mainboard"][2], "B", -22.5, 2.15, 0.8),
         # JLC prints the order number here (ordering.md: "Specify a location"); under the cell.
         ("JLCJLCJLCJLC", "B", -6.0, -18.0, 0.8),
         # Connectors and test pads.
@@ -61,9 +61,10 @@ MARKS = {
         # U201's own pin 1 triangle sits at the module corner over the antenna notch, so the
         # board edge cuts it; this dot beside pin 1 (8.75, 35.61) marks it on the board.
         ("dot", "B", 10.1, 35.85, 0.2),
-        # J301 (front): pin 1 (its footprint also has a dot there) and pin 31 at the far end.
-        ("1", "F", 4.5, 15.45, 0.8),
-        ("31", "F", -4.5, 15.45, 0.8),
+        # J301 (front, rows along y): pin 1 (-6.44, 8.72) at the top end (its footprint also has a
+        # dot there) and pin 31 (-6.44, -0.28) at the bottom end, each beyond its mounting pad.
+        ("1", "F", -5.0, 10.7, 0.8),
+        ("31", "F", -5.0, -2.3, 0.8),
     ],
     "perch-dock": [
         # Owner mark on the top, below the pogo pins and clear of the snap-off neck.

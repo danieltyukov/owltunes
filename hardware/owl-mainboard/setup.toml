@@ -73,7 +73,7 @@ track_width = 0.5
 clearance = 0.2
 via_diameter = 0.6
 via_drill = 0.3
-nets = ["GND", "+3V3", "DISP_3V3", "VSYS", "VBAT", "VIN_CHG", "VBUS_USB", "VBUS_DOCK", "TPS_L1", "TPS_L2"]
+nets = ["GND", "+3V3", "DISP_3V3", "DISP_1V8", "VSYS", "VBAT", "VIN_CHG", "VBUS_USB", "VBUS_DOCK", "TPS_L1", "TPS_L2"]
 
 [netclass.Fine]
 track_width = 0.1

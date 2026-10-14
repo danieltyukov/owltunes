@@ -90,13 +90,40 @@ PLACE = {
     "C111": (-11.6, 12.4, 0, "back"),
     "C112": (-14.2, 12.4, 0, "back"),
     "TP105": (-8.6, 9.6, 0, "back"),
-    # Display FPC decoupling on the front, below J301's DISP_3V3 pins (the flex enters from above).
-    "C302": (-2.25, 9.1, 0, "front"),
-    "C301": (-2.25, 8.0, 0, "front"),
-    # Touch pull-ups behind J301.
-    "R301": (-5.0, 12.0, 90, "back"),
-    "R302": (-6.2, 12.0, 90, "back"),
-    "R303": (-7.4, 12.0, 90, "back"),
+    # Display FPC decoupling on the front, east of J301's DISP_3V3 pins 22, 24 and 26 (J301 sits at
+    # (-5.0, 4.22) rot 270 with its rows along y and the flex entering from the west), pad 1
+    # towards J301 and outside the strip x -3.7 to -2.4 where J301's back-flip actuator opens.
+    "C301": (-1.2, 3.0, 0, "front"),
+    "C302": (-1.2, 1.9, 0, "front"),
+    # Touch translator and its 1.8 V rail east of J301, outside the actuator strip x -3.7 to -2.4.
+    # U305's A side (pins 1 to 7) faces J301. The 1.8 V pull-ups stand below it, pad 2 up, in pin
+    # order from the west (RST, INT, SCL, SDA for pins 5 to 2), so their tracks come down under the
+    # package without crossing. The row sits at y -5.6 to clear U305's courtyard and U303's GND via
+    # at (1.4, -4.3) (hw_route.py local_power). R310, the DISP_1V8 bleeder, ends it at the west
+    # with its GND pad up below pin 7 (GND). R310 sits 0.2 mm above the row (y -5.4) and R311 is
+    # 1.55 mm from R312 against the row's 1.2 mm pitch: both are kept from the earlier layout and
+    # shape DISP_1V8's jog at (-1.88, -5.91) to (-1.5, -6.11) (hw_route.py touch_shift), so moving
+    # either means rerouting that run. C312, the DISP_1V8 star, sits under pin 8 beside
+    # U306's VOUT (pin 2). R315 (not fitted) and C311 sit below U306, R315 between VOUT and C311's
+    # DISP_3V3 pad, which VIN (pin 3) comes down to, so U306's reference fits on its right. No pad
+    # may cover a via that has no tracks (the pour vias): saving the board gives such a via the
+    # net of the pad over it.
+    "U305": (2.0, -1.6, 0, "front"),
+    "R310": (-1.88, -5.4, 90, "front"),
+    "R314": (-0.7, -5.6, 90, "front"),
+    "R313": (0.5, -5.6, 90, "front"),
+    "R312": (1.7, -5.6, 90, "front"),
+    "R311": (3.25, -5.6, 90, "front"),
+    "C312": (5.2, -5.4, 270, "front"),
+    "U306": (8.0, -4.85, 0, "front"),
+    "R315": (7.4, -7.35, 180, "front"),
+    "C311": (9.4, -7.15, 0, "front"),
+    # ESP32-S3 side touch pull-ups beside U305's B pins (pins 13 to 11), pad 2 towards them with
+    # room between for the B side's vias, 1.6 mm apart so each reference fits beside its part. On
+    # the front they leave the back free for the QSPI lanes between the module and J301.
+    "R301": (7.9, 0.65, 180, "front"),
+    "R302": (7.9, -0.95, 180, "front"),
+    "R303": (7.9, -2.55, 180, "front"),
     # Haptics next to J302: LRA_P and LRA_N (pins 7 and 9) face the connector; C304 spans VDD
     # pin 10 and GND pin 8 on the outer side, C303 at REG.
     "U301": (25.0, -14.0, 0, "back"),
@@ -142,6 +169,31 @@ REF_SIZE = 0.8  # JLC minimum silkscreen text height (owl-mainboard.kicad_dru)
 REF_THICKNESS = 0.15
 SILK_GAP = 0.15
 
+# Reference spots set by hand, placed before the search below: owl (x, y) of the text, then
+# "left" for text that starts there, or 90 for text that runs up the board (centred otherwise).
+# On the front east of J301 the search put R314's reference under R310, where it read as R310's,
+# and found no room for C302, C312 and R311 to R313. The row below U305 takes one reference
+# standing under each part: the glyphs are 0.99 mm wide, but the search measures a text by its
+# 1.46 mm box, which the 1.2 mm pitch cannot give. DRC checks these spots (silk to pad, silk
+# overlap) on the glyphs themselves.
+REF_AT = {
+    "C301": (0.16, 3.0, "left"),
+    "C302": (0.16, 1.9, "left"),
+    "U305": (2.0, -1.6),
+    "R301": (9.28, 0.65, "left"),
+    "R302": (9.28, -0.95, "left"),
+    "R303": (9.28, -2.55, "left"),
+    "U306": (10.4, -4.85, "left"),
+    "R310": (-1.88, -8.2, 90),
+    "R314": (-0.7, -8.2, 90),
+    "R313": (0.5, -8.2, 90),
+    "R312": (1.7, -8.2, 90),
+    "R311": (3.25, -8.2, 90),
+    "C312": (5.2, -8.2, 90),
+    "R315": (7.4, -8.55),
+    "C311": (10.85, -7.15, 90),  # stands beside it, off the H4 bezel lug (from x 12.3)
+}
+
 
 def box(item) -> tuple[float, float, float, float]:
     bb = item.BBox() if isinstance(item, pcbnew.SHAPE_POLY_SET) else item.GetBoundingBox()
@@ -156,7 +208,7 @@ def place_references(board) -> list[str]:
     """Put each reference designator on its side's silkscreen next to the part, clear of every
     pad, hole, other reference, footprint silkscreen drawing and board silkscreen text or mark
     (tools/hw/hw_silk.py, the J101 marks); hide it (the F.Fab or B.Fab copy stays) where nothing
-    fits."""
+    fits. The references in REF_AT go first, at their own spots, unchecked."""
     outline = pcbnew.SHAPE_POLY_SET()
     board.GetBoardPolygonOutlines(outline, False)
     copper = {False: [], True: []}
@@ -172,7 +224,7 @@ def place_references(board) -> list[str]:
         if d.GetLayer() in silk:
             taken[silk[d.GetLayer()]].append(box(d))
     hidden = []
-    for fp in sorted(board.GetFootprints(), key=lambda f: f.GetReference()):
+    for fp in sorted(board.GetFootprints(), key=lambda f: (f.GetReference() not in REF_AT, f.GetReference())):
         ref, back = fp.Reference(), fp.IsFlipped()
         fp.BuildCourtyardCaches()
         ref.SetLayer(pcbnew.B_SilkS if back else pcbnew.F_SilkS)
@@ -187,6 +239,9 @@ def place_references(board) -> list[str]:
                  (cx0 - 0.6, my, 90), (cx1 + 0.6, my, 90),
                  (cx0 - 0.4, cy0 - 0.6, "right"), (cx1 + 0.4, cy0 - 0.6, "left"),
                  (cx0 - 0.4, cy1 + 0.6, "right"), (cx1 + 0.4, cy1 + 0.6, "left"), (mx, my), (mx, my, 90)]
+        fixed = REF_AT.get(fp.GetReference())
+        if fixed:
+            spots = [(100 + fixed[0], 100 - fixed[1], *fixed[2:])]
         for spot in spots:
             ref.SetTextAngleDegrees(spot[2] if len(spot) == 3 and spot[2] == 90 else 0)
             ref.SetHorizJustify(pcbnew.GR_TEXT_H_ALIGN_CENTER)
@@ -198,7 +253,8 @@ def place_references(board) -> list[str]:
             t = box(ref)
             inside = all(outline.Contains(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
                          for x, y in ((t[0] - 0.3, t[1] - 0.3), (t[2] + 0.3, t[1] - 0.3), (t[2] + 0.3, t[3] + 0.3), (t[0] - 0.3, t[3] + 0.3)))
-            if inside and not any(hits(t, c) for c in copper[back]) and not any(hits(t, o, 0.1) for o in taken[back]):
+            if fixed or (inside and not any(hits(t, c) for c in copper[back])
+                         and not any(hits(t, o, 0.1) for o in taken[back])):
                 taken[back].append(t)
                 break
         else:
