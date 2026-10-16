@@ -19,7 +19,7 @@ from pathlib import Path
 from hw_netlist import ROOT
 
 BOARDS = {
-    "owl-mainboard": ("OwlTunes main board", ["power", "mcu_usb", "periph"], "2026-10-13"),
+    "owl-mainboard": ("OwlTunes main board", ["power", "mcu_usb", "periph"], "2026-10-16"),
     "perch-dock": ("OwlTunes perch board", ["perch", "owl_pads"], "2026-10-11"),
 }
 REV = "A"
