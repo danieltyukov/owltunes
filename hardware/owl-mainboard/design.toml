@@ -1069,9 +1069,10 @@ pins = { 1 = "U0RXD" }
 # (open), 14 RESET, 15 CSX, 16 SDI = QSPI D0, 17 DCX = QSPI D1, 18 SCL, 19 D(1) = QSPI D3,
 # 20 D(0) = QSPI D2, 21 TE, 22 GND, 23 to 30 MIPI (open), 25 and 28 GND, 31 GND.
 # Panel supplies (ruling R18): VCI, IOVCC, VCI_EN, VBAT and TP_3.3V all run from DISP_3V3. VBAT
-# takes 3.3 to 5.5 V (VIEWE's reply of 16 October 2026, as the application circuit on page 12), so
+# takes 3.3 to 5.5 V (VIEWE's reply of 14 October 2026, as the application circuit on page 12), so
 # DISP_3V3 is in range. The touch lines (panel pins 2 to 5) are 3.3 V logic with no pull-ups in the
-# module (same reply), so J301 carries TP_SCL, TP_SDA, TP_RST and TP_INT straight to the ESP32-S3.
+# module (VIEWE's reply of 16 October 2026), so J301 carries TP_SCL, TP_SDA, TP_RST and TP_INT
+# straight to the ESP32-S3.
 [[part]]
 ref = "J301"
 sheet = "periph"

@@ -218,7 +218,7 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 
 | Item | Spec | Rev A | Why |
 |---|---|---|---|
-| Panel supplies | VCI and IOVCC | VCI, IOVCC, VCI_EN, VBAT, TP_3.3V all on DISP_3V3 | VIEWE panel has a VBAT pin for its own boost; the Waveshare kit feeds it 3.3 V, and VIEWE's reply of 16 October 2026 gives VBAT 3.3 to 5.5 V |
+| Panel supplies | VCI and IOVCC | VCI, IOVCC, VCI_EN, VBAT, TP_3.3V all on DISP_3V3 | VIEWE panel has a VBAT pin for its own boost; the Waveshare kit feeds it 3.3 V, and VIEWE's reply of 14 October 2026 gives VBAT 3.3 to 5.5 V |
 | I2C | one bus implied | two buses | touch is powered off with the panel; the CST820 (0x15) no longer shares an address with the DRV2605L (0x5A), so the second bus is for power-down, not for an address clash |
 | Touch level | touch on DISP_3V3 | touch on DISP_3V3: J301 pins 27 to 30 carry TP_SCL, TP_SDA, TP_RST and TP_INT straight to the ESP32-S3, 4.7k on SDA and SCL and 10k on INT to DISP_3V3, TP_RST push-pull from GPIO40 | VIEWE's reply of 16 October 2026: the touch lines are 3.3 V logic, the module has no pull-ups of its own, and the host should put 4.7k to 3.3 V on SDA and SCL and a pull-up on INT. It corrects the drawing's "I2C voltage: 1.8V" note and their 13 October answer, after which a 1.8 V level shift (LSF0204 and a 1.8 V LDO) had been added; that is gone again, and a 1.8 V high would sit below the CST820's VIH (0.7 x 3.3 V = 2.31 V) |
 | J301 position | top edge of the panel, rotation 180 | owl (-5.00, 4.22), rotation 270, front side | VIEWE's standard adapter FPC (USD 0.80) reaches it with one U-turn and one S-bend; see Display adapter route |
