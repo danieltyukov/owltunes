@@ -390,10 +390,6 @@
       },
       {
         "netclass": "Power",
-        "pattern": "DISP_1V8"
-      },
-      {
-        "netclass": "Power",
         "pattern": "VSYS"
       },
       {

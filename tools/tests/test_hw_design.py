@@ -13,11 +13,11 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DESIGN = ROOT / "hardware" / "owl-mainboard" / "design.toml"
 ALL_SHEETS = {"power", "mcu_usb", "periph"}
-RAILS = {"+3V3", "DISP_3V3", "DISP_1V8", "VSYS", "VBAT", "VIN_CHG"}
+RAILS = {"+3V3", "DISP_3V3", "VSYS", "VBAT", "VIN_CHG"}
 
 # VIEWE ALL-UEOL018VG-RA31-A001A spec V1.1, page 7 (I/O connection), and page 12 (QSPI wiring).
-# The touch pins are on the 1.8 V side of U305 (VIEWE, 13 October 2026).
-PANEL = {1: "GND", 2: "TP_INT_1V8", 3: "TP_RST_1V8", 4: "TP_SDA_1V8", 5: "TP_SCL_1V8",
+# The touch pins are 3.3 V logic and go straight to the ESP32-S3 (VIEWE's reply of 16 October 2026).
+PANEL = {1: "GND", 2: "TP_INT", 3: "TP_RST", 4: "TP_SDA", 5: "TP_SCL",
          6: "DISP_3V3", 7: "GND", 8: "DISP_3V3", 9: "DISP_3V3", 10: "DISP_3V3", 11: "DISP_3V3",
          12: "GND", 13: None, 14: "LCD_RST", 15: "LCD_CS", 16: "LCD_D0", 17: "LCD_D1",
          18: "LCD_CLK", 19: "LCD_D3", 20: "LCD_D2", 21: "LCD_TE", 22: "GND", 23: None, 24: None,
@@ -102,10 +102,6 @@ class DesignTest(unittest.TestCase):
         for sig in ("TP_SDA", "TP_SCL", "TP_INT"):
             self.assertTrue(resistors_between(self.parts, "DISP_3V3", sig), sig)
             self.assertFalse(resistors_between(self.parts, "+3V3", sig), sig)
-        for sig in ("TP_SDA_1V8", "TP_SCL_1V8", "TP_INT_1V8", "TP_RST_1V8"):
-            self.assertTrue(resistors_between(self.parts, "DISP_1V8", sig), sig)
-            self.assertFalse(resistors_between(self.parts, "DISP_3V3", sig), sig)
-            self.assertFalse(resistors_between(self.parts, "+3V3", sig), sig)
         for sig in ("I2C_SDA", "I2C_SCL"):
             self.assertTrue(resistors_between(self.parts, "+3V3", sig), sig)
             self.assertFalse(resistors_between(self.parts, "DISP_3V3", sig), sig)
@@ -113,31 +109,18 @@ class DesignTest(unittest.TestCase):
                 supplies = set(self.parts[ref].get("pins", {}).values()) & RAILS
                 self.assertNotIn("DISP_3V3", supplies, f"{ref} on {sig} must not be powered from DISP_3V3")
 
-    def test_touch_side_runs_from_the_panel_rail(self):
-        # DISP_1V8 comes from DISP_3V3 and U305's refB is DISP_3V3, so with the panel off nothing
-        # can hold the touch controller up (Review Focus 2).
+    def test_touch_lines_run_straight_to_the_panel(self):
+        # VIEWE's reply of 16 October 2026: the CST820's lines are 3.3 V logic with no pull-ups in
+        # the module; 4.7k to 3.3 V on SDA and SCL, and INT needs one too. No level shift between.
         self.need("periph")
-        p = self.parts
-        self.assertEqual((p["U306"]["pins"]["3"], p["U306"]["pins"]["2"]), ("DISP_3V3", "DISP_1V8"))
-        u = p["U305"]["pins"]
-        self.assertEqual((u["14"], u["1"], u["8"]), ("DISP_3V3", "DISP_1V8", "DISP_1V8"))
-        # Each channel passes An to Bn (SLVSCP5H table 6-1: A1 to A4 are pins 2 to 5, B1 to B4 pins
-        # 13 to 10), so each A pin carries the 1.8 V copy of its B pin's signal.
-        for a, b in (("2", "13"), ("3", "12"), ("4", "11"), ("5", "10")):
-            self.assertEqual(u[a], u[b] + "_1V8", f"U305 pin {a} against pin {b}")
-        touch = {n for n in self.nets if n.startswith("TP_") and n.endswith("_1V8")}
-        self.assertEqual(touch, {"TP_SDA_1V8", "TP_SCL_1V8", "TP_INT_1V8", "TP_RST_1V8"})
-        for net in touch:
-            allowed = {"J301", "U305", *resistors_between(p, "DISP_1V8", net)}
-            for ref in {pin.split(".")[0] for pin in self.nets[net]}:
-                self.assertIn(ref, allowed, net)
-        self.assertTrue(resistors_between(p, "DISP_1V8", "GND"))
-        on_rail = {pin.split(".")[0] for pin in self.nets["DISP_1V8"]}
-        resistors = {r for r in on_rail if p[r]["symbol"] == "Device:R"}
-        others = {r for r in resistors if not set(p[r]["pins"].values()) & (touch | {"GND"})}
-        self.assertEqual(others, {"R315"})
-        self.assertEqual(set(p["R315"]["pins"].values()), {"DISP_1V8", "DISP_3V3"})
-        self.assertFalse(p["R315"].get("assembled", True))
+        j = self.parts["J301"]["pins"]
+        self.assertEqual([j[str(k)] for k in range(27, 31)], ["TP_SCL", "TP_SDA", "TP_RST", "TP_INT"])
+        self.assertEqual({pin.split(".")[0] for pin in self.nets["TP_RST"]}, {"J301", "U201"})
+        for sig, value in (("TP_SDA", "4.7k"), ("TP_SCL", "4.7k"), ("TP_INT", "10k")):
+            pulls = resistors_between(self.parts, "DISP_3V3", sig)
+            self.assertEqual([self.parts[r]["value"] for r in pulls], [value], sig)
+            self.assertTrue(all(self.parts[r].get("assembled", True) for r in pulls), sig)
+        self.assertEqual([n for n in self.nets if n.endswith("_1V8")], [])
 
     def test_wake_nets_have_pullups(self):
         self.need(*ALL_SHEETS)
