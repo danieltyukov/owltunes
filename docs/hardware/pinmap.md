@@ -45,8 +45,8 @@ seen from the ESP32-S3. "Wake source" marks the seven ext1 `ANY_LOW` deep-sleep 
 | 44 | 36 | `U0RXD` | In | UART0 RX, pad TP205 |
 | 45 | 26 | `CHG_SUSPEND` | Out, active high | High suspends the charger input (BQ24073 EN1); 100k pull-down. Strapping pin (VDD_SPI), low at reset |
 | 46 | 16 | `DISP_EN` | Out, active high | TPS22917 ON, high powers DISP_3V3; 100k pull-down. Strapping pin, low at reset |
-| 47 | 24 | `TP_SDA` | Open drain | Touch bus I2C1, 4.7k pull-ups to DISP_3V3 (R301, R302); keep the internal pull-up off |
-| 48 | 25 | `TP_SCL` | Open drain | Touch bus I2C1, 4.7k pull-ups to DISP_3V3 (R301, R302); keep the internal pull-up off |
+| 47 | 24 | `TP_SDA` | Open drain | Touch bus I2C1, 4.7k pull-up to DISP_3V3 (R301); keep the internal pull-up off |
+| 48 | 25 | `TP_SCL` | Open drain | Touch bus I2C1, 4.7k pull-up to DISP_3V3 (R302); keep the internal pull-up off |
 
 Module pin 3 is `ESP_EN` (reset, pad TP201), pin 2 is +3V3 and pins 1, 40 and 41 are GND.
 

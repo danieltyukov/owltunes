@@ -151,7 +151,7 @@ SILK_GAP = 0.15
 # Reference spots set by hand, placed before the search below: owl (x, y) of the text, then
 # "left" for text that starts there, or 90 for text that runs up the board (centred otherwise).
 # On the front east of J301 the search found no room for C302's reference; C301 and R301 to R303
-# keep the spots the search gave them. DRC checks these spots (silk to pad, silk overlap) on the
+# are pinned here to the spots the search first gave them. DRC checks these spots (silk to pad, silk overlap) on the
 # glyphs themselves.
 REF_AT = {
     "C301": (0.16, 3.0, "left"),

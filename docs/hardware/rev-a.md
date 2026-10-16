@@ -268,7 +268,9 @@ panel connector, 2.8 +- 0.2 mm. The route is sensitive to both:
 - At 3.0 mm depth the clearance over the H2 screw head drops to 0.10 mm. A wafer-head M2 at H2 is
   the fallback.
 
-The physical check in the open items below settles both.
+VIEWE gives the adapter length as 24.148 +- 0.5 mm (reply of 14 October 2026), wider than the
+0.15 mm assumed above: at the short end the nominal slack falls to about 0.27 mm and the worst
+corner goes negative. The physical check in the open items below settles all three.
 
 ## Open items checked at bring-up
 
@@ -288,15 +290,16 @@ The physical check in the open items below settles both.
   on the page are 10 mm, so check them first; the thin grey outline outside the red copper is
   61.8 mm wide. Measure the panel connector's
   front face from the display centre and the adapter's depth at it. Confirm 0 to 1.4 mm of slack at
-  J301 x -5.00; otherwise move J301 by the difference before ordering the board. The panels and
-  adapters can be ordered first and this check run before the board order, or everything can be
-  ordered at once and the computed slack relied on (see Display adapter route).
+  J301 x -5.00; otherwise move J301 by the difference before ordering the board. With the +- 0.5 mm
+  adapter tolerance the computed slack no longer covers the short end, so the panels and adapters
+  are ordered first and this check runs before the board order.
 - Touch I2C at 3.3 V (VIEWE's reply of 16 October 2026). If the scan at bring-up does not find
   0x15, check TP_RST high at J301 pin 29 after the release, SDA and SCL idle at 3.3 V at J301 with
   an ACK on the scope, and the 100 ms wait after TP_RST.
-- Open questions to VIEWE: the order code of the 48.16 mm glass version; where the panel
-  connector's front face sits and the tolerance of 24.148 mm; and whether both adapter ends carry
-  the stiffener and whether 2.50 mm is the full insertion depth.
+- Open questions to VIEWE: where the panel connector's front face sits, and the CO5300
+  initialisation code for this panel. Answered on 14 October 2026: the 48.16 mm glass is
+  discontinued (only the 52.6 mm glass is supplied, so the enclosure face changes), both adapter
+  ends carry the 5 mm stiffener, the 2.5 mm line marks full insertion, and 24.148 mm is +- 0.5 mm.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
 - RT101 against the cell: with the gap pad fitted (Off-board parts), during a USB charge (about
   0.27 A) from about 3.5 V, compare RT101's temperature (from the TS

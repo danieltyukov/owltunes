@@ -89,7 +89,7 @@ enclosure and one perch.
 | JST SH 4-pin cable, 50 mm, pin 1 to pin 1 (Qwiic or STEMMA QT, for example Adafruit 4399), J303 to the dock-pad board | any | 3 |
 | ESP32-S3-WROOM-1U-N16R8 (C3013946), loose: the fallback if the ring test loses more than 6 dB of RSSI, swapped by hand onto one board | LCSC | 2 |
 | 2.4 GHz antenna with a U.FL (IPEX MHF1) plug for the WROOM-1U, for example Molex 146153-0050 (C916292) | LCSC | 2 |
-| VIEWE 1.75 inch AMOLED ALL-UEOL018WV-RA31-A001A (the shop lists ALL-UEOL018VG-RA31-A001A) in the 48.16 mm cover glass version (order code from VIEWE; the one the shop lists is not confirmed to be it), plus the standard adapter FPC FPC3-HD143Y002M (31 contacts, 0.3 mm pitch, USD 0.80 each), ordered separately | VIEWE | 2 panels, 2 adapters |
+| VIEWE 1.75 inch AMOLED ALL-UEOL018VG-RA31-A001A with the standard 52.6 mm cover glass (VIEWE, 14 October 2026: the 48.16 mm version is discontinued; the enclosure face is being redesigned for it), plus the standard adapter FPC FPC3-HD143Y002M (31 contacts, 0.3 mm pitch, USD 0.80 each), ordered separately; two adapters are spares for the fit check | VIEWE | 2 panels, 4 adapters |
 | Bearing 6710ZZ, 50 x 62 x 6 mm (ring A and the ring test) | any | 2 |
 | N52 disc magnets D3 x 2 mm, axially magnetised (ring carriers) | any | 150 |
 | N52 disc magnets D6 x 2 mm, axially magnetised (dock: 2 in the owl, 2 in the perch) | any | 8 |
