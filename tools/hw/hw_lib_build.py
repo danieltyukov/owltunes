@@ -103,17 +103,6 @@ PARTS = {
         {"1": ("VDD", "power_in"), "2": ("ADDR", "input"), "3": ("GND", "power_in"), "4": ("SCL", "input"),
          "5": ("~{INT}", "open_collector"), "6": ("SDA", "bidirectional"), "7": ("EP", "passive")},
         left=("2",), right=("6", "4", "5"), top=("1",), bottom=("3", "7")),
-    # LSF0204 datasheet SLVSCP5H, table 6-1. Pins 6 and 9 are not connected inside the part.
-    "LSF0204PWR": Part(
-        "C202288", "Package_SO:TSSOP-14_4.4x5mm_P0.65mm", "https://www.ti.com/lit/ds/symlink/lsf0204.pdf",
-        "4-bit bidirectional multi-voltage level translator, auto direction, TSSOP-14", "level translator TI",
-        {"1": ("Vref_A", "power_in"), "2": ("A1", "bidirectional"), "3": ("A2", "bidirectional"),
-         "4": ("A3", "bidirectional"), "5": ("A4", "bidirectional"), "6": ("NC", "no_connect"),
-         "7": ("GND", "power_in"), "8": ("EN", "input"), "9": ("NC", "no_connect"),
-         "10": ("B4", "bidirectional"), "11": ("B3", "bidirectional"), "12": ("B2", "bidirectional"),
-         "13": ("B1", "bidirectional"), "14": ("Vref_B", "power_in")},
-        left=("1", "2", "3", "4", "5"), right=("14", "13", "12", "11", "10"), top=("8",),
-        bottom=("6", "7", "9")),
 }
 
 # --------------------------------------------------------------------------------------------

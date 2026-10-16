@@ -39,11 +39,6 @@ DATASHEET = {
     "OPT3001DNPR": {"1": ("VDD", "power_in"), "2": ("ADDR", "input"), "3": ("GND", "power_in"),
                     "4": ("SCL", "input"), "5": ("INT", "open_collector"), "6": ("SDA", "bidirectional"),
                     "7": ("EP", "passive")},
-    "LSF0204PWR": {"1": ("VREFA", "power_in"), "2": ("A1", "bidirectional"), "3": ("A2", "bidirectional"),
-                   "4": ("A3", "bidirectional"), "5": ("A4", "bidirectional"), "6": ("NC", "no_connect"),
-                   "7": ("GND", "power_in"), "8": ("EN", "input"), "9": ("NC", "no_connect"),
-                   "10": ("B4", "bidirectional"), "11": ("B3", "bidirectional"), "12": ("B2", "bidirectional"),
-                   "13": ("B1", "bidirectional"), "14": ("VREFB", "power_in")},
 }
 PADS = {
     "TI_DLA_VSON-10_2x3mm_P0.5mm": {str(n) for n in range(1, 11)},

@@ -31,7 +31,6 @@ Pages are those of the document named, as printed on the page.
 | TMAG5273A2QDBVR symbol (stock `SOT-23-6`) | C3715882 | TMAG5273 datasheet SLYS045C, table 4-1 | KiCad stock, compared with TI DBV0006A-C02 | p. 4 (pins); p. 55 land pattern |
 | LIS2DW12TR symbol (stock `LGA-12_2x2mm_P0.5mm`) | C189624 | LIS2DW12 datasheet DS11811 rev 9, table 1 | KiCad stock, compared with the package and ST TN0018 | p. 4 (pins); p. 56 package; TN0018 rev 8 p. 12 |
 | OPT3001DNPR symbol, `TI_DNP_USON-6-1EP_2x2mm_P0.65mm` | C90462 | OPT3001 datasheet SBOS681C, pin functions | TI DNP0006A example board layout | p. 3 (pins); p. 42 land pattern, p. 43 stencil (thermal pad 88 %), p. 41 outline |
-| LSF0204PWR symbol (stock `TSSOP-14_4.4x5mm_P0.65mm`) | C202288 | LSF0204 datasheet SLVSCP5H, table 6-1 | KiCad stock | pin table 6-1 |
 | `Hirose_FH26W-31S-0.3SHW_1x31-1MP_P0.30mm_Horizontal` | C2973806 | (stock connector symbols) | Hirose drawing EDC3-323714-05, recommended PCB mounting pattern | p. 1 pattern and side view, p. 4 table (31 contacts: B 8.4, C 9.0), p. 6 bottom contact; FH26 series catalogue (Oct 2026) p. 8 |
 | `PogoPin_Xinyangze_YZ71215080P-02` | C5157364 | (stock symbol) | Xinyangze drawing YZ71215080P-02 (part only, no land pattern) | p. 3 of the LCSC file |
 | `L_Murata_DFE201612E` | C668312 | (stock `Device:L`) | Murata reference specification J(E)TE243A-0006B-01, recommended PCB pattern | p. 5 pattern, p. 1 size, p. 7 no copper under the coil |
