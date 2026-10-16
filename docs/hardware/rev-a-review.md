@@ -90,6 +90,14 @@ below, the J301, U305 and U306 rows of the datasheet table, the findings whose c
 changed, the In2 +3V3 boundary risk and the hidden reference count follow those runs; everything
 else is as reviewed on 12 October.
 
+Refreshed on 16 October 2026 for the touch level shift's removal (VIEWE's reply of 16 October 2026:
+the touch lines are 3.3 V logic): U305, U306, C311, C312 and R310 to R315 are gone and J301 pins 27
+to 30 run straight to TP_SCL, TP_SDA, TP_RST and TP_INT, on the board of commit 9f0e7e0. Run again:
+ERC, DRC, zone fills, `hw_fab.py`, the kicad-happy schematic, PCB and Gerber analyzers, SPICE and
+the stock check; their rows, PU-001 and TE-001 follow those runs. The U305 and U306 rows of the
+datasheet table are gone. The cross, EMC and thermal rows are those of 14 October less what
+belonged to the removed parts.
+
 ### Blockers
 
 | Finding | Status |
@@ -103,16 +111,16 @@ else is as reviewed on 12 October.
 | ERC (`hw_kicad.py`) | 0 violations |
 | DRC with schematic parity (`hw_kicad.py`) | 0 violations, 0 unconnected, 0 parity; 3 silk_edge_clearance markers excluded with comments (J201's receptacle front and U201's pin 1 triangle overhang the edge) |
 | Zone fills | The saved fills of all five pours equal a fresh ZONE_FILLER fill (difference 0.0000 mm2), so the Gerbers carry current copper |
-| `hw_fab.py owl-mainboard` | 0 fabrication errors; 96 placements, 18 top (SW203, J301, U304, C309, U305, U306, C301, C302, C311, C312, R301 to R303, R310 to R314) and 78 bottom, as design.toml gives (117 parts, 21 not assembled: TP101 to TP107, TP201 to TP205, H1 to H8, R315); BOM 47 rows (45 LCSC numbers; J202 and J303, SW201 and SW202 share a number but not a value), 96 designators, LCSC numbers equal to design.toml; every unassembled part excluded on its symbol and its footprint |
-| Gerber analysis (`analyze_gerbers.py`) | complete: F, In1, In2 and B copper, F/B mask, F/B paste, F/B silkscreen, Edge.Cuts, PTH and NPTH drills; board 61.8 x 79.8 mm; layers aligned; 267 vias (0.3 mm), 16 plated component holes (0.3 mm thermal vias: 4 in U101, 12 in U201), 4 plated slots 0.6 mm wide for J201's shell (routed, which the analyzer counts as 0 holes), 2 NPTH 0.65 mm (J201 pegs), 8 NPTH 2.2 mm (H1 to H8); 0 errors (no GR-001 to GR-005 error), 1 warning (GR-004, below) |
-| kicad-happy schematic analysis | 59 findings: 0 errors, 8 warnings, all triaged below |
-| kicad-happy PCB analysis (`--full`) | 112 findings: 7 errors, 31 warnings, all triaged below; routing complete, 0 unrouted nets |
+| `hw_fab.py owl-mainboard` | 0 fabrication errors; 87 placements, 9 top (SW203, J301, U304, C309, C301, C302, R301 to R303) and 78 bottom, as design.toml gives (107 parts, 20 not assembled: TP101 to TP107, TP201 to TP205, H1 to H8); BOM 45 rows (43 LCSC numbers; J202 and J303, SW201 and SW202 share a number but not a value), 87 designators, LCSC numbers equal to design.toml; every unassembled part excluded on its symbol and its footprint |
+| Gerber analysis (`analyze_gerbers.py`) | complete: F, In1, In2 and B copper, F/B mask, F/B paste, F/B silkscreen, Edge.Cuts, PTH and NPTH drills; board 61.8 x 79.8 mm; layers aligned; 262 vias (0.3 mm), 16 plated component holes (0.3 mm thermal vias: 4 in U101, 12 in U201), 4 plated slots 0.6 mm wide for J201's shell (routed, which the analyzer counts as 0 holes), 2 NPTH 0.65 mm (J201 pegs), 8 NPTH 2.2 mm (H1 to H8); 0 errors (no GR-001 to GR-005 error), 1 warning (GR-004, below) |
+| kicad-happy schematic analysis | 53 findings: 0 errors, 9 warnings, all triaged below |
+| kicad-happy PCB analysis (`--full`) | 109 findings: 7 errors, 31 warnings, all triaged below; routing complete, 0 unrouted nets |
 | kicad-happy cross analysis | 3 findings (plane-split artifacts, below) |
 | kicad-happy EMC analysis | 45 findings: 5 errors, 31 warnings, all triaged below |
-| kicad-happy thermal analysis | 100/100; U103 (TPS63802) Tj about 55 C at 0.2 W. U101 is not modelled by the tool; by hand (rev-a.md, Calculations), about 0.51 W worst case at the start of fast charge with R101 3.3k (ICHG 0.298 A, the input at its 0.478 A limit), 44.5 C/W (SLUS810N p. 11) gives Tj about 48 C at 25 C ambient, under the 125 C thermal regulation. U306 is below the tool's dissipation floor (under 2 mA from 3.3 to 1.8 V, about 3 mW) |
-| SPICE (`simulate_subcircuits.py`, ngspice) | 21 subcircuits: 20 pass (TPS63802 feedback 0.500 V, the EN, button and DOCK_DET filters, decoupling impedance on VIN_CHG, VSYS, VBAT and +3V3, inrush on +3V3 and DISP_1V8, and four "dividers" that are the DISP_1V8 pull-ups and R310), 1 warning (crystal, below) |
-| Lifecycle | LCSC returns no lifecycle status (all unknown by construction); the TI parts are Active in their datasheets' package addenda (BQ24073RGTR, TPS63802DLAR, TPS22917DBVR, DRV2605LDGSR, TMAG5273A2QDBVR, OPT3001DNPR, LSF0204PWR); stock below |
-| Stock (`hw_stock.py owl-mainboard --boards 5`, 14 October 2026) | 45 unique parts, all OK, 0 low or missing |
+| kicad-happy thermal analysis | 100/100; U103 (TPS63802) Tj about 55 C at 0.2 W. U101 is not modelled by the tool; by hand (rev-a.md, Calculations), about 0.51 W worst case at the start of fast charge with R101 3.3k (ICHG 0.298 A, the input at its 0.478 A limit), 44.5 C/W (SLUS810N p. 11) gives Tj about 48 C at 25 C ambient, under the 125 C thermal regulation |
+| SPICE (`simulate_subcircuits.py`, ngspice) | 16 subcircuits: 15 pass (TPS63802 feedback 0.500 V, the EN, button and DOCK_DET filters, decoupling impedance on VIN_CHG, VSYS, VBAT and +3V3, inrush on +3V3), 1 warning (crystal, below). The 14 October run also had inrush on DISP_1V8 and four "dividers" that were the DISP_1V8 pull-ups and R310, gone with the level shift |
+| Lifecycle | LCSC returns no lifecycle status (all unknown by construction); the TI parts are Active in their datasheets' package addenda (BQ24073RGTR, TPS63802DLAR, TPS22917DBVR, DRV2605LDGSR, TMAG5273A2QDBVR, OPT3001DNPR); stock below |
+| Stock (`hw_stock.py owl-mainboard --boards 5`, 16 October 2026) | 43 unique parts, all OK, 0 low or missing |
 | Prior review delta | Against the part C analyzer run on the same day (before the polish round): identical findings apart from the GND stitching count (120 to 130 vias, the ten enclosed-pour vias); no finding fixed, none new |
 
 ### Datasheet cross-verification
@@ -134,8 +142,6 @@ schematic. Pages are the printed page numbers.
 | U304 OPT3001DNPR | TI SBOS681C (November 2017) | p. 3 pin functions | VDD +3V3, ADDR to GND (0x44), GND, SCL, INT open (open drain, unused), SDA, thermal pad to GND | Match |
 | U202 USBLC6-2SC6 | ST Doc ID 11265 rev 5 | p. 1 figure 1 | I/O1 (1, 6) on USB_DP_CONN, I/O2 (3, 4) on USB_DM_CONN, GND (2); VBUS (5) open by design (rev-a.md, Protection and known limits) | Match |
 | J301 FH26W-31S-0.3SHW(60) pin 1 | Hirose EDC3-323714-05 | p. 1 recommended PCB mounting pattern | Contact 1 at the end of the row that carries the two fitting tabs (the odd row, contacts 1 to 31), contact 2 at the same end of the other row; on the board contact 1 sits at owl (-6.44, 8.72) beside the F.Silkscreen "1" at (-5.0, 10.7), contact 31 at (-6.44, -0.28) beside "31" at (-5.0, -2.3); pad lengths 0.8 (odd) and 0.65 (even) | Match |
-| U305 LSF0204PWR pin 1 | TI SLVSCP5H (April 2021) | p. 4 figure 6-1 and the EN table; p. 5 table 6-1; p. 7 ICCBA; p. 14 table 10-2 | All 14 pins. Pin 1 (Vref_A) sits at owl (-0.86, 0.35), the corner the footprint's F.Silkscreen triangle points at, with pins 1 to 7 facing J301; Vref_A (1) and EN (8, active high in the LSF0204, active low in the LSF0204D) on DISP_1V8, EN supplied by Vref_A as the EN table asks; Vref_B (14) on DISP_3V3, at least Vref_A + 0.8 V (3.3 against 1.8); A1 to A4 (2 to 5) on TP_SDA_1V8, TP_SCL_1V8, TP_INT_1V8 and TP_RST_1V8, B1 to B4 (13 to 10) on TP_SDA, TP_SCL, TP_INT and TP_RST, each A the 1.8 V copy of its B (pinned by a test); GND (7); NC (6, 9) open; pull-ups on both sides (R311 to R314 to DISP_1V8, R301 to R303 to DISP_3V3; TP_RST is driven); R310 100k from DISP_1V8 to GND carries the refB to refA current (ICCBA, at most 3.5 uA) | Match |
-| U306 XC6206P182MR pin 1 | Torex ETR0305_005 | p. 2 pin configuration, pin assignment and ordering information | SOT-23 pins: VSS (1) to GND, VOUT (2) on DISP_1V8, VIN (3) on DISP_3V3. Pin 1 sits at owl (6.86, -3.90), the pad the footprint's F.Silkscreen triangle points at; P182MR is 1.8 V, 2 % accuracy, SOT-23; 1 uF ceramic on VIN (C311) and VOUT (C312), low ESR ceramic capacitors being what the series is built for (p. 1); R315 (0R, not assembled) bridges VIN to VOUT as the 3.3 V fallback | Match |
 
 ### Findings fixed
 
@@ -156,10 +162,7 @@ offset a part needs is the EasyEDA-to-KiCad angle less the table's angle. Five p
 
 The rest match: U102, U103, U304 and J301 were drawn in EasyEDA's orientation, U104 and U302 use
 the SOT-23-6 "BR" footprint the toolkit's 180 fits, U301's TSSOP fits the toolkit's 270, and Y201
-differs only in pad numbering (no polarity). U305 and U306, added on the front with the VIEWE VG
-change, were compared the same way on 13 October: U305's TSSOP-14 "BL" footprint fits the
-toolkit's 270 and U306's SOT-23-3 "BR" footprint its 180, so neither needs an offset. The preview
-still has the last word.
+differs only in pad numbering (no polarity). The preview still has the last word.
 
 The comparison matches pads by number, so it assumes that EasyEDA's pad numbers carry KiCad's pin
 functions. That holds for every polarised part on both boards (PMEG2020EH C456104 and SMF5.0A
@@ -200,9 +203,9 @@ moved out from under the H2 cover boss, and labels for the power test pads.
 | TV-001 (warning) | U101 4 thermal vias, the tool wants 5 | Accepted: TI's RGT land pattern makes thermal vias optional; four 0.3 mm vias fit the 1.6 mm pad with the paste windows clear of them, the pad joins the planes solid, and the BQ24073 has thermal regulation (Tj about 48 C worst case, above). |
 | DFM-001, DFM-002 (warning) | 0.1 mm tracks; 0.1 mm via ring (0.5 / 0.3 mm vias) | Within JLC's 4-layer capability the board's rules use (0.09 mm track and gap; 0.3 / 0.5 mm vias carry no extra fee). |
 | CC-002 (warning, 20) | Signal nets with 0.1 to 0.15 mm tracks | Signal currents only; the power nets are 0.5 mm (0.25 mm necks at fine-pitch pins). |
-| TE-001 (warning) | Test points on 9 of 83 nets | The bring-up set (rails, reset, boot, UART) is chosen on purpose; I2C and the display are checked from firmware. |
+| TE-001 (warning) | Test points on 9 of 76 nets | The bring-up set (rails, reset, boot, UART) is chosen on purpose; I2C and the display are checked from firmware. |
 | OR-001, TB-001, CP-002, PM-001 (info) | Mixed passive orientations; 0402 tombstoning risk medium; no copper under the holes; TP202 and TP203 courtyards touching the module's antenna courtyard (0.0 mm2) | Layout follows the parts it serves; standard 0402 lands with JLC reflow; the holes keep a no-copper ring; the test pads sit outside the antenna keep-out, which DRC checks. |
-| PU-001 (warning, 3) | U101 TMR, U103 PG, U303 INT2 have no pull-up | False positive: TMR is left open for the default timers (SLUS810N p. 9); PG is pulled up through R212 (4.7k) and R205 (47k); INT2 is a push-pull output left unused. U104 QOD, tied to VOUT for the internal discharge (SLVSDW8B p. 4), is no longer flagged: the tool takes R315 (0R from DISP_3V3 to DISP_1V8, not assembled) for its pull-up. |
+| PU-001 (warning, 4) | U101 TMR, U103 PG, U104 QOD, U303 INT2 have no pull-up | False positive: TMR is left open for the default timers (SLUS810N p. 9); PG is pulled up through R212 (4.7k) and R205 (47k); QOD is tied to VOUT for the internal discharge (SLVSDW8B p. 4); INT2 is a push-pull output left unused. On 14 October the tool took R315 (0R from DISP_3V3 to DISP_1V8, not assembled) for QOD's pull-up; with R315 gone it flags QOD again, as on 12 October. |
 | RS-001 (warning, 2) | VBUS_USB and VBUS_DOCK have no declared source | False positive: both are inputs from outside the board (USB-C and the dock cable). |
 | UC-001 (warning) | No capacitor on VBUS_USB at J201 | By design: the USB input capacitance sits behind D101 (C101 4.7 uF, under the USB limit of 10 uF); keeping VBUS_USB small limits the attach inrush. |
 | UC-002 (warning) | No TVS on VBUS_USB at J201 | False positive: D201 (SMF5.0A, unidirectional TVS) is on VBUS_USB to GND; the tool does not know the SMF series. |
@@ -214,7 +217,7 @@ moved out from under the H2 cover boss, and labels for the power test pads.
 | CK-001, CK-003, DP-004 (EMC warning) | LCD_CLK, the 32 kHz crystal, the USB pair and the LRA outputs on outer layers; LCD_CLK near J301 | Microstrip over solid GND is the stack-up's intent; LCD_CLK ends at J301, the connector it is meant to reach; the crystal runs are 5.4 mm over In2 GND. |
 | DP-001 (EMC warning) | USB pair skew | About 5.4 mm (30 ps) from J201 to U201 through U202 and R203 / R204; the ESP32-S3 is a full-speed device (12 Mbit/s), so it does not matter. |
 | IO-001 (EMC info) | No filtering at J301 and J101 | Both stay inside the owl: the display FPC and the battery lead. |
-| GR-004 (Gerber warning) | F.Paste 87 flashes against 375 F.Cu flashes | Expected: the front carries 18 assembled parts (87 paste openings, J301's 33 among them) and the F.Cu count includes 267 via flashes and the back parts' through features. |
+| GR-004 (Gerber warning) | F.Paste 54 flashes against 337 F.Cu flashes | Expected: the front carries 9 assembled parts (54 paste openings, J301's 33 among them) and the F.Cu count includes 262 via flashes and the back parts' through features. |
 | SP-WARN (SPICE) | Crystal Y201 did not resonate in the generic model | Simulator model limit for a 32.768 kHz tuning fork; the load works out at 12 pF (2 x 18 pF in series plus about 3 pF stray) against the crystal's 12.5 pF; bring-up compares the drift (bringup.md step 12). |
 | Datasheet (U102) | MAX17048 VDD has 1 uF, the pin table asks for 0.1 uF | Accepted: a larger bypass on a voltage-sense pin is harmless at the gauge's sampling rate. |
 | Datasheet (U303) | ST suggests 100 nF and 10 uF at the LIS2DW12 supply | The part has 100 nF and 1 uF at its pins; +3V3 carries 3 x 22 uF a few centimetres away. |

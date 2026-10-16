@@ -27,8 +27,7 @@ is a header only for now: rev A board support arrives with the P3 board selectio
                                                 |                                    |    (AMOLED, touch)
                                           MAX17048 (VBAT)                            +-- ESP32-S3-WROOM-1-N16R8
  Sensor I2C (+3V3): TMAG5273A2 0x35, MAX17048 0x36, LIS2DW12 0x19, OPT3001 0x44, DRV2605L 0x5A
- Touch I2C: ESP32-S3 side on DISP_3V3 --- U305 LSF0204 --- panel side on DISP_1V8 (U306 from DISP_3V3):
- CST820 0x15.  QSPI (FSPI IO_MUX pins 9 to 14, 40 MHz): CO5300 AMOLED.
+ Touch I2C (DISP_3V3): CST820 0x15.  QSPI (FSPI IO_MUX pins 9 to 14, 40 MHz): CO5300 AMOLED.
 ```
 
 ## Mechanical stack (depth behind the cover glass front, mm)
@@ -149,7 +148,7 @@ The divider draws 30 uA, only while docked (on external power).
 
 | State | Spec | Rev A estimate | Basis |
 |---|---|---|---|
-| Screen on, Wi-Fi active | 110 to 180 mA | about 105 to 180 mA | ESP32-S3 Wi-Fi modem sleep 40 to 60 mA, panel 30 to 75 mA (VIEWE: 75 mA full red), touch 1.9 mA typical (plus 18 uA in R310 while the panel is on), at 3.3 V through the 90 % buck-boost |
+| Screen on, Wi-Fi active | 110 to 180 mA | about 105 to 180 mA | ESP32-S3 Wi-Fi modem sleep 40 to 60 mA, panel 30 to 75 mA (VIEWE: 75 mA full red), touch 1.9 mA typical, at 3.3 V through the 90 % buck-boost |
 | Screen off, Wi-Fi associated | about 3 mA | about 3 mA | Espressif light sleep with DTIM 3, 32.768 kHz crystal fitted |
 | Wi-Fi off, BLE advertising | 0.5 to 1 mA | about 0.5 to 1 mA | Espressif BLE light sleep figures |
 | Deep sleep | about 30 uA | about 44 uA | below |
@@ -219,9 +218,9 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 
 | Item | Spec | Rev A | Why |
 |---|---|---|---|
-| Panel supplies | VCI and IOVCC | VCI, IOVCC, VCI_EN, VBAT, TP_3.3V all on DISP_3V3 | VIEWE panel has a VBAT pin for its own boost; the Waveshare kit feeds it 3.3 V |
-| I2C | one bus implied | two buses | touch is powered off with the panel, and it sits on its own 1.8 V side behind U305; the CST820 (0x15) no longer shares an address with the DRV2605L (0x5A), so the second bus is for power-down and level, not for an address clash |
-| Touch level | touch on DISP_3V3 | CST820 at 1.8 V: U306 XC6206P182MR makes DISP_1V8 from DISP_3V3, U305 LSF0204 translates SDA, SCL, INT and RST (TP_*_1V8, 4.7k and 10k pull-ups to DISP_1V8) | the CST820 at 0x15 must see 1.8 V (VIEWE drawing note). Both new parts are JLC Extended and have no Basic or Preferred equivalent. With DISP_3V3 off every translator pin is high impedance, so no GPIO can back-power the touch controller. Fallback: fit R315 (0R, not assembled) to put DISP_1V8 at 3.3 V |
+| Panel supplies | VCI and IOVCC | VCI, IOVCC, VCI_EN, VBAT, TP_3.3V all on DISP_3V3 | VIEWE panel has a VBAT pin for its own boost; the Waveshare kit feeds it 3.3 V, and VIEWE's reply of 14 October 2026 gives VBAT 3.3 to 5.5 V |
+| I2C | one bus implied | two buses | touch is powered off with the panel; the CST820 (0x15) no longer shares an address with the DRV2605L (0x5A), so the second bus is for power-down, not for an address clash |
+| Touch level | touch on DISP_3V3 | touch on DISP_3V3: J301 pins 27 to 30 carry TP_SCL, TP_SDA, TP_RST and TP_INT straight to the ESP32-S3, 4.7k on SDA and SCL and 10k on INT to DISP_3V3, TP_RST push-pull from GPIO40 | VIEWE's reply of 16 October 2026: the touch lines are 3.3 V logic, the module has no pull-ups of its own, and the host should put 4.7k to 3.3 V on SDA and SCL and a pull-up on INT. It corrects the drawing's "I2C voltage: 1.8V" note and their 13 October answer, after which a 1.8 V level shift (LSF0204 and a 1.8 V LDO) had been added; that is gone again, and a 1.8 V high would sit below the CST820's VIH (0.7 x 3.3 V = 2.31 V) |
 | J301 position | top edge of the panel, rotation 180 | owl (-5.00, 4.22), rotation 270, front side | VIEWE's standard adapter FPC (USD 0.80) reaches it with one U-turn and one S-bend; see Display adapter route |
 | Panel QSPI clock | not stated (rev A header: 80 MHz) | 40 MHz | the panel allows 50 MHz for writes; the board runs the QSPI at 40 MHz |
 | TMAG5273 | on the PCB | back side of the board | lets the board front sit 0.3 mm behind the carrier flange |
@@ -269,7 +268,9 @@ panel connector, 2.8 +- 0.2 mm. The route is sensitive to both:
 - At 3.0 mm depth the clearance over the H2 screw head drops to 0.10 mm. A wafer-head M2 at H2 is
   the fallback.
 
-The physical check in the open items below settles both.
+VIEWE gives the adapter length as 24.148 +- 0.5 mm (reply of 14 October 2026), wider than the
+0.15 mm assumed above: at the short end the nominal slack falls to about 0.27 mm and the worst
+corner goes negative. The physical check in the open items below settles all three.
 
 ## Open items checked at bring-up
 
@@ -289,23 +290,16 @@ The physical check in the open items below settles both.
   on the page are 10 mm, so check them first; the thin grey outline outside the red copper is
   61.8 mm wide. Measure the panel connector's
   front face from the display centre and the adapter's depth at it. Confirm 0 to 1.4 mm of slack at
-  J301 x -5.00; otherwise move J301 by the difference before ordering the board. The panels and
-  adapters can be ordered first and this check run before the board order, or everything can be
-  ordered at once and the computed slack relied on (see Display adapter route).
-- Touch I2C level: the CST820 at 0x15 runs at 1.8 V behind U305 (resolved in the design). If the
-  scan at bring-up does not find 0x15, check TP_RST_1V8 high at J301 pin 29 after the release, SDA
-  and SCL idle at 1.8 V at J301 with an ACK on the scope, the 100 ms wait after TP_RST, and DISP_1V8
-  at C312. Fitting R315 (0R, DISP_3V3 to DISP_1V8) is the last resort: it goes against VIEWE's
-  statement of 13 October 2026 that the I2C lines cannot be pulled up to 3.3 V, may damage the
-  panel's touch controller, and puts the bus at 3.3 V on both sides of U305, outside the LSF0204's
-  translation conditions.
-- Open questions to VIEWE: the order code of the 48.16 mm glass version; whether TP_INT and TP_RST
-  share the 1.8 V limit; where the panel connector's front face sits and the tolerance of
-  24.148 mm; whether both adapter ends carry the stiffener and whether 2.50 mm is the full
-  insertion depth; and the VBAT pin level.
-- Panel VBAT at 3.3 V: the VIEWE pin table gives VBAT 3.7 to 4.5 V and its application circuit
-  3.3 to 5.5 V; the Waveshare kit runs it at 3.3 V. Asked VIEWE (the VBAT pin level). If the panel
-  misbehaves, feed VBAT from VSYS with a bodge wire.
+  J301 x -5.00; otherwise move J301 by the difference before ordering the board. With the +- 0.5 mm
+  adapter tolerance the computed slack no longer covers the short end, so the panels and adapters
+  are ordered first and this check runs before the board order.
+- Touch I2C at 3.3 V (VIEWE's reply of 16 October 2026). If the scan at bring-up does not find
+  0x15, check TP_RST high at J301 pin 29 after the release, SDA and SCL idle at 3.3 V at J301 with
+  an ACK on the scope, and the 100 ms wait after TP_RST.
+- Open questions to VIEWE: where the panel connector's front face sits, and the CO5300
+  initialisation code for this panel. Answered on 14 October 2026: the 48.16 mm glass is
+  discontinued (only the 52.6 mm glass is supplied, so the enclosure face changes), both adapter
+  ends carry the 5 mm stiffener, the 2.5 mm line marks full insertion, and 24.148 mm is +- 0.5 mm.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
 - RT101 against the cell: with the gap pad fitted (Off-board parts), during a USB charge (about
   0.27 A) from about 3.5 V, compare RT101's temperature (from the TS

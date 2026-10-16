@@ -32,21 +32,21 @@ seen from the ESP32-S3. "Wake source" marks the seven ext1 `ANY_LOW` deep-sleep 
 | 18 | 11 | `EXP_B` | In or I2C | J202 pin 4, 10k pull-up. Encoder B or SCL |
 | 19 | 13 | `USB_DM` | USB | USB Serial/JTAG D-, 22 ohm series, USBLC6 at the receptacle |
 | 20 | 14 | `USB_DP` | USB | USB Serial/JTAG D+, 22 ohm series, USBLC6 at the receptacle |
-| 21 | 23 | `TP_INT` | In, active low | CST820 interrupt through U305, 10k pull-up to DISP_3V3 (R303) and 10k to DISP_1V8 (R313); keep the internal pull-up off |
+| 21 | 23 | `TP_INT` | In, active low | CST820 interrupt, 10k pull-up to DISP_3V3 (R303); keep the internal pull-up off |
 | 35 | 28 | not connected | | Octal PSRAM (N16R8) |
 | 36 | 29 | not connected | | Octal PSRAM (N16R8) |
 | 37 | 30 | not connected | | Octal PSRAM (N16R8) |
 | 38 | 31 | `LCD_TE` | In | CO5300 tearing effect; keep the internal pull-up off |
 | 39 | 32 | `LCD_RST` | Out, active low | CO5300 reset; low before DISP_EN goes low |
-| 40 | 33 | `TP_RST` | Out, active low | CST820 reset through U305, 10k pull-up to DISP_1V8 (R314); low before DISP_EN goes low |
+| 40 | 33 | `TP_RST` | Out, active low | CST820 reset, push-pull with no resistor; low before DISP_EN goes low |
 | 41 | 34 | `I2C_SCL` | Open drain | Sensor bus I2C0, 4.7k pull-up to +3V3 |
 | 42 | 35 | `I2C_SDA` | Open drain | Sensor bus I2C0, 4.7k pull-up to +3V3 |
 | 43 | 37 | `U0TXD` | Out | UART0 TX, pad TP204 (the 499 ohm series resistor is inside the module) |
 | 44 | 36 | `U0RXD` | In | UART0 RX, pad TP205 |
 | 45 | 26 | `CHG_SUSPEND` | Out, active high | High suspends the charger input (BQ24073 EN1); 100k pull-down. Strapping pin (VDD_SPI), low at reset |
 | 46 | 16 | `DISP_EN` | Out, active high | TPS22917 ON, high powers DISP_3V3; 100k pull-down. Strapping pin, low at reset |
-| 47 | 24 | `TP_SDA` | Open drain | Touch bus I2C1 through U305, 4.7k pull-ups to DISP_3V3 (R301, R302) and to DISP_1V8 (R311, R312); keep the internal pull-up off |
-| 48 | 25 | `TP_SCL` | Open drain | Touch bus I2C1 through U305, 4.7k pull-ups to DISP_3V3 (R301, R302) and to DISP_1V8 (R311, R312); keep the internal pull-up off |
+| 47 | 24 | `TP_SDA` | Open drain | Touch bus I2C1, 4.7k pull-up to DISP_3V3 (R301); keep the internal pull-up off |
+| 48 | 25 | `TP_SCL` | Open drain | Touch bus I2C1, 4.7k pull-up to DISP_3V3 (R302); keep the internal pull-up off |
 
 Module pin 3 is `ESP_EN` (reset, pad TP201), pin 2 is +3V3 and pins 1, 40 and 41 are GND.
 
@@ -59,7 +59,7 @@ Module pin 3 is `ESP_EN` (reset, pad TP201), pin 2 is +3V3 and pins 1, 40 and 41
 | Sensor | LIS2DW12 (U303) | 0x19 | SA0 pulled high by R309 10k |
 | Sensor | OPT3001 (U304) | 0x44 | ADDR tied to GND |
 | Sensor | DRV2605L (U301) | 0x5A | Fixed; EN tied high, use the STANDBY bit |
-| Touch (I2C1, GPIO47 SDA, GPIO48 SCL) | CST820 (on the panel, 1.8 V side of U305) | 0x15 | Fixed; its own bus because it is powered off with the panel |
+| Touch (I2C1, GPIO47 SDA, GPIO48 SCL) | CST820 (on the panel, 3.3 V logic) | 0x15 | Fixed; its own bus because it is powered off with the panel |
 
 ## Panel power order
 

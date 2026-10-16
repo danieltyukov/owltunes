@@ -18,7 +18,7 @@ planes); the outer GND pours and the stitching vias come after the session impor
 
 Usage: python3 tools/hw/hw_route.py owl-mainboard <group> [<group> ...]
 Groups: tps63802 tps63802_gnd charger vin_chg_taps tps_pg gauge gnd_vias usb crystal dock usb_fanout
-qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 touch_shift local_power late_links planes outer_pours
+qspi bat_ntc vsys_link v3v3_feed vbus_usb j301_fanout disp_3v3 touch local_power late_links planes outer_pours
 stitching pour_vias.
 Needs KiCad's pcbnew Python module.
 """
@@ -383,7 +383,7 @@ GROUPS = {
     # B.Cu run: W west of pins 21 and 23, P in the pocket east of pins 22 to 26 with C302 and C301.
     # The run comes from U104's outputs (pins 5 and 6), C111, C112 and TP105, down at x -10.0 (west
     # of the D1 and LCD_RST lanes) to W and on under J301 to P. 0.4 mm on B.Cu (0.3 mm between C112
-    # and R109), 0.3 mm on F.Cu, 0.25 mm at J301's 0.3 mm pads. touch_shift takes it on from P.
+    # and R109), 0.3 mm on F.Cu, 0.25 mm at J301's 0.3 mm pads. touch takes it on from P.
     "disp_3v3": [
         ("DISP_3V3", 0.25, [(-6.6, 2.72), (-7.15, 2.72), (-7.15, 2.12), (-6.6, 2.12)], "F"),
         ("DISP_3V3", 0.3, [(-7.15, 2.42), (-7.7, 2.42)], "F"),
@@ -398,64 +398,44 @@ GROUPS = {
         ("DISP_3V3", 0.3, [(-13.55, 14.56), (-13.55, 13.2), (-14.68, 13.2), (-14.68, 12.4)]),
         ("DISP_3V3", "via", [(-7.7, 2.42), (-2.35, 1.25)]),
     ],
-    # Touch level shift (U305 LSF0204, A side 1.8 V facing J301, B side 3.3 V east; U306 1.8 V LDO):
-    # - A side: TP_SDA_1V8 and TP_INT_1V8 straight in from J301's east row (pins 28 and 30);
-    #   TP_SCL_1V8 (pin 27, west row) through a via west of J301 and B.Cu under it to a via beside
-    #   U305 pin 3 (the one layer change the channel order needs); TP_RST_1V8 (pin 29) round
-    #   J301's south end on F.Cu. All four go on under the package to the 1.8 V pull-ups R311 to
-    #   R314, turning down at x 3.25, 2.0, 0.5 and 0.15 (SCL keeps 0.2 mm from U303's GND via).
-    # - DISP_1V8: U305 pin 8 (EN) to C312, U306 VOUT and R315; pin 1 (refA) from pin 8 under the
-    #   package; the pull-up row (R310, R314 to R311) straight along y -6.11 and up past R311 to
-    #   C312.
-    # - DISP_3V3 on from the disp_3v3 run's pocket via P: B.Cu east (north of U305) to a via that
-    #   feeds U305 pin 14 (refB) from above, north at x 4.75 to E (west of the USB pair, leaving
-    #   IMU_INT1 a B.Cu lane beside the pair), F.Cu over the pair at y 6.0 and down at x 9.0
-    #   through R301 to R303, U306 VIN, C311 and R315 (a few mA).
-    # - B side: pins 13 to 11 to the 3.3 V pull-ups R301 to R303. R301 to R303 sit east of the
-    #   pins, so only TP_SDA (the top one) can leave north on F.Cu; TP_SCL, TP_INT and TP_RST drop
-    #   to B.Cu in the channel east of the USB pair (vias at x 6.6), run north under R301 to R303
-    #   and come back up north of R301. All four run west under the DISP_3V3 crossing (y 2.0 to
-    #   3.8), north at x 2.4 to 4.2, west above the QSPI vias (y 11.55 to 13.05); SDA, SCL and INT
-    #   drop to B.Cu below module pins 24, 25 and 23, TP_RST goes on north on F.Cu (it crosses
-    #   DISP_EN's B.Cu run) to a via east of module pin 33.
-    # - GND vias at U305 pin 7 with R310, C312, U306 pin 1 and C311.
-    "touch_shift": [
-        ("TP_SDA_1V8", 0.1, [(-3.4, 0.62), (-2.45, 0.62), (-1.9, 0.07), (-1.9, -0.3), (-1.2, -0.3)], "F"),
-        ("TP_INT_1V8", 0.1, [(-3.4, 0.02), (-2.95, 0.02), (-2.95, -1.6), (-1.2, -1.6)], "F"),
-        ("TP_SCL_1V8", 0.1, [(-6.6, 0.92), (-7.4, 0.92)], "F"),
-        ("TP_SCL_1V8", 0.1, [(-7.4, 0.92), (-7.0, 0.5), (-3.2, 0.5), (-2.15, -0.55), (-2.15, -0.95)]),
-        ("TP_SCL_1V8", 0.1, [(-2.15, -0.95), (-1.2, -0.95)], "F"),
-        ("TP_RST_1V8", 0.1, [(-6.6, 0.32), (-7.15, 0.32), (-7.15, -2.25), (-1.2, -2.25)], "F"),
-        ("TP_SDA_1V8", 0.1, [(-0.5, -0.3), (3.25, -0.3), (3.25, -5.09)], "F"),
-        ("TP_SCL_1V8", 0.1, [(-0.5, -0.95), (2.0, -0.95), (2.0, -4.5), (1.7, -4.85), (1.7, -5.09)], "F"),
-        ("TP_INT_1V8", 0.1, [(-0.5, -1.6), (0.5, -1.6), (0.5, -5.09)], "F"),
-        ("TP_RST_1V8", 0.1, [(-0.5, -2.25), (0.15, -2.25), (0.15, -4.3), (-0.7, -5.0)], "F"),
-        ("TP_SCL_1V8", "via", [(-7.4, 0.92), (-2.15, -0.95)]),
-        ("DISP_1V8", 0.25, [(5.2, -3.55), (5.2, -4.92), (5.9, -4.92), (6.5, -5.5), (6.862, -5.8),
-                            (6.89, -7.35)], "F"),
-        ("DISP_1V8", 0.25, [(4.5, -3.55), (3.75, -3.55), (3.75, 0.35), (-0.5, 0.35)], "F"),
-        ("DISP_1V8", 0.25, [(-1.88, -5.91), (-1.5, -6.11), (3.25, -6.11), (3.6, -6.11), (4.25, -5.5), (4.25, -4.92),
-                            (5.2, -4.92)], "F"),
+    # Touch lines, J301 pins 27 to 30 at 3.3 V (VIEWE's reply of 16 October 2026), to the pull-ups
+    # R301 to R303 east of J301 and on to the module:
+    # - TP_SDA and TP_INT straight in from J301's east row (pins 28 and 30); TP_SCL (pin 27, west
+    #   row) through a via west of J301 and B.Cu under it to a via at (-2.15, -0.95), the one layer
+    #   change the order SDA, SCL, INT, RST needs; TP_RST (pin 29) round J301's south end on F.Cu.
+    #   All four run east on F.Cu at y -0.3, -0.95, -1.6 and -2.25 to R301 to R303 and the vias
+    #   beside them.
+    # - DISP_3V3 on from the disp_3v3 run's pocket via P: B.Cu east to x 4.75, north to E (west of
+    #   the USB pair, leaving IMU_INT1 a B.Cu lane beside the pair), F.Cu over the pair at y 6.0
+    #   and down at x 9.0 to R301 to R303 (under 2 mA).
+    # - R301 to R303 sit east of their lines, so only TP_SDA (the top one) can leave north on
+    #   F.Cu; TP_SCL, TP_INT and TP_RST drop to B.Cu in the channel east of the USB pair (vias at
+    #   x 6.6), run north under R301 to R303 and come back up north of R301. All four run west
+    #   under the DISP_3V3 crossing (y 2.0 to 3.8), north at x 2.4 to 4.2, west above the QSPI
+    #   vias (y 11.55 to 13.05); SDA, SCL and INT drop to B.Cu below module pins 24, 25 and 23,
+    #   TP_RST goes on north on F.Cu (it crosses DISP_EN's B.Cu run) to a via east of module pin 33.
+    "touch": [
+        ("TP_SDA", 0.1, [(-3.4, 0.62), (-2.45, 0.62), (-1.9, 0.07), (-1.9, -0.3), (6.35, -0.3), (7.0, 0.35),
+                         (7.39, 0.65)], "F"),
+        ("TP_INT", 0.1, [(-3.4, 0.02), (-2.95, 0.02), (-2.95, -1.6), (6.3, -1.6), (7.0, -2.3), (7.39, -2.55)], "F"),
+        ("TP_SCL", 0.1, [(-6.6, 0.92), (-7.4, 0.92)], "F"),
+        ("TP_SCL", 0.1, [(-7.4, 0.92), (-7.0, 0.5), (-3.2, 0.5), (-2.15, -0.55), (-2.15, -0.95)]),
+        ("TP_SCL", 0.1, [(-2.15, -0.95), (7.39, -0.95)], "F"),
+        ("TP_RST", 0.1, [(-6.6, 0.32), (-7.15, 0.32), (-7.15, -2.25), (6.1, -2.25), (6.6, -2.75), (6.6, -2.85)],
+         "F"),
+        ("TP_SCL", "via", [(-7.4, 0.92), (-2.15, -0.95)]),
         ("DISP_3V3", 0.3, [(-2.35, 1.25), (-1.9, 1.6), (4.75, 1.6), (4.75, 6.0)]),
-        ("DISP_3V3", 0.3, [(4.6, 1.6), (4.6, 1.0)]),
-        ("DISP_3V3", 0.3, [(4.6, 1.0), (4.6, 0.45)], "F"),
-        ("DISP_3V3", 0.3, [(4.75, 6.0), (8.6, 6.0), (9.0, 5.6), (9.0, 0.65), (9.0, -0.95), (9.0, -2.55),
-                           (9.0, -7.15)], "F"),
+        ("DISP_3V3", 0.3, [(4.75, 6.0), (8.6, 6.0), (9.0, 5.6), (9.0, 0.65), (9.0, -0.95), (9.0, -2.55)], "F"),
         ("DISP_3V3", 0.25, [(8.41, 0.65), (9.0, 0.65)], "F"),
         ("DISP_3V3", 0.25, [(8.41, -0.95), (9.0, -0.95)], "F"),
         ("DISP_3V3", 0.25, [(8.41, -2.55), (9.0, -2.55)], "F"),
-        ("DISP_3V3", 0.25, [(8.92, -7.15), (8.4, -7.35), (7.91, -7.35)], "F"),
-        ("DISP_3V3", "via", [(4.6, 1.0), (4.75, 6.0)]),
-        ("TP_SDA", 0.1, [(5.4, -0.3), (6.35, -0.3), (7.0, 0.35), (7.39, 0.65)], "F"),
-        ("TP_SCL", 0.1, [(5.4, -0.95), (7.39, -0.95)], "F"),
-        ("TP_INT", 0.1, [(5.4, -1.6), (6.3, -1.6), (7.0, -2.3), (7.39, -2.55)], "F"),
+        ("DISP_3V3", "via", [(4.75, 6.0)]),
         ("TP_SDA", 0.1, [(7.39, 0.65), (7.39, 1.1), (5.7, 1.1), (5.7, 2.0), (2.4, 2.0), (2.4, 11.55),
                          (-4.445, 11.55)], "F"),
         ("TP_SCL", 0.1, [(6.6, -0.95), (6.6, 1.6)]),
         ("TP_SCL", 0.1, [(6.6, 1.6), (6.6, 2.6), (3.0, 2.6), (3.0, 12.05), (-5.715, 12.05)], "F"),
         ("TP_INT", 0.1, [(6.6, -1.9), (7.85, -1.9), (7.85, 2.0)]),
         ("TP_INT", 0.1, [(7.85, 2.0), (7.85, 3.2), (3.6, 3.2), (3.6, 12.55), (-3.175, 12.55)], "F"),
-        ("TP_RST", 0.1, [(5.4, -2.25), (6.1, -2.25), (6.6, -2.75), (6.6, -2.85)], "F"),
         ("TP_RST", 0.1, [(6.6, -2.85), (8.35, -2.85), (8.35, 3.0)]),
         ("TP_RST", 0.1, [(8.35, 3.0), (8.35, 3.8), (4.2, 3.8), (4.2, 13.05), (-6.6, 13.05), (-6.6, 26.0),
                          (-7.32, 26.72)], "F"),
@@ -467,12 +447,6 @@ GROUPS = {
         ("TP_SCL", "via", [(6.6, -0.95), (6.6, 1.6), (-5.715, 12.05)]),
         ("TP_INT", "via", [(6.6, -1.9), (7.85, 2.0), (-3.175, 12.55)]),
         ("TP_RST", "via", [(6.6, -2.85), (8.35, 3.0), (-7.32, 26.72)]),
-        ("GND", 0.25, [(-1.2, -3.55), (-2.0, -3.55), (-2.75, -3.4)], "F"),
-        ("GND", 0.25, [(-1.88, -4.89), (-1.88, -4.3), (-2.75, -3.4)], "F"),
-        ("GND", 0.25, [(5.2, -5.88), (4.75, -6.3), (4.4, -6.4)], "F"),
-        ("GND", 0.25, [(6.862, -3.9), (6.862, -4.6)], "F"),
-        ("GND", 0.25, [(9.88, -7.15), (10.6, -7.15)], "F"),
-        ("GND", "via", [(-2.75, -3.4), (4.4, -6.4), (6.862, -4.6), (10.6, -7.15)]),
     ],
     # Fine-pitch power pins Freerouting left open (the Power class's 0.2 mm clearance does not fit
     # its tracks between 0.5 mm pitch pads):
@@ -512,10 +486,9 @@ GROUPS = {
     #   (21.65, 13.3) and south at x 20.5, a B.Cu hop under the VSYS and +3V3 F.Cu runs (between
     #   the +3V3 via beside TP104 and TP103), F.Cu south at x 20.55 to the bus via at
     #   (19.929, -11.292) on the U301 side.
-    # - IMU_INT1 (since the touch level shift took its old F.Cu path): from U303 pin 12 east at
-    #   y -6.33 (above I2C_SCL), up a 0.15 mm B.Cu lane at x 5.3 between DISP_3V3's run to E and the
-    #   USB pair, past U305 and the QSPI lanes, a via below module pin 16 and F.Cu on to its run
-    #   from module pin 6.
+    # - IMU_INT1: from U303 pin 12 east at y -6.33 (above I2C_SCL), up a 0.15 mm B.Cu lane at
+    #   x 5.3 between DISP_3V3's run to E and the USB pair, under the touch lines and past the
+    #   QSPI lanes, a via below module pin 16 and F.Cu on to its run from module pin 6.
     "late_links": [
         ("+3V3", 0.25, [(-11.41, 27.99), (-12.1, 27.75)]),
         ("+3V3", 0.25, [(-12.1, 27.75), (-11.85, 27.5), (-6.3, 27.5)], "F"),
@@ -583,12 +556,13 @@ GROUPS = {
     ],
     # One GND via in each region of the outer pours that the tracks round it enclose (review M2):
     # without a via the filler drops the region as an island (or, if a GND pad is in it, leaves it
-    # unconnected: C301 and C302 north of U305). Each sits at the deepest spot of its region that
-    # is outside every courtyard except the module's (vias beside its exposed pad sit under it)
-    # and clear of other copper on both outer layers, found again after J301 moved and the touch
-    # level shift went in (the last one, beside D101, is the earlier search's and still stands).
-    # The first nine are for F.Cu regions, the rest for B.Cu regions; regions under 4 mm2 or with
-    # no spot that fits a via stay empty.
+    # unconnected: C301 and C302 north of the touch lines). Each sits at the deepest spot of its
+    # region that is outside every courtyard except the module's (vias beside its exposed pad sit
+    # under it) and clear of other copper on both outer layers, found again after J301 moved and
+    # the touch level shift went in (the last one, beside D101, is the earlier search's and still
+    # stands). Taking the level shift off again left one new region, 1.2 mm2 on B.Cu at
+    # (4.6, -6.0). The first nine are for F.Cu regions, the rest for B.Cu regions; regions under
+    # 4 mm2 or with no spot that fits a via stay empty.
     "pour_vias": [
         ("GND", "via", [(-15.84, -3.38), (0.36, 5.51), (21.79, 5.5), (6.55, 4.85), (10.05, 11.31), (-1.4, 9.86),
                         (6.0, 15.76), (-2.65, 16.65), (-11.66, 26.23), (11.6, -16.83), (3.8, 13.55), (1.39, 8.75),
