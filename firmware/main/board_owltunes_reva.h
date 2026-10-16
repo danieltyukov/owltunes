@@ -24,13 +24,12 @@
  * GPIO46 is a strapping pin and must be low at reset. */
 #define OWL_PIN_DISP_EN 46
 
-/* Touch: CST820 (0x15) on its own I2C bus (I2C1), through U305 (LSF0204) to its 1.8 V side:
- * 4.7k pull-ups to DISP_3V3 here, 4.7k to DISP_1V8 on the panel side; at most 400 kHz and at least
- * 4.5 us between STOP and START. */
+/* Touch: CST820 (0x15) on its own I2C bus (I2C1), wired straight to the panel at 3.3 V with 4.7k
+ * pull-ups to DISP_3V3; at most 400 kHz and at least 4.5 us between STOP and START. */
 #define OWL_PIN_TP_SDA 47
 #define OWL_PIN_TP_SCL 48
 #define OWL_PIN_TP_INT 21 /* 10k pull-up to DISP_3V3, falling edge */
-#define OWL_PIN_TP_RST 40 /* active low, through U305 */
+#define OWL_PIN_TP_RST 40 /* active low, push-pull */
 #define OWL_I2C_ADDR_CST820 0x15
 #define OWL_TOUCH_RESET_WAIT_MS 100 /* CST820 Tron: wait after releasing TP_RST */
 
