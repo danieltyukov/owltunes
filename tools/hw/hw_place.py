@@ -95,32 +95,11 @@ PLACE = {
     # towards J301 and outside the strip x -3.7 to -2.4 where J301's back-flip actuator opens.
     "C301": (-1.2, 3.0, 0, "front"),
     "C302": (-1.2, 1.9, 0, "front"),
-    # Touch translator and its 1.8 V rail east of J301, outside the actuator strip x -3.7 to -2.4.
-    # U305's A side (pins 1 to 7) faces J301. The 1.8 V pull-ups stand below it, pad 2 up, in pin
-    # order from the west (RST, INT, SCL, SDA for pins 5 to 2), so their tracks come down under the
-    # package without crossing. The row sits at y -5.6 to clear U305's courtyard and U303's GND via
-    # at (1.4, -4.3) (hw_route.py local_power). R310, the DISP_1V8 bleeder, ends it at the west
-    # with its GND pad up below pin 7 (GND). R310 sits 0.2 mm above the row (y -5.4) and R311 is
-    # 1.55 mm from R312 against the row's 1.2 mm pitch: both are kept from the earlier layout and
-    # shape DISP_1V8's jog at (-1.88, -5.91) to (-1.5, -6.11) (hw_route.py touch_shift), so moving
-    # either means rerouting that run. C312, the DISP_1V8 star, sits under pin 8 beside
-    # U306's VOUT (pin 2). R315 (not fitted) and C311 sit below U306, R315 between VOUT and C311's
-    # DISP_3V3 pad, which VIN (pin 3) comes down to, so U306's reference fits on its right. No pad
-    # may cover a via that has no tracks (the pour vias): saving the board gives such a via the
-    # net of the pad over it.
-    "U305": (2.0, -1.6, 0, "front"),
-    "R310": (-1.88, -5.4, 90, "front"),
-    "R314": (-0.7, -5.6, 90, "front"),
-    "R313": (0.5, -5.6, 90, "front"),
-    "R312": (1.7, -5.6, 90, "front"),
-    "R311": (3.25, -5.6, 90, "front"),
-    "C312": (5.2, -5.4, 270, "front"),
-    "U306": (8.0, -4.85, 0, "front"),
-    "R315": (7.4, -7.35, 180, "front"),
-    "C311": (9.4, -7.15, 0, "front"),
-    # ESP32-S3 side touch pull-ups beside U305's B pins (pins 13 to 11), pad 2 towards them with
-    # room between for the B side's vias, 1.6 mm apart so each reference fits beside its part. On
-    # the front they leave the back free for the QSPI lanes between the module and J301.
+    # Touch pull-ups east of J301, outside the actuator strip x -3.7 to -2.4, pad 2 (TP_*) towards
+    # J301's touch pins with room between for the vias of the touch runs, 1.6 mm apart so each
+    # reference fits beside its part. On the front they leave the back free for the QSPI lanes
+    # between the module and J301. No pad may cover a via that has no tracks (the pour vias):
+    # saving the board gives such a via the net of the pad over it.
     "R301": (7.9, 0.65, 180, "front"),
     "R302": (7.9, -0.95, 180, "front"),
     "R303": (7.9, -2.55, 180, "front"),
@@ -171,27 +150,15 @@ SILK_GAP = 0.15
 
 # Reference spots set by hand, placed before the search below: owl (x, y) of the text, then
 # "left" for text that starts there, or 90 for text that runs up the board (centred otherwise).
-# On the front east of J301 the search put R314's reference under R310, where it read as R310's,
-# and found no room for C302, C312 and R311 to R313. The row below U305 takes one reference
-# standing under each part: the glyphs are 0.99 mm wide, but the search measures a text by its
-# 1.46 mm box, which the 1.2 mm pitch cannot give. DRC checks these spots (silk to pad, silk
-# overlap) on the glyphs themselves.
+# On the front east of J301 the search found no room for C302's reference; C301 and R301 to R303
+# keep the spots the search gave them. DRC checks these spots (silk to pad, silk overlap) on the
+# glyphs themselves.
 REF_AT = {
     "C301": (0.16, 3.0, "left"),
     "C302": (0.16, 1.9, "left"),
-    "U305": (2.0, -1.6),
     "R301": (9.28, 0.65, "left"),
     "R302": (9.28, -0.95, "left"),
     "R303": (9.28, -2.55, "left"),
-    "U306": (10.4, -4.85, "left"),
-    "R310": (-1.88, -8.2, 90),
-    "R314": (-0.7, -8.2, 90),
-    "R313": (0.5, -8.2, 90),
-    "R312": (1.7, -8.2, 90),
-    "R311": (3.25, -8.2, 90),
-    "C312": (5.2, -8.2, 90),
-    "R315": (7.4, -8.55),
-    "C311": (10.85, -7.15, 90),  # stands beside it, off the H4 bezel lug (from x 12.3)
 }
 
 
