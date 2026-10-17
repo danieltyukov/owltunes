@@ -245,39 +245,41 @@ S-bend down to J301 at owl (-5.00, 4.22). Lengths along the flex's mid-plane, be
 | Segment | Length (mm) | Note |
 |---|---|---|
 | Inside the panel connector | 2.50 | not counted: the 24.148 starts at the connector face |
-| Plug-end stiffener, straight out | 2.50 | s 14.96 to 17.46, depth 2.8 |
+| Plug-end stiffener, straight out | 2.50 | s 14.64 to 17.14, depth 2.8 |
 | U-turn outward and back, R 2.0 | 6.28 | depth 2.8 to 6.8, contacts now towards the board |
-| Straight run over the H2 screw head | 3.6 to 4.1 | depth 6.8 |
+| Straight run over the H2 screw head | 3.2 to 3.8 | depth 6.8 |
 | S-bend down, two arcs R 2.0 of 78.5 degrees | 5.48 | depth 6.8 to 10.0 |
-| Lead-in on the board, last 2.50 is the stiffener | 2.5 to 3.0 | to J301's entry face |
+| Lead-in on the board, last 2.50 is the stiffener | 2.5 to 3.1 | to J301's entry face |
 | Inside J301 | 2.50 | |
-| Sum | 23.38 | the rows below the first, with the straight run and the lead-in together 6.62 wherever the S-bend sits (4.1 with 2.5, down to 3.6 with 3.0); adapter 24.148: 0.77 mm slack, taken up by the U-turn growing outward |
+| Sum | 23.06 | the rows below the first, with the straight run and the lead-in together 6.30 wherever the S-bend sits (3.8 with 2.5, down to 3.2 with 3.1); adapter 24.148: 1.09 mm slack, taken up by the U-turn growing outward |
 
 `enclosure/tests/test_pcb_contract.py` (`test_display_adapter_reaches_j301`) computes this from the
-constants in `enclosure/owl_params.py`: 0.766 mm of slack nominal and 0.016 mm at the tolerance
-corner (connector face 0.6 mm further out, adapter 0.15 mm short). The S-bend may start anywhere in
-a window of s 13.34 to 13.85. The U-turn apex is at radius 21.89 mm (the bezel bore allows 23.1) and
-its underside clears the H2 screw head by 0.30 mm.
+constants in `enclosure/owl_params.py`: 1.09 mm of slack nominal and 0.27 mm at the worst tolerance
+corner (connector face 0.15 mm further out, adapter 0.5 mm short, panel-side depth 2.6 mm). The
+S-bend may start anywhere in a window of s 13.34 to 13.93. The U-turn apex is at radius 21.74 mm
+nominal and 22.11 mm at most over the tolerance corners (the bezel bore allows 23.1), and its
+underside clears the H2 screw head by 0.30 mm.
 
-Two inputs are estimates, because VIEWE does not dimension them: the panel connector's front face
-(taken as 14.96 mm from the centre, covered 14.5 to 15.55) and the adapter's mid-plane depth at the
-panel connector, 2.8 +- 0.2 mm. The route is sensitive to both:
+The tolerances behind these numbers:
 
-- At 2.6 mm depth the stacked worst corner (connector face 0.6 mm further out, adapter 0.15 mm
-  short) leaves -0.15 mm of slack, so the adapter would be too short.
-- At 3.0 mm depth the clearance over the H2 screw head drops to 0.10 mm. A wafer-head M2 at H2 is
-  the fallback.
+- The panel connector's front face is 1.60 mm from the connector's centre on VIEWE's STEP model of
+  the connector (reply of 17 October 2026), so 14.64 mm from the display centre; taken as +- 0.15.
+- The adapter is 24.148 +- 0.5 mm from that face to the end of its fingers (VIEWE's reply of 14
+  October 2026).
+- The adapter's mid-plane depth at the panel connector, 2.8 +- 0.2 mm, is still an estimate: VIEWE
+  does not dimension it. At 2.6 mm, with the face and the adapter at their worst too, 0.27 mm of
+  slack is left. At 3.0 mm the clearance over the H2 screw head drops to 0.10 mm; a wafer-head M2
+  at H2 is the fallback.
 
-VIEWE gives the adapter length as 24.148 +- 0.5 mm (reply of 14 October 2026), wider than the
-0.15 mm assumed above: at the short end the nominal slack falls to about 0.27 mm and the worst
-corner goes negative. The physical check in the open items below settles all three.
+The standard adapter reaches J301 at every tolerance corner, so the physical check in the open
+items below is a confirmation at assembly, not a step before the board order.
 
 ## Open items checked at bring-up
 
-- Adapter fit check, before the board is ordered (about 10 minutes). Build the route with a real
+- Adapter fit check, a confirmation at assembly (about 10 minutes). Build the route with a real
   VIEWE adapter, or with a 1:1 paper strip 9.6 mm wide and 26.65 mm long (24.148 + 2.50) with 5.00 mm
-  stiffener ends, against a 1:1 print of the board front around J301 and the printed bezel with the
-  H2 screw fitted. The print is one A4 page; make it from the repository root with
+  stiffener ends, against the board (or a 1:1 print of the board front around J301) and the printed
+  bezel with the H2 screw fitted. The print is one A4 page; make it from the repository root with
 
   ```
   kicad-cli pcb export pdf --mode-single --scale 1 --ibt \
@@ -288,18 +290,20 @@ corner goes negative. The physical check in the open items below settles all thr
 
   and print it at actual size, not fit to page. Check the scale on paper before use: the two bars
   on the page are 10 mm, so check them first; the thin grey outline outside the red copper is
-  61.8 mm wide. Measure the panel connector's
-  front face from the display centre and the adapter's depth at it. Confirm 0 to 1.4 mm of slack at
-  J301 x -5.00; otherwise move J301 by the difference before ordering the board. With the +- 0.5 mm
-  adapter tolerance the computed slack no longer covers the short end, so the panels and adapters
-  are ordered first and this check runs before the board order.
+  61.8 mm wide. Measure the panel connector's front face from the display centre (14.64 mm
+  expected) and the adapter's depth at it, and confirm slack at J301 (about 1.1 mm expected, at
+  least 0.27 mm at the worst tolerance corner). The route model covers every tolerance corner, so
+  the board is ordered without waiting for this check; if an adapter falls short anyway, ask VIEWE
+  for a longer custom adapter (they offered custom adapters on 16 October 2026) and record the
+  shortfall for rev B's J301 position.
 - Touch I2C at 3.3 V (VIEWE's reply of 16 October 2026). If the scan at bring-up does not find
   0x15, check TP_RST high at J301 pin 29 after the release, SDA and SCL idle at 3.3 V at J301 with
   an ACK on the scope, and the 100 ms wait after TP_RST.
-- Open questions to VIEWE: where the panel connector's front face sits, and the CO5300
-  initialisation code for this panel. Answered on 14 October 2026: the 48.16 mm glass is
-  discontinued (only the 52.6 mm glass is supplied, so the enclosure face changes), both adapter
-  ends carry the 5 mm stiffener, the 2.5 mm line marks full insertion, and 24.148 mm is +- 0.5 mm.
+- Questions to VIEWE, all answered. 14 October 2026: the 48.16 mm glass is discontinued (only the
+  52.6 mm glass is supplied; the enclosure face is drawn for it), both adapter ends carry the 5 mm
+  stiffener, the 2.5 mm line marks full insertion, and 24.148 mm is +- 0.5 mm. 17 October 2026: a
+  STEP model of the panel connector, which puts its front face 1.60 mm from its centre, and the
+  CO5300 initialisation code for this panel.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
 - RT101 against the cell: with the gap pad fitted (Off-board parts), during a USB charge (about
   0.27 A) from about 3.5 V, compare RT101's temperature (from the TS

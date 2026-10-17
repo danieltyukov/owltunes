@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import json
 import math
 import re
@@ -212,16 +213,18 @@ def test_front_parts_clear_the_ring_and_the_display_fpc_reaches():
     assert max(math.hypot(x, y) for x, y in corners(C.footprint_box(fpc))) < P.PANEL_POCKET_D / 2 - 1.0
 
 
-def adapter_route(face: float = P.PANEL_CONN_FACE, length: float = P.ADAPTER_L) -> dict:
+def adapter_route(
+    face: float = P.PANEL_CONN_FACE, length: float = P.ADAPTER_L, panel_depth: float = P.ADAPTER_PANEL_DEPTH
+) -> dict:
     """VIEWE's standard adapter from the panel connector to J301, along s = -x (from the display
     centre towards 9 o clock), flex mid-plane. It leaves the panel connector's front face straight for
-    the stiffener's length outside it, U-turns outward and back (radius R, from ADAPTER_PANEL_DEPTH to
+    the stiffener's length outside it, U-turns outward and back (radius R, from panel_depth to
     2R deeper) with its contacts now facing the board, runs straight over the H2 lug, S-bends down to
     J301's FPC plane in two arcs of theta and runs straight into J301. Wherever the S-bend sits, the two
     straight runs add up to the distance from the U-turn's end to J301's face less the S-bend's span, so
     the length left over (the slack, taken up by the U-turn growing outward) does not depend on it."""
     r, out = P.ADAPTER_BEND_R, P.ADAPTER_STIFFENER_L - P.ADAPTER_INSERT
-    theta = math.acos(1 - (P.J301_FPC_DEPTH - P.ADAPTER_PANEL_DEPTH - 2 * r) / (2 * r))
+    theta = math.acos(1 - (P.J301_FPC_DEPTH - panel_depth - 2 * r) / (2 * r))
     s_panel = -P.PANEL_CONN_X + face
     s_j301 = -C.local_to_owl(placement("J301"), 0.0, J301_FACE_V)[0]
     span = 2 * r * math.sin(theta)
@@ -235,9 +238,10 @@ def test_display_adapter_reaches_j301():
     j301, route = placement("J301"), adapter_route()
     r, t, out = P.ADAPTER_BEND_R, P.ADAPTER_T, P.ADAPTER_STIFFENER_L - P.ADAPTER_INSERT
     assert 0.0 < route["slack"] < 1.5
-    # The panel connector's front face and the stiffener outside it are not dimensioned: the adapter
-    # still reaches with the face 0.6 mm further out and the adapter 0.15 mm short.
-    assert adapter_route(P.PANEL_CONN_FACE + 0.6, P.ADAPTER_L - 0.15)["slack"] >= 0.0
+    # Tolerances: the connector's front face (measured on VIEWE's STEP model) +-0.15, the adapter
+    # +-0.5 (VIEWE's reply of 14 October 2026) and the panel-side depth +-0.2. The adapter still
+    # reaches at the shortest corner: face 0.15 further out, adapter 0.5 short, panel-side depth 2.6.
+    assert adapter_route(P.PANEL_CONN_FACE + 0.15, P.ADAPTER_L - 0.5, P.ADAPTER_PANEL_DEPTH - 0.2)["slack"] >= 0.0
     # The S-bend may start anywhere from where J301's stiffener stays straight to where the S-bend's
     # midpoint (flex mid-plane at depth 8.4, half the flex's thickness above the H2 lug's front face)
     # comes within 0.3 mm of the lug's inner corner nearest the centre.
@@ -247,10 +251,12 @@ def test_display_adapter_reaches_j301():
     last = corner_s - 0.3 + r * math.sin(route["theta"])
     assert first < last
     # The U-turn grows outward by half the slack; at the band's top corner its outer face stays 0.5 mm
-    # inside the bezel bore.
+    # inside the bezel bore, at every tolerance corner.
     top = P.PANEL_CONN_Y + P.ADAPTER_W / 2
-    apex = route["s_panel"] + out + r + t / 2 + route["slack"] / 2
-    assert math.hypot(apex, top) < P.PANEL_POCKET_D / 2 - 0.5
+    for df, dl, dd in itertools.product((-0.15, 0.0, 0.15), (-0.5, 0.0, 0.5), (-0.2, 0.0, 0.2)):
+        corner = adapter_route(P.PANEL_CONN_FACE + df, P.ADAPTER_L + dl, P.ADAPTER_PANEL_DEPTH + dd)
+        apex = corner["s_panel"] + out + r + t / 2 + corner["slack"] / 2
+        assert math.hypot(apex, top) < P.PANEL_POCKET_D / 2 - 0.5, (df, dl, dd)
     # The band's top passes over H2's button head (ISO 7380 M2 on the lug face) on the U-turn's way
     # back, at the run's depth.
     _, hy = C.MOUNT_HOLES[1]

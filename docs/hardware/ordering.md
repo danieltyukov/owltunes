@@ -6,8 +6,8 @@ private order package (shops, prices and the order-day checklist) is kept outsid
 
 ## Before uploading
 
-Decide on the adapter fit check first (rev-a.md, Open items). Then run these in the
-repository on the order day and stop at the first failure:
+Run these in the repository on the order day and stop at the first failure. The adapter fit
+check (rev-a.md, Open items) is a confirmation at assembly and does not hold up the order.
 
 ```
 python3 tools/hw/hw_stock.py owl-mainboard --boards 5
