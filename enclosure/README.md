@@ -29,5 +29,11 @@ Exports go to `build/`, which is not tracked. Licence: CERN-OHL-P-2.0 (`LICENSE-
   v2: a mechanical lock.
 - The bearing (or bushing sleeve) has no lip in front of it: it is set flush with the bezel's front
   face on a flat plate at assembly and held by two-part epoxy on its seat.
+- The glass's own printed border (outside the 44.16 mm viewing area) is now the visible frame,
+  with a 0.5 mm gap to the ring lip over the inner race: confirm on a real panel that the border is
+  opaque out to the glass edge.
+- The magnet carrier's rear face sits 1.0 mm in front of the board, so a 1.0 mm slot shows under
+  the ring band at the side openings. If it is unwanted, the flange's outer part (r 30 to 33) can
+  reach back to 0.3 mm from the board without touching the Hall gap.
 - Screws are ISO 7380 M2 button heads (black): M2 x 6 from the front through the bezel lugs, M2 x 14
   from the back. The back heads sit 0.2 mm below the cover's back face.

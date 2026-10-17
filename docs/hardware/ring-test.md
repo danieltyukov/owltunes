@@ -47,12 +47,15 @@ the inner race, inside the ring lip (53.6 mm, 0.5 mm clear of the glass edge).
 1. Magnets: hold a reference magnet; every pocket with a bump behind it gets a magnet that the
    reference attracts, every other pocket one that it repels, so polarity alternates. A drop of
    glue in each pocket.
-2. Lay the bezel face down on a flat plate. Nothing stands in front of the bearing, so the plate
-   sets it flush with the bezel's front face. Variant A: spread two-part epoxy thinly on the bezel
-   seat (none on the shields) and slide a 6710ZZ onto it from the back until it touches the plate;
-   let the epoxy set (it holds the bearing in both directions), then press ring A onto the outer
-   race from the front until the lip touches it. Variant B: glue the bushing sleeve onto the seat
-   the same way, fit the O-ring in its groove, grease the sleeve and push ring B on from the front.
+2. Cover a flat plate with release film (PTFE film or packing tape) and lay the bezel face down
+   on it. Nothing stands in front of the bearing, so the plate sets it flush with the bezel's front
+   face. Variant A: spread two-part epoxy thinly on the bezel seat (none on the shields) and slide a
+   6710ZZ onto it from the back until it touches the plate. Before the epoxy sets, lift the bezel
+   off the film and wipe the bezel's front face and the inner race's front face clean (they carry
+   the glass tape), then lay it back face down and let the epoxy set (it holds the bearing in both
+   directions). Press ring A onto the outer race from the front until the lip touches it. Variant
+   B: glue the bushing sleeve onto the seat the same way, fit the O-ring in its groove, grease the
+   sleeve and push ring B on from the front.
 3. Push a magnet carrier into the ring from the back until its flange touches the ring's rear face.
    The flange sits beside the magnets, flush with them.
 4. Screw the bezel lugs to the jig with M2 x 10 screws, nuts in the hex pockets underneath.
@@ -68,7 +71,7 @@ the inner race, inside the ring lip (53.6 mm, 0.5 mm clear of the glass edge).
 | M2 | Field | For each carrier and spacer: log with SparkFun's Arduino library Example1 at about 100 Hz, ring still for 2 s, then one turn from the 0 tick back to 0. Run `uv run --project enclosure python enclosure/ring_analysis.py LOG --magnets N` |
 | M3 | Cogging | With the steel bearing (ring A) and with the bushing (ring B): does the ring snap to positions? |
 | M4 | RSSI | Tape the Nano ESP32 so its PCB antenna sits in the marked rectangle. Log RSSI to the access point (3 m away, same spot) for 30 s each: no ring, ring A (steel bearing) with magnets, ring B with magnets. Average each; the result is each ring's drop against no ring (a relative figure, so the Nano's antenna stands in for the WROOM-1's) |
-| M5 | Fits | Which coupon step the bearing stops at (inside and outside) and which magnet pocket holds a magnet without glue |
+| M5 | Fits | Which coupon step the bearing stops at (inside and outside) and which magnet pocket holds a magnet without glue. On the 6710ZZ in hand: the inner race land's outside diameter (BRG_INNER_RACE_OD, estimated 53.6) must exceed the largest glass edge, 52.75, so the glass overhang sits over the stationary race; and the shields must not stand proud of the race's front face. If a shield does, the glass needs tape thicker than 0.2 mm by that much (GLASS_TAPE_T) |
 
 ## Acceptance
 

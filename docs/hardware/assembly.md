@@ -4,9 +4,9 @@ Tools: a soldering iron (for the inserts at 220 C, with a heat-set insert tip or
 tip, and for the LRA leads), solder and 1.5 mm heat-shrink tubing, a multimeter, a 1.3 mm hex key
 for the ISO 7380 M2 button heads, cyanoacrylate glue, black 0.2 mm double-sided tape (the glass,
 step 9), 1 mm double-sided foam tape (battery end stop, step 8), two-part epoxy (the bearing on its
-seat, step 3) and a flat plate (glass or a steel rule) to set the bearing on. No crimp tool: the LRA
-gets a pre-crimped pigtail. Keep cyanoacrylate away from the cover glass: its vapour leaves a white
-film. Also a piece of soft
+seat, step 3) and a flat plate (glass or a steel rule) covered with release film (PTFE film or
+packing tape) to set the bearing on. No crimp tool: the LRA gets a pre-crimped pigtail. Keep
+cyanoacrylate away from the cover glass: its vapour leaves a white film. Also a piece of soft
 silicone thermal gap pad, about 5 x 5 mm and 1.5 mm thick, 1 to 3 W/mK, electrically insulating
 (see step 8).
 
@@ -19,13 +19,15 @@ from the ring test; see [ring-test.md](ring-test.md).
    The product carrier has no polarity bumps, so check each magnet against its neighbour with a
    reference magnet before the glue sets. Back cover: two D6 x 2 mm magnets in the cups at
    (+-20, -22), north facing out; the perch magnets face south out so they attract.
-3. **Ring.** Lay the bezel face down on the flat plate. Spread two-part epoxy thinly on the bearing
-   seat, keeping it off the shields, and slide the bearing (or the bushing sleeve) onto the bezel
-   tube from the back until it touches the plate: its front face is then flush with the bezel's
-   front face, which is the glass ledge. There is no lip in front of the bearing, so the epoxy
-   holds it in both directions; let it set before going on. Press the ring on from the front until
-   its lip rests on the outer race, and push the carrier into the ring from the back until its
-   flange meets the ring.
+3. **Ring.** Cover the flat plate with release film and lay the bezel face down on it. Spread
+   two-part epoxy thinly on the bearing seat, keeping it off the shields, and slide the bearing (or
+   the bushing sleeve) onto the bezel tube from the back until it touches the plate: its front face
+   is then flush with the bezel's front face, which is the glass ledge. The bearing pushes some
+   epoxy forward: before it sets, lift the bezel off the film and wipe the bezel's front face and
+   the inner race's front face clean, because they carry the glass tape, then lay it back face down.
+   There is no lip in front of the bearing, so the epoxy holds it in both directions; let it set
+   before going on. Press the ring on from the front until its lip rests on the outer race, and
+   push the carrier into the ring from the back until its flange meets the ring.
 4. **Keys.** Beak key into the face slot from inside; ear keys into the top slots from inside.
 5. **LRA.** The motor's two leads (red and blue, about 27 mm, AWG 32) are spliced to a pre-crimped
    JST SH 1.0 mm 2-pin pigtail whose housing plugs into J302. Trim the pigtail to about 20 mm from
@@ -81,8 +83,10 @@ from the ring test; see [ring-test.md](ring-test.md).
    four ISO 7380 M2 x 6 from the front through the bezel lugs and the board into the cover
    standoffs, and four ISO 7380 M2 x 14 from the back through the cover spacers and the board into
    the body bosses. The back screw heads sit just below the cover's back face.
-9. **Display.** The cover glass is laminated to the panel. First lay a ring of the black 0.2 mm
-   tape on the bezel's front face and on the inner race's front face (or the bushing sleeve's) out
+9. **Display.** The cover glass is laminated to the panel. The bearing must have passed the check
+   in ring-test.md (M5): its inner race land reaches past the 52.75 mm largest glass edge and no
+   shield stands proud of the race face; if one does, use tape thicker than 0.2 mm by that much.
+   First lay a ring of the black 0.2 mm tape on the bezel's front face and on the inner race's front face (or the bushing sleeve's) out
    to 52.0 mm, at least 0.8 mm from the gap at the shields and open over the flex notch at 12
    o'clock. Lay the panel face down on a cloth and plug the adapter FPC into the panel connector
    (contacts towards the panel, the positioning line at the connector face). Then put the
