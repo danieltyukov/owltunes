@@ -241,7 +241,7 @@ def lug_polygon(x: float, y: float, margin: float = BOSS_CLEAR) -> list[tuple[fl
 def keepouts() -> list[dict]:
     """Board areas no part may cover, in owl coordinates. Back: the cover boss behind every hole.
     Front: the body bosses at H5 to H8, the bezel lugs at H1 to H4, the annulus under the bezel
-    tube, magnet carrier and ring (the carrier flange runs 0.3 mm in front of the board), and the
+    tube, magnet carrier and ring (the board front sits 1.0 mm behind the carrier), and the
     display adapter's way down to J301 (J301 itself is exempt). Both sides: the strips beside the
     antenna notch edges (U201 itself is exempt)."""
     out = []

@@ -38,7 +38,7 @@ def placement(ref):
 
 
 def test_every_part_is_one_valid_solid(parts):
-    assert len(parts) == 12
+    assert len(parts) == 11
     for name, part in parts.items():
         assert part.is_valid, name
         assert len(part.solids()) == 1, name
@@ -59,8 +59,7 @@ def test_assembly_has_no_interference(parts, ring):
         "body": parts["body"],
         "back_cover": parts["back_cover"],
         "bezel": parts["bezel"],
-        "glass_retainer": parts["glass_retainer"],
-        "glass": V.glass_envelope(),
+        "glass": V.glass_envelope(P.GLASS_D + P.GLASS_D_TOL),
         "middle": middle,
         "ring": parts[ring],
         "carrier": parts["magnet_carrier_24"],
@@ -85,27 +84,23 @@ def test_ring_sides_are_exposed_for_the_thumb(parts):
         assert not body.is_inside(Vector(P.RING_OD / 2 + 0.1, 0.0, z))
 
 
-def test_glass_drops_in_from_the_front_and_the_retainer_holds_it(parts):
-    bezel, retainer = parts["bezel"], parts["glass_retainer"]
-    seated = V.glass_envelope()
-    # with the retainer off, the glass drops in from the front without touching the bezel
+def test_glass_drops_in_from_the_front_onto_its_tape_inside_the_ring_lip(parts):
+    bezel = parts["bezel"]
+    largest = V.glass_envelope(P.GLASS_D + P.GLASS_D_TOL)
+    # the largest glass drops in from the front past the body face and the ring lip
     for dz in (6.0, 3.0, 1.5, 0.5, 0.0):
-        assert overlap_volume(Pos(0, 0, dz) * seated, bezel) < 1e-3, dz
-    # the retainer follows it into the lip opening, over the glass border
-    for dz in (4.0, 2.0, 0.5, 0.0):
-        assert overlap_volume(Pos(0, 0, dz) * retainer, bezel) < 1e-3, dz
-    assert overlap_volume(retainer, seated) < 1e-3
-    assert not retainer.is_inside(Vector(0.0, -(P.BEZEL_LIP_ID / 2 - 0.02), 0.5))  # glue gap
-    # the glass cannot leave without moving the retainer: it covers the glass edge all round
-    assert overlap_volume(Pos(0, 0, V.GLASS_GAP + 0.05) * seated, retainer) > 0.01
-    assert V.RETAINER_ID < P.GLASS_D - 2.0
-    # the retainer stays out of the viewing area, is flush with the lip and meets the wall rule
-    for angle in range(0, 360, 15):
-        x, y = R.polar(P.VIEW_D / 2 + 0.05, angle)
-        assert not retainer.is_inside(Vector(x, y, 0.5))
-    assert V.RETAINER_ID / 2 - P.VIEW_D / 2 >= 0.2
-    assert retainer.bounding_box().max.Z == pytest.approx(P.LIP_T)
-    assert (V.RETAINER_OD - V.RETAINER_ID) / 2 >= P.MJF_STRUCT_WALL
+        for name in ("body", "bezel", "ring_a_bearing", "ring_b_bushing", "bushing_sleeve"):
+            assert overlap_volume(Pos(0, 0, dz) * largest, parts[name]) < 1e-3, (dz, name)
+    # it rests on GLASS_TAPE_T of tape on the bezel's front face: pushed back past the tape, the
+    # smallest glass meets the bezel
+    assert bezel.bounding_box().max.Z == pytest.approx(-P.GLASS_T - P.GLASS_TAPE_T)
+    smallest = V.glass_envelope(P.GLASS_D - P.GLASS_D_TOL)
+    assert overlap_volume(Pos(0, 0, -P.GLASS_TAPE_T - 0.05) * smallest, bezel) > 0.01
+    # the ring lip and the body face stand LIP_T in front of the glass; the ring is the only part
+    # round the glass edge, at least 0.4 from it, so the tape alone holds the glass
+    assert parts["ring_a_bearing"].bounding_box().max.Z == pytest.approx(P.LIP_T)
+    assert V.FRONT_Z == pytest.approx(P.LIP_T)
+    assert (P.RING_LIP_ID - P.GLASS_D - P.GLASS_D_TOL) / 2 >= 0.4
     assert P.LIP_T >= P.MJF_STRUCT_WALL
 
 
@@ -274,7 +269,8 @@ def test_counterbore_edge_keeps_a_structural_wall():
 
 def test_dock_magnets_stay_away_from_the_ring_sensor():
     # Spec 7.3: as far from the TMAG5273 as the cover allows. At 20 mm a D6 x 2 N52 disc adds
-    # well under 1 mT at the sensor, against about 46 mT from the ring magnets at the 3.0 mm gap.
+    # well under 1 mT at the sensor, against about 39 mT from the ring magnets (D3 x 1) at the
+    # 2.7 mm gap.
     hall = placement("U302")
     for mx, my in V.DOCK_MAGNETS:
         assert math.dist((mx, my), (hall.x, hall.y)) >= 20.0
@@ -476,7 +472,7 @@ RING_Y = C.RING_CLEAR_R - 0.5  # just inside the ring opening at x = 0
 
 def test_export_writes_step_and_stl(parts, tmp_path):
     written = V.export_all(tmp_path)
-    assert len(written) == 24
+    assert len(written) == 22
     assert all(p.stat().st_size > 500 for p in written)
     # every STEP reads back as the same single solid (the mark's outlines once came back empty)
     for name, part in parts.items():
@@ -488,5 +484,7 @@ def test_export_writes_step_and_stl(parts, tmp_path):
 def test_glass_envelope_matches_the_panel_data():
     glass = V.glass_envelope()
     box = glass.bounding_box()
+    assert P.GLASS_D == pytest.approx(52.6)
     assert box.size.X == pytest.approx(P.GLASS_D)
-    assert box.max.Z == pytest.approx(-V.GLASS_GAP)
+    assert box.max.Z == pytest.approx(0.0)
+    assert box.min.Z == pytest.approx(-P.GLASS_T)

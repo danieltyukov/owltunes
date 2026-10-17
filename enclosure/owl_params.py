@@ -18,9 +18,12 @@ MJF_MIN_WALL = 0.8
 MJF_STRUCT_WALL = 1.0
 
 # Display: VIEWE ALL-UEOL018VG-RA31-A001A specification V1.1 (2026-07-30), pages 4 and 6, with the
-# 48.16 mm cover glass VIEWE confirmed on 13 October 2026 (the specification draws a 52.6 mm glass).
-GLASS_D = 48.16  # cover glass diameter (VIEWE reply of 13 October 2026)
+# specification's 52.6 mm cover glass. VIEWE's reply of 14 October 2026: the 48.16 mm glass they had
+# confirmed on 13 October is discontinued, and only the 52.6 mm glass is supplied.
+GLASS_D = 52.6  # cover glass diameter ("Outline (assembly) 52.6", specification page 4)
+GLASS_D_TOL = 0.15  # taken as +-0.15; the drawing's general tolerance is +-0.20
 GLASS_T = 1.10  # cover glass thickness ("C.G 1.1")
+GLASS_TAPE_T = 0.2  # double-sided tape under the glass border (docs/hardware/assembly.md step 9)
 DISPLAY_STACK_T = 2.07  # glass, OCA, panel and foam ("Total 2.07")
 VIEW_D = 44.16  # viewing area ("V.A 44.16")
 PANEL_W = 45.93  # panel outline width
@@ -31,16 +34,17 @@ FLEX_PARTS_H = 1.2  # component area on the folded main flex ("H=1.2mm")
 BRG_ID = 50.0
 BRG_OD = 62.0
 BRG_W = 6.0
-BRG_INNER_RACE_OD = 53.6  # estimate of the inner race shoulder; the bezel lip stays inside it
+BRG_INNER_RACE_OD = 53.6  # estimate of the inner race shoulder; the glass edge stays inside it
 BRG_OUTER_RACE_ID = 58.4  # estimate of the outer race shoulder; the ring contacts outside it
 
-# Face bezel (stationary): holds the glass and carries the bearing inner race.
-LIP_T = 1.3  # front lips of bezel and ring stand this far in front of the glass (ring lip is LIP_T - LIP_RELIEF = 1.0 thick)
-BEZEL_LIP_ID = 48.30  # front opening: the glass is inserted from the front, so it must pass here
-BEZEL_LIP_OD = 52.0  # contacts only the inner race front face (inside 53.6)
-GLASS_POCKET_D = 48.30  # glass seat, 0.07 radial clearance; drops in from the front, glue it; wall to the 49.9 seat is 0.8
-GLASS_POCKET_DEPTH = 1.3  # glass rests on the ledge, 0.2 below the rim plane (glue layer)
-PANEL_POCKET_D = 47.2  # clears the 46.35 panel behind the glass; the ring left over is the glass ledge
+# Face bezel (stationary): carries the bearing inner race. The glass is wider than the bearing's
+# bore, so it sits in front of the bearing on its tape, on the bezel's front face (the glass ledge),
+# which is flush with the bearing's front face. The glass edge reaches 0.2 over the inner race face;
+# nothing stationary surrounds it, so the tape alone holds the glass. The bearing has no lip in front
+# of it: it is set flush on a flat plate at assembly and held by epoxy on its seat.
+BRG_FRONT_DEPTH = GLASS_T + GLASS_TAPE_T  # 1.3: bearing or sleeve front face = bezel front face = glass ledge
+LIP_T = 1.3  # the ring lip stands this far in front of the glass, flush with the body face
+PANEL_POCKET_D = 47.2  # clears the 46.35 panel behind the glass; the ring left over (to the seat) is the glass ledge
 FPC_NOTCH_W = 14.0  # room for the flex fold at the panel's top edge
 FPC_NOTCH_R = 23.95  # notch reaches this radius, leaving a 1.0 wall under the bearing seat
 FPC_NOTCH_END_DEPTH = 4.0  # the fold sits next to the panel edge; behind it the flex lies flat
@@ -70,12 +74,12 @@ M2_NUT_DEPTH_CLEAR = 0.2  # extra depth of the printed nut pocket
 
 # Ring (rotating). The outer diameter is the owl's width.
 RING_OD = 66.0
-RING_LIP_ID = 52.8  # 0.4 radial gap to the bezel lip
+RING_LIP_ID = 53.6  # 0.425 radial to the largest glass (GLASS_D + GLASS_D_TOL), 0.40 at the drawing's +-0.20
 RING_CONTACT_R = 30.0  # the ring touches the outer race only outside this radius
 LIP_RELIEF = 0.3  # gap between the ring lip and the inner race or shields
 RING_A_BORE_D = 62.10  # test: bearing variant, 0.10 clearance, bearing glued
 RING_B_BORE_D = 62.00  # test: bushing variant, 0.10 radial clearance on the sleeve
-RING_REAR_DEPTH = 9.2  # ring body ends here; leaves a 1.0 floor under the magnet pockets
+RING_REAR_DEPTH = 8.5  # ring body ends here, 1.0 behind the carrier front (the floor in front of the pockets)
 INDEX_NOTCH_W = 1.0
 INDEX_NOTCH_D = 0.6
 INDEX_NOTCH_L = 2.0
@@ -90,20 +94,21 @@ ORING_GROOVE_W = 2.0
 # 1.5 mm to 1.25 mm (16.7 percent) between the groove bottom and the 62.00 bore.
 ORING_GROOVE_DEPTH = 1.15
 
-# Magnets: D3 x 2 mm N52 discs, axially magnetised, alternating polarity.
+# Magnets: D3 x 1 mm N52 discs, axially magnetised, alternating polarity.
 MAG_D = 3.0
-MAG_H = 2.0
+MAG_H = 1.0
 MAG_POCKET_D = 3.10  # test: coupon checks 2.95 to 3.25; magnets are glued
-MAG_POCKET_DEPTH = 2.00  # equal to MAG_H: a seated magnet is flush with the carrier's rear face
+MAG_POCKET_DEPTH = 1.0  # equal to MAG_H: a seated magnet is flush with the carrier's rear face
 R_TRACK = 28.0  # magnet centre radius
 MAGNET_COUNTS = (24, 32)
 CARRIER_ID = 50.9  # 0.65 radial clearance to the bezel tube; leaves a 1.0 wall inside the magnet pockets
 CARRIER_FIT_CLEARANCE = 0.2  # diametral MJF clearance between the carrier body and the smaller ring bore
 CARRIER_OD = min(RING_A_BORE_D, RING_B_BORE_D) - CARRIER_FIT_CLEARANCE  # fits both rings; glued
-CARRIER_FRONT_DEPTH = 6.2  # 0.2 behind the bearing rear face; leaves a 1.0 floor in front of the pockets
+CARRIER_FRONT_DEPTH = BRG_FRONT_DEPTH + BRG_W + 0.2  # 7.5: 0.2 behind the bearing; leaves a 1.0 floor in front of the pockets
 CARRIER_FLANGE_T = 1.0
+CARRIER_REAR_DEPTH = RING_REAR_DEPTH + CARRIER_FLANGE_T  # 9.5: the flange sits beside the pockets, behind the ring body
 CARRIER_FLANGE_R_IN = 29.8  # 1.1 overlap with the body, 0.25 clear of the pocket mouths
-POLARITY_BUMP_D = 1.0  # raised bump on the flange behind every other pocket
+POLARITY_BUMP_D = 1.0  # raised bump on the carrier's rear face beside every other pocket
 POLARITY_BUMP_H = 0.3
 POLARITY_BUMP_R = 31.75
 
@@ -113,20 +118,20 @@ POLARITY_BUMP_R = 31.75
 SENSOR_ANGLE_DEG = 180.0
 PCB_T = 1.0  # main board thickness (4-layer)
 HALL_ELEMENT_H = 0.70  # Hall element height above its seating plane, TMAG5273 figure 6-2 (estimate)
-# Product gap (Task 7, provisional until the Task 9 measurements): 3.0 mm, so the board front sits
-# 0.3 mm behind the rotating carrier flange (the product carrier has no polarity bumps). Kept at
-# 3.0 rather than 3.2 (0.5 mm) because enclosure v1 is already 23.5 mm deep, every 0.1 mm of gap
-# adds 0.1 mm of depth, and pressing the ring cannot push it back towards the board: its front lip
-# rests on the bearing or sleeve front face (the carrier lets it move 0.2 mm forward only). Task 9
-# measures the real flange-to-board clearance on the prints and may move this to 3.2 (23.7 mm deep).
-HALL_GAP_NOMINAL = 3.0  # test: magnet face to Hall element; the board front then sits 0.3 mm behind the flange
-HALL_GAP_STEPS = (4.5, 3.5, 2.5, 1.5)  # gaps the jig gives with spacers of 0, 1, 2 and 3 mm
+# Product gap (provisional until the Task 9 measurements): 2.7 mm, so the board front sits 1.0 mm
+# behind the carrier's rear face, where the magnets are flush and the flange sits beside them (the
+# product carrier has no polarity bumps). Nothing that turns stands behind the magnet faces, and the
+# 1.0 mm covers the 0.5 mm clearance Task 9 may ask for. Every 0.1 mm of gap adds 0.1 mm of depth;
+# pressing the ring cannot push it back towards the board: its front lip rests on the bearing or
+# sleeve front face (the carrier lets it move 0.2 mm forward only).
+HALL_GAP_NOMINAL = 2.7  # test: magnet face to Hall element; the board front then sits 1.0 mm behind the carrier
+HALL_GAP_STEPS = (4.7, 3.7, 2.7, 1.7)  # gaps the jig gives with spacers of 0, 1, 2 and 3 mm; the 2 mm spacer gives the product gap
 
 
 def magnet_face_depth() -> float:
     """Depth of the magnets' rear faces. A magnet rests on the pocket floor, so its rear face sits
-    MAG_POCKET_DEPTH - MAG_H (0.1) in front of the carrier's rear face."""
-    return RING_REAR_DEPTH - (MAG_POCKET_DEPTH - MAG_H)
+    MAG_POCKET_DEPTH - MAG_H (0 today) in front of the carrier's rear face."""
+    return CARRIER_REAR_DEPTH - (MAG_POCKET_DEPTH - MAG_H)
 
 
 def pcb_front_depth(hall_gap: float = HALL_GAP_NOMINAL) -> float:
