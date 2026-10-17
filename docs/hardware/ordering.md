@@ -70,7 +70,7 @@ are printed once and serve both.
 
 | Folder | Files | Colour |
 |---|---|---|
-| `build/enclosure/v1/` | body (with the cable relief behind J303), back_cover (with the Tyukov Inc mark and the slot in the LRA cup for the motor's lead tab), bezel, glass_retainer, ring_a_bearing, ring_b_bushing, bushing_sleeve, beak_key, ear_key_left, ear_key_right, magnet_carrier_24, magnet_carrier_32 | black dyed |
+| `build/enclosure/v1/` | body (with the cable relief behind J303), back_cover (with the Tyukov Inc mark and the slot in the LRA cup for the motor's lead tab), bezel, ring_a_bearing, ring_b_bushing, bushing_sleeve, beak_key, ear_key_left, ear_key_right, magnet_carrier_24, magnet_carrier_32 | black dyed |
 | `build/enclosure/perch-v1/` | perch_body (with the Tyukov Inc mark on the underside) | black dyed |
 | `build/enclosure/ring-test/` | face_bezel, sensor_jig, coupon_shaft, coupon_bore, magnet_carrier_24, magnet_carrier_32 (these two with polarity bumps, for the test), jig_spacer_1mm, jig_spacer_2mm, jig_spacer_3mm | natural grey |
 
@@ -89,9 +89,9 @@ enclosure and one perch.
 | JST SH 4-pin cable, 50 mm, pin 1 to pin 1 (Qwiic or STEMMA QT, for example Adafruit 4399), J303 to the dock-pad board | any | 3 |
 | ESP32-S3-WROOM-1U-N16R8 (C3013946), loose: the fallback if the ring test loses more than 6 dB of RSSI, swapped by hand onto one board | LCSC | 2 |
 | 2.4 GHz antenna with a U.FL (IPEX MHF1) plug for the WROOM-1U, for example Molex 146153-0050 (C916292) | LCSC | 2 |
-| VIEWE 1.75 inch AMOLED ALL-UEOL018VG-RA31-A001A with the standard 52.6 mm cover glass (VIEWE, 14 October 2026: the 48.16 mm version is discontinued; the enclosure face is being redesigned for it), plus the standard adapter FPC FPC3-HD143Y002M (31 contacts, 0.3 mm pitch, USD 0.80 each), ordered separately; two adapters are spares for the fit check | VIEWE | 2 panels, 4 adapters |
+| VIEWE 1.75 inch AMOLED ALL-UEOL018VG-RA31-A001A with the standard 52.6 mm cover glass (VIEWE's reply of 14 October 2026: the 48.16 mm version is discontinued; the enclosure face is drawn for the 52.6 mm glass), plus the standard adapter FPC FPC3-HD143Y002M (31 contacts, 0.3 mm pitch, USD 0.80 each), ordered separately; two adapters are spares | VIEWE | 2 panels, 4 adapters |
 | Bearing 6710ZZ, 50 x 62 x 6 mm (ring A and the ring test) | any | 2 |
-| N52 disc magnets D3 x 2 mm, axially magnetised (ring carriers) | any | 150 |
+| N52 disc magnets D3 x 1 mm, axially magnetised (ring carriers and the ring test) | any | 150 |
 | N52 disc magnets D6 x 2 mm, axially magnetised (dock: 2 in the owl, 2 in the perch) | any | 8 |
 | O-ring NBR 59 x 1.5 mm (ring B drag) | any | 1 pack |
 | Damping grease for camera focus rings (ring B feel) | any | 1 small tube |
@@ -102,6 +102,7 @@ enclosure and one perch.
 | Silicone feet for the perch, about 8 to 10 mm across (for example 3M Bumpon SJ5302) | any | 1 sheet (4 per perch) |
 | SparkFun TMAG5273 Qwiic board (SEN-23880) and a Qwiic breadboard cable, for the ring test | any | 1 each |
 | Cyanoacrylate glue (magnets, ring-test parts; keep it away from the cover glass) | any | 1 |
+| Two-part epoxy (the bearing or bushing sleeve on the bezel seat, [assembly.md](assembly.md) step 3) and black 0.2 mm double-sided tape (the cover glass, step 9) | any | 1 each |
 
 The ring test ([ring-test.md](ring-test.md)) uses the steel 6710ZZ for ring A and the printed
 bushing as the metal-free ring B; no plastic 6710 is bought (ruling R14). If the steel bearing

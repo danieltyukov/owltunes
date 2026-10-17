@@ -9,7 +9,7 @@ schematic parity, [rev-a-review.md](rev-a-review.md)), and their fabrication fil
 (`tools/hw/hw_fab.py`; what to order is in [ordering.md](ordering.md)). Enclosure v1 and perch v1
 are drawn and reviewed, and the main board's fit check against enclosure v1 finds no clash. Nothing
 is ordered yet. The ring test runs when the parts are delivered, so until then the magnet count,
-the ring variant (A with the 6710 bearing, B with the printed bushing) and the 3.0 mm Hall gap are
+the ring variant (A with the 6710 bearing, B with the printed bushing) and the 2.7 mm Hall gap are
 provisional.
 
 The firmware pin map is `firmware/main/board_owltunes_reva.h` (see [pinmap.md](pinmap.md)). It
@@ -36,11 +36,13 @@ Values from `enclosure/owl_params.py` and `enclosure/owl_v1.py`.
 
 | Item | Depth |
 |---|---|
-| Ring and bezel front lips | -1.3 to 0 |
-| Cover glass, OCA, panel and foam (2.07), parts on the folded flex (1.2) | 0 to about 3.3 |
-| Bearing 6710 (ring A) or printed bushing sleeve (ring B) | 0 to 6.0 |
-| Magnet carrier (magnets flush with its rear face at 9.2, flange 9.2 to 10.2) | 6.2 to 10.2 |
-| Main board (TMAG5273 on the back side, Hall element 3.0 mm behind the magnets) | 10.5 to 11.5 |
+| Ring front lip, flush with the body face | -1.3 to 0 |
+| Cover glass (52.6 mm), OCA, panel and foam (2.07), parts on the folded flex (1.2) | 0 to about 3.3 |
+| Tape under the glass border, on the bezel's front face (the glass ledge) and the inner race face | 1.1 to 1.3 |
+| Bearing 6710 (ring A) or printed bushing sleeve (ring B), front face flush with the glass ledge | 1.3 to 7.3 |
+| Ring body (behind its lip) | 1.3 to 8.5 |
+| Magnet carrier (D3 x 1 mm magnets flush with its rear face at 9.5; flange 8.5 to 9.5 beside them, behind the ring body) | 7.5 to 9.5 |
+| Main board (TMAG5273 on the back side, Hall element 2.7 mm behind the magnets) | 10.5 to 11.5 |
 | Battery foam | 11.5 to 12.7 |
 | Battery (8 mm: an 803030 class cell in a cavity drawn for an 803040) | 12.7 to 20.7 |
 | Back cover | 20.7 to 22.2 |
@@ -223,15 +225,16 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Touch level | touch on DISP_3V3 | touch on DISP_3V3: J301 pins 27 to 30 carry TP_SCL, TP_SDA, TP_RST and TP_INT straight to the ESP32-S3, 4.7k on SDA and SCL and 10k on INT to DISP_3V3, TP_RST push-pull from GPIO40 | VIEWE's reply of 16 October 2026: the touch lines are 3.3 V logic, the module has no pull-ups of its own, and the host should put 4.7k to 3.3 V on SDA and SCL and a pull-up on INT. It corrects the drawing's "I2C voltage: 1.8V" note and their 13 October answer, after which a 1.8 V level shift (LSF0204 and a 1.8 V LDO) had been added; that is gone again, and a 1.8 V high would sit below the CST820's VIH (0.7 x 3.3 V = 2.31 V) |
 | J301 position | top edge of the panel, rotation 180 | owl (-5.00, 4.22), rotation 270, front side | VIEWE's standard adapter FPC (USD 0.80) reaches it with one U-turn and one S-bend; see Display adapter route |
 | Panel QSPI clock | not stated (rev A header: 80 MHz) | 40 MHz | the panel allows 50 MHz for writes; the board runs the QSPI at 40 MHz |
-| TMAG5273 | on the PCB | back side of the board | lets the board front sit 0.3 mm behind the carrier flange |
+| TMAG5273 | on the PCB | back side of the board | lets the board front sit 1.0 mm behind the magnet carrier, whose magnets are flush with its rear face |
 | Dock pads | on the main board | separate dock-pad board, cabled to J303 | the main board is about 11 mm in front of the back surface |
 | Antenna keep-out | 15 mm from the ring | not reachable in 66 x 84 mm | to be measured in the ring test (RSSI with and without the ring stack); WROOM-1U fallback on the same pads |
-| Owl depth | about 22 mm | 23.5 mm | bearing plus a 3.0 mm sensor gap |
+| Owl depth | about 22 mm | 23.5 mm | the bearing 1.3 mm behind the glass front (the 52.6 mm glass sits in front of it) plus a 2.7 mm sensor gap |
 | Battery NTC | 10k NTC in the pack, JST PH (8.1) | 2-wire pack on a 2-pin JST PH; RT101 (10k NTC) on the board under the cell | cheap off-the-shelf packs are 2-wire, and the BQ24073 does not charge with TS open. Cost: RT101 reads the board under the cell, so the charge temperature window is approximate (a few degrees warm in fast charge) |
 | Battery size | 1S LiPo about 1000 mAh (803040) | 803030 class, 740 mAh (efaso; EEMB 700 mAh as the fallback) in the 803040 cavity, held by a foam end stop | the only listings found with a stated JST PH 2.0 plug that fit the cavity: the efaso 803040 variant has a 1.0 mm pitch plug, and an 803040 whose protection board sits outside its 40 mm is too long. Cost: about 26 % less capacity, a typical day of 3.5 to 5 days instead of about 6. An 803040 with a PH 2.0 plug and its protection board inside the 40 mm fits the same cavity later |
 | Charger input limit | not stated | 0.424 A typical, 0.478 A worst case (R102 3.6k) | USB 2.0 default power without CC sensing; faster charging needs CC sensing in rev B |
 | Charge current | not stated | 0.270 A typical, 0.298 A worst case (R101 3.3k) | controller ruling, 12 October 2026: at most 0.5 C of the 700 mAh fallback pack in the worst case. Cost: a full charge takes roughly 3 h instead of about 2 h at the earlier 0.445 A |
-| Cover glass retention | not stated | adhesive: glass on an adhesive ring, 1.3 mm retainer ring glued into the lip opening | a snap does not fit the 1.3 mm lip with the bearing behind it. Owner review point: the glass could come loose if a glue joint fails in a drop; a mechanical lock (a taller lip or a bayonet) is a v2 item |
+| Cover glass retention | not stated | tape only: the 52.6 mm glass rests on a ring of 0.2 mm double-sided tape on the bezel's front face, continued over the bearing's inner race face to 52.0 mm; no retainer | VIEWE's reply of 14 October 2026: the 48.16 mm glass, which fitted inside the bearing's bore, is discontinued. The 52.6 mm glass is wider than the bore, so it sits in front of the bearing and only the rotating ring surrounds its edge: a stationary retainer would have to reach round the glass, which costs 0.2 mm of depth and leaves the display adapter 0.09 mm of slack at its worst tolerance corner instead of 0.27. The owner chose tape only on 17 October 2026. Owner review point: a back-first drop can pull the glass and panel off the tape; a mechanical lock is a v2 item |
+| Bearing location | not stated | no lip in front of the bearing (or bushing sleeve): it is set flush with the bezel's front face on a flat plate at assembly and held by two-part epoxy on its seat in both directions | the bezel's front face is the glass ledge and must be flush with the bearing's front face, so nothing can stand in front of the bearing. Chosen by the owner on 17 October 2026 |
 | Perch USB-C | on the back of the perch (7.3) | right side of the back rest, the plug enters along +X | J1 is an edge-mount receptacle in the tilted rest plane and the perch board is Economic PCBA (top side only). Owner review point: a back exit needs a vertical receptacle on the board's bottom side, hand-soldered or with Standard PCBA, plus a boss on the rest's back; rev B can move it. The side channel takes the largest Type-C overmold (12.35 x 6.5 mm) |
 
 ## Display adapter route
