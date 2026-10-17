@@ -27,7 +27,7 @@ SCREEN = ROOT / "docs" / "img" / "now_playing.png"
 MM = 0.001
 VIEW_D = 44.16  # display viewing area, owl_params.VIEW_D
 OWL_BACK_Z = -22.2  # back face of the back cover, owl_v1.BACK_Z
-OWL_PARTS = ("back_cover", "body", "ring", "bezel", "glass_retainer", "beak_key", "ear_key_left", "ear_key_right")
+OWL_PARTS = ("back_cover", "body", "ring", "bezel", "beak_key", "ear_key_left", "ear_key_right")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -488,7 +488,7 @@ def scene_exploded() -> None:
     objs["battery"] = import_stl(MESHES / "battery.stl", simple("pouch", (0.62, 0.63, 0.66), 0.32, metal=0.7))
     pcb = board()
     lift = {"back_cover": -0.066, "battery": -0.046, "ring": 0.022, "bezel": 0.040, "screen": 0.056,
-            "glass": 0.068, "glass_retainer": 0.080, "beak_key": 0.022, "ear_key_left": 0.022, "ear_key_right": 0.022}
+            "glass": 0.068, "beak_key": 0.022, "ear_key_left": 0.022, "ear_key_right": 0.022}
     for name, obj in objs.items():
         obj.location.z += lift.get(name, 0.0)
     for obj in pcb:

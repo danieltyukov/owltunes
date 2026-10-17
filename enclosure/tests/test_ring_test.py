@@ -33,14 +33,16 @@ def sf_box(u0: float, u1: float, v0: float, v1: float, z0: float, z1: float) -> 
 
 
 def sparkfun_dummy(spacer: float) -> Part:
-    """Board plus its two right-angle Qwiic connectors, sensor side facing the ring."""
+    """Board plus its two right-angle Qwiic connectors, sensor side facing the ring. Each connector
+    body is drawn 0.7 longer at both ends than the footprint's silkscreen, but not past the board
+    edge: the silkscreen ends 0.48 inside it, and the jig pocket leaves only JIG_POCKET_CLEAR / 2."""
     top = -(R.jig_pocket_floor_depth() - spacer - P.SF_BOARD_T)
     board = sf_box(0, P.SF_BOARD, 0, P.SF_BOARD, top - P.SF_BOARD_T, top)
     for (u, v), sign in ((P.SF_J1, -1), (P.SF_J2, 1)):
         u_edge = u + sign * P.SF_CONN_L
         board += sf_box(
-            min(u, u_edge) - 0.7, max(u, u_edge) + 0.7, v - P.SF_CONN_W / 2, v + P.SF_CONN_W / 2,
-            top, top + P.SF_CONN_H,
+            max(min(u, u_edge) - 0.7, 0.0), min(max(u, u_edge) + 0.7, P.SF_BOARD),
+            v - P.SF_CONN_W / 2, v + P.SF_CONN_W / 2, top, top + P.SF_CONN_H,
         )
     return board
 
@@ -60,21 +62,35 @@ def test_ring_outer_diameter_is_the_owl_width(parts):
         assert size.Y == pytest.approx(P.RING_OD, abs=0.01)
 
 
-def test_glass_drops_in_from_the_front_and_cannot_fall_out_the_back(parts):
+def glass(d: float, front: float = 0.0) -> Part:
+    return Pos(0, 0, front - P.GLASS_T) * Cylinder(d / 2, P.GLASS_T, align=R.BOTTOM)
+
+
+def test_glass_drops_in_from_the_front_onto_the_ledge_and_cannot_fall_out_the_back(parts):
     bezel = parts["face_bezel"]
-    seated_front = -(P.GLASS_POCKET_DEPTH - P.GLASS_T)
+    # the ledge is the bezel's front face, flush with the bearing's, one tape thickness behind the
+    # glass; the glass front is the reference plane z = 0
+    assert P.BRG_FRONT_DEPTH == pytest.approx(P.GLASS_T + P.GLASS_TAPE_T)
+    assert bezel.bounding_box().max.Z == pytest.approx(-P.BRG_FRONT_DEPTH)
+    assert R.bearing_dummy().bounding_box().max.Z == pytest.approx(-P.BRG_FRONT_DEPTH)
+    # the largest glass drops in from the front past the ring lip without touching any part
+    largest = P.GLASS_D + P.GLASS_D_TOL
+    stack = [bezel, R.bearing_dummy(), parts["bushing_sleeve"], parts["ring_a_bearing"], parts["ring_b_bushing"]]
     for dz in (6.0, 3.0, 1.5, 0.5, 0.0):
-        glass = Pos(0, 0, seated_front + dz - P.GLASS_T) * Cylinder(
-            P.GLASS_D / 2, P.GLASS_T, align=R.BOTTOM
-        )
-        overlap = glass & bezel
-        assert (overlap.volume if overlap is not None else 0.0) < 1e-3, dz
-    # the glass rests on a ledge behind the pocket, and the panel opening below it stays clear
-    assert inside(bezel, P.GLASS_D / 2 - 0.1, -P.GLASS_POCKET_DEPTH - 0.1)
-    assert not inside(bezel, P.PANEL_POCKET_D / 2 - 0.2, -P.GLASS_POCKET_DEPTH - 0.1)
-    # the rim stands in front of the glass and its opening is wider than the glass
-    assert P.BEZEL_LIP_ID >= P.GLASS_D + 0.1
-    assert P.GLASS_POCKET_D >= P.GLASS_D + 0.1
+        for part in stack:
+            overlap = glass(largest, dz) & part
+            assert (overlap.volume if overlap is not None else 0.0) < 1e-3, dz
+    # pushed back past its tape, the smallest glass meets the ledge: it cannot fall out the back
+    overlap = glass(P.GLASS_D - P.GLASS_D_TOL, -P.GLASS_TAPE_T - 0.05) & bezel
+    assert overlap is not None and overlap.volume > 0.01
+    # the ledge is solid from the panel opening to the seat, and the panel opening stays clear
+    for r in (P.PANEL_POCKET_D / 2 + 0.1, P.BRG_SEAT_D / 2 - 0.1):
+        assert inside(bezel, r, -P.BRG_FRONT_DEPTH - 0.1)
+    assert not inside(bezel, P.PANEL_POCKET_D / 2 - 0.2, -P.BRG_FRONT_DEPTH - 0.1)
+    # the glass border covers the ledge and reaches over the inner race face, 0.2 in front of it,
+    # but stays inside the race, clear of the shields
+    assert (P.GLASS_D - P.GLASS_D_TOL) / 2 > P.BRG_ID / 2
+    assert (P.GLASS_D + P.GLASS_D_TOL) / 2 < P.BRG_INNER_RACE_OD / 2
 
 
 def test_bearing_seat_and_bores(parts):
@@ -93,17 +109,30 @@ ASSEMBLY = ("face_bezel", "ring_a_bearing", "ring_b_bushing", "bushing_sleeve", 
 
 
 def test_nothing_covers_the_viewing_area(parts):
+    # nothing stands in front of the viewing area, and nothing reaches into the largest glass's edge
     for part in [parts[n] for n in ASSEMBLY] + [parts["magnet_carrier_24"]]:
         for angle in range(0, 360, 15):
             assert not inside(part, P.VIEW_D / 2, P.LIP_T / 2, angle)
+            assert not inside(part, (P.GLASS_D + P.GLASS_D_TOL) / 2, -P.GLASS_T / 2, angle)
 
 
-def test_bezel_lip_stays_inside_the_inner_race_and_ring_lip_clears_it(parts):
-    assert P.BEZEL_LIP_OD < P.BRG_INNER_RACE_OD
+@pytest.mark.parametrize("name", ["ring_a_bearing", "ring_b_bushing"])
+def test_ring_lip_clears_the_largest_glass_and_stands_lip_t_proud(parts, name):
+    # the lip opening clears the glass edge by 0.4 or more, also at the drawing's +-0.20
+    assert (P.RING_LIP_ID - P.GLASS_D - P.GLASS_D_TOL) / 2 >= 0.4
+    assert (P.RING_LIP_ID - P.GLASS_D - 0.2) / 2 >= 0.4 - 1e-9
     assert P.RING_CONTACT_R * 2 > P.BRG_OUTER_RACE_ID
-    ring = parts["ring_a_bearing"]
-    assert not inside(ring, (P.RING_LIP_ID / 2 + P.RING_CONTACT_R) / 2, P.LIP_RELIEF / 2)
-    assert inside(ring, P.RING_CONTACT_R + 0.3, P.LIP_T / 2)
+    ring = parts[name]
+    assert ring.bounding_box().max.Z == pytest.approx(P.LIP_T)
+    assert inside(ring, P.RING_LIP_ID / 2 + 0.05, P.LIP_T - 0.05)
+    assert not inside(ring, P.RING_LIP_ID / 2 - 0.05, P.LIP_T - 0.05)
+    # the contact face rests on the outer race at the bearing's front face; inside RING_CONTACT_R the
+    # lip clears the inner race and the shields by LIP_RELIEF
+    assert inside(ring, P.RING_CONTACT_R + 0.3, -P.BRG_FRONT_DEPTH + 0.05)
+    assert not inside(ring, P.RING_CONTACT_R + 0.3, -P.BRG_FRONT_DEPTH - 0.05)
+    relieved = (P.RING_LIP_ID / 2 + P.RING_CONTACT_R) / 2
+    assert not inside(ring, relieved, -P.BRG_FRONT_DEPTH + P.LIP_RELIEF - 0.05)
+    assert inside(ring, relieved, -P.BRG_FRONT_DEPTH + P.LIP_RELIEF + 0.05)
 
 
 @pytest.mark.parametrize("count", P.MAGNET_COUNTS)
@@ -122,14 +151,18 @@ def test_assembly_has_no_interference(parts, variant, count):
 
 def test_bearing_and_carrier_slide_on_from_the_back(parts):
     bezel = parts["face_bezel"]
-    behind_seat = bezel.bounding_box()
+    box = bezel.bounding_box()
     assert P.TUBE_OD < P.BRG_SEAT_D <= P.BRG_ID
     assert P.TUBE_OD < P.CARRIER_ID
     for angle in P.LUG_ANGLES_DEG:
         for da in (-12.0, -6.0, 0.0, 6.0, 12.0):
             z = -P.TUBE_END_DEPTH - P.LUG_T / 2
             assert not inside(bezel, P.BRG_ID / 2 - 0.05, z, angle + da)
-    assert behind_seat.max.X <= P.BEZEL_LIP_OD / 2 + 1e-6
+    # nothing on the bezel is wider than the seat, and no lip stands in front of the bearing: on a
+    # flat plate the bearing (or sleeve) front face comes flush with the bezel's front face
+    assert max(box.max.X, box.max.Y, -box.min.X, -box.min.Y) <= P.BRG_SEAT_D / 2 + 1e-6
+    for part in (R.bearing_dummy(), parts["bushing_sleeve"]):
+        assert part.bounding_box().max.Z == pytest.approx(box.max.Z)
 
 
 def test_jig_gives_the_planned_gaps():
@@ -137,6 +170,15 @@ def test_jig_gives_the_planned_gaps():
     for spacer, gap in zip((0.0, *P.SPACER_T), P.HALL_GAP_STEPS):
         hall_depth = floor - spacer - P.SF_BOARD_T - P.HALL_ELEMENT_H
         assert hall_depth - P.magnet_face_depth() == pytest.approx(gap)
+    # the 2 mm spacer gives the product gap, and the jig floor under the pocket stays 1.3 thick
+    assert P.HALL_GAP_STEPS[2] == pytest.approx(P.HALL_GAP_NOMINAL)
+    assert P.JIG_FRONT_DEPTH + P.JIG_T - floor == pytest.approx(1.3)
+
+
+def test_sparkfun_board_seats_in_the_jig_with_every_spacer(parts):
+    for spacer in (0.0, *P.SPACER_T):
+        overlap = parts["sensor_jig"] & sparkfun_dummy(spacer)
+        assert (overlap.volume if overlap is not None else 0.0) < 1e-3, spacer
 
 
 def test_sensor_position_is_the_pcb_contract():
@@ -144,21 +186,33 @@ def test_sensor_position_is_the_pcb_contract():
     assert x == pytest.approx(-P.R_TRACK)
     assert y == pytest.approx(0.0, abs=1e-9)
     assert P.pcb_front_depth() == pytest.approx(10.5)
-    flange_back = P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T
-    assert flange_back == pytest.approx(10.2)
-    assert P.pcb_front_depth() - flange_back >= 0.3 - 1e-9
+    carrier_back = P.CARRIER_REAR_DEPTH
+    assert carrier_back == pytest.approx(9.5)
+    assert P.pcb_front_depth() - carrier_back >= 1.0 - 1e-9
     # the polarity bumps exist on the test carriers only (the product carrier uses bumps=False);
-    # they reach the board but must not pass it
-    bump_back = flange_back + P.POLARITY_BUMP_H
+    # they stand behind the rear face but must not reach the board
+    bump_back = carrier_back + P.POLARITY_BUMP_H
     assert P.pcb_front_depth() - bump_back >= -1e-9
 
 
-def test_magnet_face_is_where_a_seated_magnet_sits():
-    assert P.magnet_face_depth() == pytest.approx(P.RING_REAR_DEPTH - (P.MAG_POCKET_DEPTH - P.MAG_H))
+def test_magnet_face_is_where_a_seated_magnet_sits(parts):
+    assert P.magnet_face_depth() == pytest.approx(P.CARRIER_REAR_DEPTH - (P.MAG_POCKET_DEPTH - P.MAG_H))
     assert P.MAG_POCKET_DEPTH >= P.MAG_H
-    assert P.magnet_face_depth() == pytest.approx(9.2)
+    assert P.magnet_face_depth() == pytest.approx(9.5)
     # the Hall element sits HALL_ELEMENT_H behind the board's back face
-    assert P.pcb_front_depth(3.0) + P.PCB_T + P.HALL_ELEMENT_H - P.magnet_face_depth() == pytest.approx(3.0)
+    assert P.pcb_front_depth(2.7) + P.PCB_T + P.HALL_ELEMENT_H - P.magnet_face_depth() == pytest.approx(2.7)
+    # the pockets open in the rear face with a 1.0 floor in front of them, the ring body ends at the
+    # floor, and the flange sits beside the magnets: without bumps nothing stands behind their faces
+    carrier = parts["magnet_carrier_24"]
+    floor = P.CARRIER_REAR_DEPTH - P.MAG_POCKET_DEPTH
+    assert floor - P.CARRIER_FRONT_DEPTH == pytest.approx(P.MJF_STRUCT_WALL)
+    assert P.RING_REAR_DEPTH == pytest.approx(floor)
+    assert not inside(carrier, P.R_TRACK, -floor - 0.05, 0.0)
+    assert inside(carrier, P.R_TRACK, -floor + 0.05, 0.0)
+    assert inside(carrier, (P.CARRIER_FLANGE_R_IN + P.RING_OD / 2) / 2, -P.magnet_face_depth() + 0.05, 0.0)
+    assert R.magnet_carrier(24, bumps=False).bounding_box().min.Z == pytest.approx(-P.magnet_face_depth())
+    for name in ("ring_a_bearing", "ring_b_bushing"):
+        assert parts[name].bounding_box().min.Z == pytest.approx(-P.RING_REAR_DEPTH)
 
 
 def test_carrier_fits_both_rings_with_real_clearance(parts):
@@ -246,13 +300,12 @@ def test_jig_screw_holes_and_nut_pockets(parts):
     assert P.M2_NUT_AF_CLEAR >= 0.2 and P.M2_NUT_DEPTH_CLEAR >= 0.2
 
 
-PROBE_ANGLES = (0.0, 7.0, 45.0, 90.0, 215.0, 300.0)
+PROBE_ANGLES = (0.0, 7.0, 45.0, 90.0, 180.0, 215.0, 300.0)
 # Per part: (z0, z1) zones that are cosmetic or glass-fit features and are judged against
 # MJF_MIN_WALL, and zones that are skipped (engraved lines and bumps are not walls).
 PART_ZONES = {
-    "face_bezel": {"min": [(-P.GLASS_POCKET_DEPTH, 0.0)], "skip": []},
-    "magnet_carrier_24": {"min": [], "skip": [(-(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T + 0.5), -(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T))]},
-    "magnet_carrier_32": {"min": [], "skip": [(-(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T + 0.5), -(P.RING_REAR_DEPTH + P.CARRIER_FLANGE_T))]},
+    "magnet_carrier_24": {"min": [], "skip": [(-(P.CARRIER_REAR_DEPTH + 0.5), -P.CARRIER_REAR_DEPTH)]},
+    "magnet_carrier_32": {"min": [], "skip": [(-(P.CARRIER_REAR_DEPTH + 0.5), -P.CARRIER_REAR_DEPTH)]},
     "sensor_jig": {"min": [], "skip": [(-P.JIG_FRONT_DEPTH - P.TICK_DEPTH - 0.01, -P.JIG_FRONT_DEPTH + 0.01)]},
 }
 

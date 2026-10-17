@@ -9,7 +9,7 @@ schematic parity, [rev-a-review.md](rev-a-review.md)), and their fabrication fil
 (`tools/hw/hw_fab.py`; what to order is in [ordering.md](ordering.md)). Enclosure v1 and perch v1
 are drawn and reviewed, and the main board's fit check against enclosure v1 finds no clash. Nothing
 is ordered yet. The ring test runs when the parts are delivered, so until then the magnet count,
-the ring variant (A with the 6710 bearing, B with the printed bushing) and the 3.0 mm Hall gap are
+the ring variant (A with the 6710 bearing, B with the printed bushing) and the 2.7 mm Hall gap are
 provisional.
 
 The firmware pin map is `firmware/main/board_owltunes_reva.h` (see [pinmap.md](pinmap.md)). It
@@ -36,11 +36,13 @@ Values from `enclosure/owl_params.py` and `enclosure/owl_v1.py`.
 
 | Item | Depth |
 |---|---|
-| Ring and bezel front lips | -1.3 to 0 |
-| Cover glass, OCA, panel and foam (2.07), parts on the folded flex (1.2) | 0 to about 3.3 |
-| Bearing 6710 (ring A) or printed bushing sleeve (ring B) | 0 to 6.0 |
-| Magnet carrier (magnets flush with its rear face at 9.2, flange 9.2 to 10.2) | 6.2 to 10.2 |
-| Main board (TMAG5273 on the back side, Hall element 3.0 mm behind the magnets) | 10.5 to 11.5 |
+| Ring front lip, flush with the body face | -1.3 to 0 |
+| Cover glass (52.6 mm), OCA, panel and foam (2.07), parts on the folded flex (1.2) | 0 to about 3.3 |
+| Tape under the glass border, on the bezel's front face (the glass ledge) and the inner race face | 1.1 to 1.3 |
+| Bearing 6710 (ring A) or printed bushing sleeve (ring B), front face flush with the glass ledge | 1.3 to 7.3 |
+| Ring body (behind its lip) | 1.3 to 8.5 |
+| Magnet carrier (D3 x 1 mm magnets flush with its rear face at 9.5; flange 8.5 to 9.5 beside them, behind the ring body) | 7.5 to 9.5 |
+| Main board (TMAG5273 on the back side, Hall element 2.7 mm behind the magnets) | 10.5 to 11.5 |
 | Battery foam | 11.5 to 12.7 |
 | Battery (8 mm: an 803030 class cell in a cavity drawn for an 803040) | 12.7 to 20.7 |
 | Back cover | 20.7 to 22.2 |
@@ -223,15 +225,16 @@ These are also written in `firmware/main/board_owltunes_reva.h`.
 | Touch level | touch on DISP_3V3 | touch on DISP_3V3: J301 pins 27 to 30 carry TP_SCL, TP_SDA, TP_RST and TP_INT straight to the ESP32-S3, 4.7k on SDA and SCL and 10k on INT to DISP_3V3, TP_RST push-pull from GPIO40 | VIEWE's reply of 16 October 2026: the touch lines are 3.3 V logic, the module has no pull-ups of its own, and the host should put 4.7k to 3.3 V on SDA and SCL and a pull-up on INT. It corrects the drawing's "I2C voltage: 1.8V" note and their 13 October answer, after which a 1.8 V level shift (LSF0204 and a 1.8 V LDO) had been added; that is gone again, and a 1.8 V high would sit below the CST820's VIH (0.7 x 3.3 V = 2.31 V) |
 | J301 position | top edge of the panel, rotation 180 | owl (-5.00, 4.22), rotation 270, front side | VIEWE's standard adapter FPC (USD 0.80) reaches it with one U-turn and one S-bend; see Display adapter route |
 | Panel QSPI clock | not stated (rev A header: 80 MHz) | 40 MHz | the panel allows 50 MHz for writes; the board runs the QSPI at 40 MHz |
-| TMAG5273 | on the PCB | back side of the board | lets the board front sit 0.3 mm behind the carrier flange |
+| TMAG5273 | on the PCB | back side of the board | lets the board front sit 1.0 mm behind the magnet carrier, whose magnets are flush with its rear face |
 | Dock pads | on the main board | separate dock-pad board, cabled to J303 | the main board is about 11 mm in front of the back surface |
 | Antenna keep-out | 15 mm from the ring | not reachable in 66 x 84 mm | to be measured in the ring test (RSSI with and without the ring stack); WROOM-1U fallback on the same pads |
-| Owl depth | about 22 mm | 23.5 mm | bearing plus a 3.0 mm sensor gap |
+| Owl depth | about 22 mm | 23.5 mm | the bearing 1.3 mm behind the glass front (the 52.6 mm glass sits in front of it) plus a 2.7 mm sensor gap |
 | Battery NTC | 10k NTC in the pack, JST PH (8.1) | 2-wire pack on a 2-pin JST PH; RT101 (10k NTC) on the board under the cell | cheap off-the-shelf packs are 2-wire, and the BQ24073 does not charge with TS open. Cost: RT101 reads the board under the cell, so the charge temperature window is approximate (a few degrees warm in fast charge) |
 | Battery size | 1S LiPo about 1000 mAh (803040) | 803030 class, 740 mAh (efaso; EEMB 700 mAh as the fallback) in the 803040 cavity, held by a foam end stop | the only listings found with a stated JST PH 2.0 plug that fit the cavity: the efaso 803040 variant has a 1.0 mm pitch plug, and an 803040 whose protection board sits outside its 40 mm is too long. Cost: about 26 % less capacity, a typical day of 3.5 to 5 days instead of about 6. An 803040 with a PH 2.0 plug and its protection board inside the 40 mm fits the same cavity later |
 | Charger input limit | not stated | 0.424 A typical, 0.478 A worst case (R102 3.6k) | USB 2.0 default power without CC sensing; faster charging needs CC sensing in rev B |
 | Charge current | not stated | 0.270 A typical, 0.298 A worst case (R101 3.3k) | controller ruling, 12 October 2026: at most 0.5 C of the 700 mAh fallback pack in the worst case. Cost: a full charge takes roughly 3 h instead of about 2 h at the earlier 0.445 A |
-| Cover glass retention | not stated | adhesive: glass on an adhesive ring, 1.3 mm retainer ring glued into the lip opening | a snap does not fit the 1.3 mm lip with the bearing behind it. Owner review point: the glass could come loose if a glue joint fails in a drop; a mechanical lock (a taller lip or a bayonet) is a v2 item |
+| Cover glass retention | not stated | tape only: the 52.6 mm glass rests on a ring of 0.2 mm double-sided tape on the bezel's front face, continued over the bearing's inner race face to 52.0 mm; no retainer | VIEWE's reply of 14 October 2026: the 48.16 mm glass, which fitted inside the bearing's bore, is discontinued. The 52.6 mm glass is wider than the bore, so it sits in front of the bearing and only the rotating ring surrounds its edge: a stationary retainer would have to reach round the glass, which costs 0.2 mm of depth and leaves the display adapter 0.09 mm of slack at its worst tolerance corner instead of 0.27. The owner chose tape only on 17 October 2026. Owner review point: a back-first drop can pull the glass and panel off the tape; a mechanical lock is a v2 item |
+| Bearing location | not stated | no lip in front of the bearing (or bushing sleeve): it is set flush with the bezel's front face on a flat plate at assembly and held by two-part epoxy on its seat in both directions | the bezel's front face is the glass ledge and must be flush with the bearing's front face, so nothing can stand in front of the bearing. Chosen by the owner on 17 October 2026 |
 | Perch USB-C | on the back of the perch (7.3) | right side of the back rest, the plug enters along +X | J1 is an edge-mount receptacle in the tilted rest plane and the perch board is Economic PCBA (top side only). Owner review point: a back exit needs a vertical receptacle on the board's bottom side, hand-soldered or with Standard PCBA, plus a boss on the rest's back; rev B can move it. The side channel takes the largest Type-C overmold (12.35 x 6.5 mm) |
 
 ## Display adapter route
@@ -245,39 +248,41 @@ S-bend down to J301 at owl (-5.00, 4.22). Lengths along the flex's mid-plane, be
 | Segment | Length (mm) | Note |
 |---|---|---|
 | Inside the panel connector | 2.50 | not counted: the 24.148 starts at the connector face |
-| Plug-end stiffener, straight out | 2.50 | s 14.96 to 17.46, depth 2.8 |
+| Plug-end stiffener, straight out | 2.50 | s 14.64 to 17.14, depth 2.8 |
 | U-turn outward and back, R 2.0 | 6.28 | depth 2.8 to 6.8, contacts now towards the board |
-| Straight run over the H2 screw head | 3.6 to 4.1 | depth 6.8 |
+| Straight run over the H2 screw head | 3.2 to 3.8 | depth 6.8 |
 | S-bend down, two arcs R 2.0 of 78.5 degrees | 5.48 | depth 6.8 to 10.0 |
-| Lead-in on the board, last 2.50 is the stiffener | 2.5 to 3.0 | to J301's entry face |
+| Lead-in on the board, last 2.50 is the stiffener | 2.5 to 3.1 | to J301's entry face |
 | Inside J301 | 2.50 | |
-| Sum | 23.38 | the rows below the first, with the straight run and the lead-in together 6.62 wherever the S-bend sits (4.1 with 2.5, down to 3.6 with 3.0); adapter 24.148: 0.77 mm slack, taken up by the U-turn growing outward |
+| Sum | 23.06 | the rows below the first, with the straight run and the lead-in together 6.30 wherever the S-bend sits (3.8 with 2.5, down to 3.2 with 3.1); adapter 24.148: 1.09 mm slack, taken up by the U-turn growing outward |
 
 `enclosure/tests/test_pcb_contract.py` (`test_display_adapter_reaches_j301`) computes this from the
-constants in `enclosure/owl_params.py`: 0.766 mm of slack nominal and 0.016 mm at the tolerance
-corner (connector face 0.6 mm further out, adapter 0.15 mm short). The S-bend may start anywhere in
-a window of s 13.34 to 13.85. The U-turn apex is at radius 21.89 mm (the bezel bore allows 23.1) and
-its underside clears the H2 screw head by 0.30 mm.
+constants in `enclosure/owl_params.py`: 1.09 mm of slack nominal and 0.27 mm at the worst tolerance
+corner (connector face 0.15 mm further out, adapter 0.5 mm short, panel-side depth 2.6 mm). The
+S-bend may start anywhere in a window of s 13.34 to 13.93. The U-turn apex is at radius 21.74 mm
+nominal and 22.11 mm at most over the tolerance corners (the bezel bore allows 23.1), and its
+underside clears the H2 screw head by 0.30 mm.
 
-Two inputs are estimates, because VIEWE does not dimension them: the panel connector's front face
-(taken as 14.96 mm from the centre, covered 14.5 to 15.55) and the adapter's mid-plane depth at the
-panel connector, 2.8 +- 0.2 mm. The route is sensitive to both:
+The tolerances behind these numbers:
 
-- At 2.6 mm depth the stacked worst corner (connector face 0.6 mm further out, adapter 0.15 mm
-  short) leaves -0.15 mm of slack, so the adapter would be too short.
-- At 3.0 mm depth the clearance over the H2 screw head drops to 0.10 mm. A wafer-head M2 at H2 is
-  the fallback.
+- The panel connector's front face is 1.60 mm from the connector's centre on VIEWE's STEP model of
+  the connector (reply of 17 October 2026), so 14.64 mm from the display centre; taken as +- 0.15.
+- The adapter is 24.148 +- 0.5 mm from that face to the end of its fingers (VIEWE's reply of 14
+  October 2026).
+- The adapter's mid-plane depth at the panel connector, 2.8 +- 0.2 mm, is still an estimate: VIEWE
+  does not dimension it. At 2.6 mm, with the face and the adapter at their worst too, 0.27 mm of
+  slack is left. At 3.0 mm the clearance over the H2 screw head drops to 0.10 mm; a wafer-head M2
+  at H2 is the fallback.
 
-VIEWE gives the adapter length as 24.148 +- 0.5 mm (reply of 14 October 2026), wider than the
-0.15 mm assumed above: at the short end the nominal slack falls to about 0.27 mm and the worst
-corner goes negative. The physical check in the open items below settles all three.
+The standard adapter reaches J301 at every tolerance corner, so the physical check in the open
+items below is a confirmation at assembly, not a step before the board order.
 
 ## Open items checked at bring-up
 
-- Adapter fit check, before the board is ordered (about 10 minutes). Build the route with a real
+- Adapter fit check, a confirmation at assembly (about 10 minutes). Build the route with a real
   VIEWE adapter, or with a 1:1 paper strip 9.6 mm wide and 26.65 mm long (24.148 + 2.50) with 5.00 mm
-  stiffener ends, against a 1:1 print of the board front around J301 and the printed bezel with the
-  H2 screw fitted. The print is one A4 page; make it from the repository root with
+  stiffener ends, against the board (or a 1:1 print of the board front around J301) and the printed
+  bezel with the H2 screw fitted. The print is one A4 page; make it from the repository root with
 
   ```
   kicad-cli pcb export pdf --mode-single --scale 1 --ibt \
@@ -288,18 +293,20 @@ corner goes negative. The physical check in the open items below settles all thr
 
   and print it at actual size, not fit to page. Check the scale on paper before use: the two bars
   on the page are 10 mm, so check them first; the thin grey outline outside the red copper is
-  61.8 mm wide. Measure the panel connector's
-  front face from the display centre and the adapter's depth at it. Confirm 0 to 1.4 mm of slack at
-  J301 x -5.00; otherwise move J301 by the difference before ordering the board. With the +- 0.5 mm
-  adapter tolerance the computed slack no longer covers the short end, so the panels and adapters
-  are ordered first and this check runs before the board order.
+  61.8 mm wide. Measure the panel connector's front face from the display centre (14.64 mm
+  expected) and the adapter's depth at it, and confirm slack at J301 (about 1.1 mm expected, at
+  least 0.27 mm at the worst tolerance corner). The route model covers every tolerance corner, so
+  the board is ordered without waiting for this check; if an adapter falls short anyway, ask VIEWE
+  for a longer custom adapter (they offered custom adapters on 16 October 2026) and record the
+  shortfall for rev B's J301 position.
 - Touch I2C at 3.3 V (VIEWE's reply of 16 October 2026). If the scan at bring-up does not find
   0x15, check TP_RST high at J301 pin 29 after the release, SDA and SCL idle at 3.3 V at J301 with
   an ACK on the scope, and the 100 ms wait after TP_RST.
-- Open questions to VIEWE: where the panel connector's front face sits, and the CO5300
-  initialisation code for this panel. Answered on 14 October 2026: the 48.16 mm glass is
-  discontinued (only the 52.6 mm glass is supplied, so the enclosure face changes), both adapter
-  ends carry the 5 mm stiffener, the 2.5 mm line marks full insertion, and 24.148 mm is +- 0.5 mm.
+- Questions to VIEWE, all answered. 14 October 2026: the 48.16 mm glass is discontinued (only the
+  52.6 mm glass is supplied; the enclosure face is drawn for it), both adapter ends carry the 5 mm
+  stiffener, the 2.5 mm line marks full insertion, and 24.148 mm is +- 0.5 mm. 17 October 2026: a
+  STEP model of the panel connector, which puts its front face 1.60 mm from its centre, and the
+  CO5300 initialisation code for this panel.
 - Sensor bus rise time at 400 kHz with the 4.7k pull-ups.
 - RT101 against the cell: with the gap pad fitted (Off-board parts), during a USB charge (about
   0.27 A) from about 3.5 V, compare RT101's temperature (from the TS

@@ -1,11 +1,11 @@
-"""OwlTunes enclosure v1: body, back cover, product bezel, glass retainer, ring, magnet carrier and
-buttons.
+"""OwlTunes enclosure v1: body, back cover, product bezel, ring, magnet carrier and buttons.
 
 v1 is a fit and feel print (MJF PA12): no feather texture yet. The main board, battery and display
-glass are represented by envelopes so the tests can check clearances. The glass goes into the bezel
-from the front on an adhesive ring, then a retainer ring is glued into the lip opening over the
-glass border, so the glass cannot come out even if its adhesive lets go. The back cover carries
-the owner mark, debossed into its outer face (MARK_* in owl_params.py). Run
+glass are represented by envelopes so the tests can check clearances. The 52.6 mm cover glass is
+wider than the bearing's bore: it goes in from the front onto a ring of 0.2 mm double-sided tape on
+the bezel's front face, flush with the bearing's, inside the ring lip. The tape alone holds it (see
+the owner review points in README.md). The back cover carries the owner mark, debossed into its
+outer face (MARK_* in owl_params.py). Run
 `uv run --project enclosure python enclosure/owl_v1.py` to export STEP and STL files to
 build/enclosure/v1/. Licence: CERN-OHL-P-2.0 (LICENSE-HARDWARE).
 """
@@ -66,14 +66,9 @@ SCREW_HEAD_DEPTH = COVER_T
 SCREW_COLLAR_R = 3.4
 SCREW_COLLAR_H = 0.8
 
-# Glass retention (front insertion). The glass rests on the bezel ledge GLASS_GAP below the rim
-# plane; the gap takes the adhesive ring. The retainer is a 1.3 mm ring over the glass border,
-# outside the viewing area, glued into the lip opening and flush with the lip front. A snap was
-# tried and dropped: the lip is 1.3 high with the bearing right behind it, so any dimple or
-# groove under it leaves a neck or a ceiling thinner than the 0.8 mm wall floor.
-GLASS_GAP = P.GLASS_POCKET_DEPTH - P.GLASS_T  # 0.2
-RETAINER_ID = 44.8  # 0.32 outside the 44.16 viewing area
-RETAINER_OD = P.BEZEL_LIP_ID - 0.1  # 0.05 radial glue gap in the lip opening
+# Glass retention: tape only. The glass rests on GLASS_TAPE_T of double-sided tape on the bezel's
+# front face and the inner race face. Only the rotating ring surrounds its edge, so no stationary
+# part can reach over the glass to retain it.
 
 # Beak key: the slot leaves a 1.0 face bar to the ring opening at x = 0. The stem has the cap's
 # depth in y, so it ends inside the flange; it is centred on the slot, 0.4 below the switch centre.
@@ -276,14 +271,9 @@ def bezel() -> Part:
     return R.face_bezel(P.pcb_front_depth() - P.LUG_T, angles, hole_r, lug_w=C.LUG_W)
 
 
-def glass_retainer() -> Part:
-    """Ring over the glass border, from the rim plane to the lip front."""
-    return R.annulus(RETAINER_ID / 2, RETAINER_OD / 2, 0.0, P.LIP_T)
-
-
-def glass_envelope() -> Part:
-    """Cover glass resting on the bezel ledge (not printed)."""
-    return Pos(0, 0, -GLASS_GAP - P.GLASS_T) * Cylinder(P.GLASS_D / 2, P.GLASS_T, align=R.BOTTOM)
+def glass_envelope(d: float = P.GLASS_D) -> Part:
+    """Cover glass on its tape on the bezel's front face, its front at z = 0 (not printed)."""
+    return Pos(0, 0, -P.GLASS_T) * Cylinder(d / 2, P.GLASS_T, align=R.BOTTOM)
 
 
 def beak_key() -> Part:
@@ -352,7 +342,6 @@ def parts() -> dict[str, Part]:
         "body": body(),
         "back_cover": back_cover(),
         "bezel": bezel(),
-        "glass_retainer": glass_retainer(),
         "ring_a_bearing": R.ring_a(),
         "ring_b_bushing": R.ring_b(),
         "bushing_sleeve": R.bushing_sleeve(),

@@ -52,7 +52,7 @@ def polar(r: float, angle_deg: float) -> tuple[float, float]:
 
 def bearing_dummy() -> Part:
     """Envelope of the 6710ZZ bearing, for interference checks only (not printed)."""
-    return annulus(P.BRG_ID / 2, P.BRG_OD / 2, -P.BRG_W, 0)
+    return annulus(P.BRG_ID / 2, P.BRG_OD / 2, -P.BRG_FRONT_DEPTH - P.BRG_W, -P.BRG_FRONT_DEPTH)
 
 
 def face_bezel(
@@ -61,11 +61,12 @@ def face_bezel(
     lug_hole_r: float = P.LUG_HOLE_R,
     lug_w: float = P.LUG_W,
 ) -> Part:
-    """Stationary bezel: glass seat, bearing seat, tube and screw lugs behind the ring."""
-    lip = annulus(P.BEZEL_LIP_ID / 2, P.BEZEL_LIP_OD / 2, 0, P.LIP_T)
-    seat = annulus(P.PANEL_POCKET_D / 2, P.BRG_SEAT_D / 2, -P.BRG_W, 0)
-    tube = annulus(P.PANEL_POCKET_D / 2, P.TUBE_OD / 2, -tube_end_depth, -P.BRG_W)
-    body = lip + seat + tube
+    """Stationary bezel: bearing seat, whose front face is the glass ledge, then the tube and the
+    screw lugs behind the ring."""
+    seat_back = -P.BRG_FRONT_DEPTH - P.BRG_W
+    seat = annulus(P.PANEL_POCKET_D / 2, P.BRG_SEAT_D / 2, seat_back, -P.BRG_FRONT_DEPTH)
+    tube = annulus(P.PANEL_POCKET_D / 2, P.TUBE_OD / 2, -tube_end_depth, seat_back)
+    body = seat + tube
     for angle in lug_angles:
         length = P.TUBE_OD / 2 - P.LUG_R_IN
         lug = Pos(P.LUG_R_IN + length / 2, 0, -tube_end_depth - P.LUG_T / 2) * Box(length, lug_w, P.LUG_T)
@@ -74,7 +75,6 @@ def face_bezel(
         )
         lug = (lug - hole) & disc(P.TUBE_OD / 2, -tube_end_depth - P.LUG_T - EPS, 0)
         body += Rot(0, 0, angle) * lug
-    body -= disc(P.GLASS_POCKET_D / 2, -P.GLASS_POCKET_DEPTH, 0)
     notch_depth = P.FPC_NOTCH_END_DEPTH - P.GLASS_T
     notch_box = Pos(0, P.FPC_NOTCH_R / 2, -P.GLASS_T - notch_depth / 2) * Box(
         P.FPC_NOTCH_W, P.FPC_NOTCH_R, notch_depth
@@ -84,9 +84,12 @@ def face_bezel(
 
 
 def ring_front(bore_d: float) -> Part:
-    body = annulus(bore_d / 2, P.RING_OD / 2, -P.RING_REAR_DEPTH, 0)
-    lip_contact = annulus(P.RING_CONTACT_R, P.RING_OD / 2, 0, P.LIP_T)
-    lip_relieved = annulus(P.RING_LIP_ID / 2, P.RING_CONTACT_R + EPS, P.LIP_RELIEF, P.LIP_T)
+    """Ring round the bearing or sleeve. Its lip rests on the outer race's front face and stands
+    LIP_T in front of the glass; inside RING_CONTACT_R it clears the inner race and shields by
+    LIP_RELIEF and surrounds the glass edge."""
+    body = annulus(bore_d / 2, P.RING_OD / 2, -P.RING_REAR_DEPTH, -P.BRG_FRONT_DEPTH)
+    lip_contact = annulus(P.RING_CONTACT_R, P.RING_OD / 2, -P.BRG_FRONT_DEPTH, P.LIP_T)
+    lip_relieved = annulus(P.RING_LIP_ID / 2, P.RING_CONTACT_R + EPS, -P.BRG_FRONT_DEPTH + P.LIP_RELIEF, P.LIP_T)
     ring = body + lip_contact + lip_relieved
     notch = Pos(0, P.RING_OD / 2, P.LIP_T - P.INDEX_NOTCH_L / 2) * Box(
         P.INDEX_NOTCH_W, 2 * P.INDEX_NOTCH_D, P.INDEX_NOTCH_L + EPS
@@ -103,8 +106,8 @@ def ring_b() -> Part:
 
 
 def bushing_sleeve() -> Part:
-    sleeve = annulus(P.SLEEVE_ID / 2, P.SLEEVE_OD / 2, -P.BRG_W, 0)
-    z_mid = -P.BRG_W / 2
+    sleeve = annulus(P.SLEEVE_ID / 2, P.SLEEVE_OD / 2, -P.BRG_FRONT_DEPTH - P.BRG_W, -P.BRG_FRONT_DEPTH)
+    z_mid = -P.BRG_FRONT_DEPTH - P.BRG_W / 2
     groove = annulus(
         P.SLEEVE_OD / 2 - P.ORING_GROOVE_DEPTH,
         P.SLEEVE_OD / 2 + 1.0,
@@ -115,10 +118,13 @@ def bushing_sleeve() -> Part:
 
 
 def magnet_carrier(count: int, bumps: bool = True) -> Part:
+    """Carrier glued into the ring from the back. The flange sits beside the magnet pockets, behind
+    the ring body, so the magnets are flush with the carrier's rear face and nothing that turns
+    stands behind them. The polarity bumps (test carriers only) stand on the rear face."""
     front = -P.CARRIER_FRONT_DEPTH
-    back = -P.RING_REAR_DEPTH
+    back = -P.CARRIER_REAR_DEPTH
     body = annulus(P.CARRIER_ID / 2, P.CARRIER_OD / 2, back, front)
-    flange = annulus(P.CARRIER_FLANGE_R_IN, P.RING_OD / 2, back - P.CARRIER_FLANGE_T, back)
+    flange = annulus(P.CARRIER_FLANGE_R_IN, P.RING_OD / 2, back, -P.RING_REAR_DEPTH)
     carrier = body + flange
     for i in range(count):
         angle = 360.0 * i / count
@@ -128,7 +134,7 @@ def magnet_carrier(count: int, bumps: bool = True) -> Part:
         )
         if bumps and i % 2 == 0:
             bx, by = polar(P.POLARITY_BUMP_R, angle)
-            bump_z = back - P.CARRIER_FLANGE_T - P.POLARITY_BUMP_H
+            bump_z = back - P.POLARITY_BUMP_H
             carrier += Pos(bx, by, bump_z) * Cylinder(
                 P.POLARITY_BUMP_D / 2, P.POLARITY_BUMP_H + EPS, align=BOTTOM
             )

@@ -26,7 +26,6 @@ def owl_parts() -> dict:
         "body": V.body(),
         "back_cover": V.back_cover(),
         "bezel": V.bezel(),
-        "glass_retainer": V.glass_retainer(),
         "glass": V.glass_envelope(),
         "ring": R.ring_a(),
         "beak_key": V.beak_key(),
