@@ -300,7 +300,7 @@ def test_jig_screw_holes_and_nut_pockets(parts):
     assert P.M2_NUT_AF_CLEAR >= 0.2 and P.M2_NUT_DEPTH_CLEAR >= 0.2
 
 
-PROBE_ANGLES = (0.0, 7.0, 45.0, 90.0, 215.0, 300.0)
+PROBE_ANGLES = (0.0, 7.0, 45.0, 90.0, 180.0, 215.0, 300.0)
 # Per part: (z0, z1) zones that are cosmetic or glass-fit features and are judged against
 # MJF_MIN_WALL, and zones that are skipped (engraved lines and bumps are not walls).
 PART_ZONES = {
