@@ -20,6 +20,8 @@ add_subdirectory(${OWL_COMPONENTS}/provisioning ${CMAKE_BINARY_DIR}/provisioning
 owl_strict_warnings(provisioning)
 add_subdirectory(${OWL_COMPONENTS}/owl_shell ${CMAKE_BINARY_DIR}/owl_shell)
 owl_strict_warnings(owl_shell)
+add_subdirectory(${OWL_COMPONENTS}/owl_amoled ${CMAKE_BINARY_DIR}/owl_amoled)
+owl_strict_warnings(owl_amoled)
 
 enable_testing()
 
@@ -69,6 +71,9 @@ target_sources(test_spotify_task PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main/api_g
 target_include_directories(test_spotify_task PRIVATE ${CMAKE_CURRENT_LIST_DIR}/stubs
                            ${CMAKE_CURRENT_LIST_DIR}/../main)
 
+# The CO5300 panel's command framing, windows, init tables and alignment, and touch decoding.
+owl_add_test(test_owl_amoled owl_amoled)
+
 # The rev A board header (pin map, straps, wake pins).
 owl_add_test(test_board_reva)
-target_include_directories(test_board_reva PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main)
+target_include_directories(test_board_reva PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../boards/bsp_owltunes_reva)

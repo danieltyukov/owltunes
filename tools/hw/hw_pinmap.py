@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check firmware/main/board_owltunes_reva.h against the main board netlist.
+"""Check the rev A board header (firmware/boards/bsp_owltunes_reva) against the main board netlist.
 
 Every `#define OWL_PIN_<NET> <gpio>` must name the net on the ESP32-S3-WROOM-1 pin that carries
 that GPIO, and every module GPIO pin that is on a named net (other than GND and +3V3) must have a
@@ -53,7 +53,7 @@ def check(pins: dict[str, int], nets: dict[str, set[str]]) -> list[str]:
 
 
 def main() -> int:
-    header = (ROOT / "firmware" / "main" / "board_owltunes_reva.h").read_text()
+    header = (ROOT / "firmware" / "boards" / "bsp_owltunes_reva" / "board_owltunes_reva.h").read_text()
     schematic = ROOT / "hardware" / "owl-mainboard" / "owl-mainboard.kicad_sch"
     with tempfile.TemporaryDirectory() as tmp:
         nets, _ = read_netlist(export_netlist(schematic, Path(tmp) / "n.xml").read_text())

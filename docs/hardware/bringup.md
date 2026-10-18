@@ -3,9 +3,10 @@
 Do these in order on the first board; stop at the first failure. Pin numbers and levels are in
 [pinmap.md](pinmap.md); expected values come from [rev-a.md](rev-a.md).
 
-Rev A board support is not in the firmware yet (it arrives with the P3 board selection), so the
-steps that drive pins need a test build that takes its pins from
-`firmware/main/board_owltunes_reva.h`, or the `esptool` and I2C commands of your choice.
+The rev A firmware (`tools/firmware.sh build owltunes_reva`) drives the display and touch only, so
+the other steps that drive pins need a test build that takes its pins from
+`firmware/boards/bsp_owltunes_reva/board_owltunes_reva.h`, or the `esptool` and I2C commands of your
+choice.
 
 1. **Look.** Under a loupe: U101, U103, U201 and J301 soldered without bridges; D101,
    D102, D201 and D301 cathode bands match the silkscreen; J101 pin 1 marked `+`; RT101 (the 0402
@@ -59,3 +60,41 @@ steps that drive pins need a test build that takes its pins from
     fitted on J202, check that it rests open at its detents (a closed channel adds 0.33 mA).
 12. **RTC.** Compare the 32.768 kHz clock with the main crystal over 10 minutes; drift above
     20 ppm means changing C204 and C205.
+
+## Display and touch at first light
+
+The same checks apply to the Waveshare ESP32-S3-Touch-AMOLED-1.75 kit (`waveshare_amoled_175`),
+which has the same CO5300 panel and a CST9217 touch controller. None of this has run on hardware
+yet, so expect to adjust it.
+
+1. Build and flash: `tools/firmware.sh flash owltunes_reva`, then open
+   `tools/firmware.sh monitor owltunes_reva` and reset the board with Ctrl+T Ctrl+R in the monitor
+   (or TP201 to TP203 on rev A): the monitor starts without a reset, so the boot lines are already
+   gone otherwise. The log shows `CO5300 up: 11 init commands, column offset 6` (14 on the kit) and
+   the screen shows the setup page (compare with `sim/golden/setup_welcome.png`).
+2. **Column offset.** The panel's frame starts at RAM column 6 (VIEWE's init sets columns 6 to
+   471), and every window the driver sets adds 6. If the picture sits a few pixels to one side with
+   a stripe of noise at the left or right edge, the offset is wrong:
+   `OWL_CO5300_VIEWE_COL_OFFSET` in `firmware/components/owl_amoled/include/owl_co5300.h` and the
+   CASET line of the init table in `owl_co5300.c` must change together (the host test checks that
+   they agree).
+3. **Colours.** The title and the QR code's background are a warm cream. If they look cold and
+   bluish white, red and blue are exchanged: turn on `OWL_LCD_BGR`. If every colour is wrong and
+   text edges look speckled, the RGB565 byte order is wrong (the driver sends each pixel high byte
+   first, `flush` in `owl_amoled.c`).
+4. **Alignment.** The driver widens every redrawn area to start on an even column and row and end
+   on an odd one, as the CO5300 needs. Thin lines or text that break up at the edges of redrawn
+   areas mean the panel wants something else.
+5. **Touch.** Tap near the top, bottom, left and right edges of the screen. If a tap lands on the
+   opposite side, turn on `OWL_TOUCH_MIRROR_X` or `OWL_TOUCH_MIRROR_Y`; if moving along one axis
+   moves the point along the other, turn on `OWL_TOUCH_SWAP_XY` (the mirrors act on the
+   controller's axes, before the swap). All three are off on rev A; the Waveshare kit has both
+   mirrors on, as in Waveshare's BSP. To see the controller's raw coordinates next to the mapped
+   ones (`touch raw x,y -> x,y`), build with `CONFIG_LOG_DEFAULT_LEVEL_DEBUG=y` added to the
+   board's `sdkconfig.board` (every component logs more then; take it out again after). If touch
+   does nothing, look for `touch read failed` in the log, then check that TP_INT falls when you
+   touch and that 0x15 acknowledges on GPIO47 and 48 (on the kit: GPIO11, and 0x5A on GPIO15 and
+   14).
+
+Set these options in the board's `sdkconfig.board` (`firmware/boards/bsp_<board>/`):
+`tools/firmware.sh` makes the build's sdkconfig again whenever that file changes.

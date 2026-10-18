@@ -261,7 +261,7 @@ call; BLE media keys respond immediately. On the perch the owl is always powered
 | `owl_usb` | TinyUSB composite: CDC console and HID consumer control | TinyUSB |
 | `owl_store` | NVS settings, tokens, album-art cache on LittleFS | ESP-IDF |
 | `owl_shell` | Developer console on USB: commands and JSON status lines for host scripts and hardware tests | `owl_core`; the setup protocol's line writer |
-| BSPs | `bsp_waveshare_amoled175`, `bsp_waveshare_knob18`, `bsp_owltunes_reva`; for development `bsp_nano_esp32` (headless Arduino Nano ESP32) and `bsp_qemu` | selected by Kconfig |
+| BSPs | `bsp_waveshare_amoled_175`, `bsp_waveshare_knob18`, `bsp_owltunes_reva`; for development `bsp_nano_esp32` (headless Arduino Nano ESP32) and `bsp_qemu` | selected by Kconfig |
 
 ### 9.3 Data flow
 
