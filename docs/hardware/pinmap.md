@@ -1,9 +1,10 @@
 # ESP32-S3 pin map (rev A)
 
-The source of truth is `firmware/main/board_owltunes_reva.h`; `tools/hw/hw_pinmap.py` checks it
-against the main board schematic (every `OWL_PIN_<NET>` macro must sit on the module pin of net
-`<NET>`, and every connected module GPIO must have a macro), and CI runs that check. The header is
-not used by the firmware build yet: rev A board support arrives with the P3 board selection.
+The source of truth is `firmware/boards/bsp_owltunes_reva/board_owltunes_reva.h`;
+`tools/hw/hw_pinmap.py` checks it against the main board schematic (every `OWL_PIN_<NET>` macro
+must sit on the module pin of net `<NET>`, and every connected module GPIO must have a macro), and
+CI runs that check. The rev A board support (`tools/firmware.sh build owltunes_reva`) takes its
+display and touch pins from it.
 
 Module: ESP32-S3-WROOM-1-N16R8 (U201, KiCad symbol `RF_Module:ESP32-S3-WROOM-1`). Directions are
 seen from the ESP32-S3. "Wake source" marks the seven ext1 `ANY_LOW` deep-sleep wake inputs

@@ -76,4 +76,4 @@ owl_add_test(test_owl_amoled owl_amoled)
 
 # The rev A board header (pin map, straps, wake pins).
 owl_add_test(test_board_reva)
-target_include_directories(test_board_reva PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../main)
+target_include_directories(test_board_reva PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../boards/bsp_owltunes_reva)

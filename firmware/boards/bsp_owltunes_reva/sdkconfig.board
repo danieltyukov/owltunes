@@ -1,0 +1,27 @@
+# OwlTunes main board rev A (ESP32-S3-WROOM-1-N16R8: 16 MB quad flash, 8 MB octal PSRAM, native
+# USB). Layered over sdkconfig.defaults by firmware/CMakeLists.txt when OWL_BOARD is owltunes_reva.
+CONFIG_OWL_BOARD_OWLTUNES_REVA=y
+
+# Flash in QIO mode (the module's flash is quad)
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+
+# The console, and the setup page's Web Serial link, use the native USB port (USB-Serial/JTAG)
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+
+# 8 MB octal PSRAM, as on the Nano ESP32 (same ESP32-S3 with R8 memory). Large buffers, Wi-Fi and
+# lwIP buffers and TLS sessions go there so internal RAM stays free for the display's DMA buffers.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
+
+# Keep a crash's core dump in flash for idf.py coredump-info
+CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH=y
+
+# Touch axes and colour order: all off until checked on the panel (docs/hardware/bringup.md)
+# CONFIG_OWL_TOUCH_SWAP_XY is not set
+# CONFIG_OWL_TOUCH_MIRROR_X is not set
+# CONFIG_OWL_TOUCH_MIRROR_Y is not set
+# CONFIG_OWL_LCD_BGR is not set

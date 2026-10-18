@@ -3,7 +3,7 @@
 | Document | What it covers |
 |---|---|
 | [rev-a.md](rev-a.md) | Rev A blocks, mechanical stack, calculations, power budget, decisions |
-| [pinmap.md](pinmap.md) | ESP32-S3 pin map (source: `firmware/main/board_owltunes_reva.h`) |
+| [pinmap.md](pinmap.md) | ESP32-S3 pin map (source: `firmware/boards/bsp_owltunes_reva/board_owltunes_reva.h`) |
 | [ring-test.md](ring-test.md) | Ring test prints, measurements and the decision record |
 | [assembly.md](assembly.md) | Building an owl from the ordered parts |
 | [bringup.md](bringup.md) | First power-on and checks |

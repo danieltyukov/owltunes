@@ -3,9 +3,10 @@
 Do these in order on the first board; stop at the first failure. Pin numbers and levels are in
 [pinmap.md](pinmap.md); expected values come from [rev-a.md](rev-a.md).
 
-Rev A board support is not in the firmware yet (it arrives with the P3 board selection), so the
-steps that drive pins need a test build that takes its pins from
-`firmware/main/board_owltunes_reva.h`, or the `esptool` and I2C commands of your choice.
+The rev A firmware (`tools/firmware.sh build owltunes_reva`) drives the display and touch only, so
+the other steps that drive pins need a test build that takes its pins from
+`firmware/boards/bsp_owltunes_reva/board_owltunes_reva.h`, or the `esptool` and I2C commands of your
+choice.
 
 1. **Look.** Under a loupe: U101, U103, U201 and J301 soldered without bridges; D101,
    D102, D201 and D301 cathode bands match the silkscreen; J101 pin 1 marked `+`; RT101 (the 0402

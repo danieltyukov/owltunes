@@ -12,8 +12,8 @@ is ordered yet. The ring test runs when the parts are delivered, so until then t
 the ring variant (A with the 6710 bearing, B with the printed bushing) and the 2.7 mm Hall gap are
 provisional.
 
-The firmware pin map is `firmware/main/board_owltunes_reva.h` (see [pinmap.md](pinmap.md)). It
-is a header only for now: rev A board support arrives with the P3 board selection.
+The firmware pin map is `firmware/boards/bsp_owltunes_reva/board_owltunes_reva.h` (see
+[pinmap.md](pinmap.md)). The rev A board support next to it drives the display and touch so far.
 
 ## Blocks
 
@@ -169,7 +169,7 @@ pull-up, which would dominate the sleep current.
 
 ## Firmware rules from the hardware
 
-These are also written in `firmware/main/board_owltunes_reva.h`.
+These are also written in `firmware/boards/bsp_owltunes_reva/board_owltunes_reva.h`.
 
 - Panel power-down: display off and sleep-in, wait 120 ms; drive LCD_RST and TP_RST low; hold
   LCD_CS, LCD_CLK and LCD_D0 to D3 low or high impedance and turn off the internal pull-ups on
