@@ -67,9 +67,11 @@ The same checks apply to the Waveshare ESP32-S3-Touch-AMOLED-1.75 kit (`waveshar
 which has the same CO5300 panel and a CST9217 touch controller. None of this has run on hardware
 yet, so expect to adjust it.
 
-1. Build and flash: `tools/firmware.sh flash owltunes_reva`, then `tools/firmware.sh monitor
-   owltunes_reva`. The log shows `CO5300 up: 11 init commands, column offset 6` and the screen shows
-   the setup page (compare with `sim/golden/setup_welcome.png`).
+1. Build and flash: `tools/firmware.sh flash owltunes_reva`, then open
+   `tools/firmware.sh monitor owltunes_reva` and reset the board with Ctrl+T Ctrl+R in the monitor
+   (or TP201 to TP203 on rev A): the monitor starts without a reset, so the boot lines are already
+   gone otherwise. The log shows `CO5300 up: 11 init commands, column offset 6` (14 on the kit) and
+   the screen shows the setup page (compare with `sim/golden/setup_welcome.png`).
 2. **Column offset.** The panel's frame starts at RAM column 6 (VIEWE's init sets columns 6 to
    471), and every window the driver sets adds 6. If the picture sits a few pixels to one side with
    a stripe of noise at the left or right edge, the offset is wrong:
@@ -87,9 +89,12 @@ yet, so expect to adjust it.
    opposite side, turn on `OWL_TOUCH_MIRROR_X` or `OWL_TOUCH_MIRROR_Y`; if moving along one axis
    moves the point along the other, turn on `OWL_TOUCH_SWAP_XY` (the mirrors act on the
    controller's axes, before the swap). All three are off on rev A; the Waveshare kit has both
-   mirrors on, as in Waveshare's BSP. If touch does nothing, look for `touch read failed` in the
-   log, then check that TP_INT falls when you touch and that 0x15 acknowledges on GPIO47 and 48
-   (on the kit: GPIO11, and 0x5A on GPIO15 and 14).
+   mirrors on, as in Waveshare's BSP. To see the controller's raw coordinates next to the mapped
+   ones (`touch raw x,y -> x,y`), build with `CONFIG_LOG_DEFAULT_LEVEL_DEBUG=y` added to the
+   board's `sdkconfig.board` (every component logs more then; take it out again after). If touch
+   does nothing, look for `touch read failed` in the log, then check that TP_INT falls when you
+   touch and that 0x15 acknowledges on GPIO47 and 48 (on the kit: GPIO11, and 0x5A on GPIO15 and
+   14).
 
-The options are in the board's `sdkconfig.board` (or `idf.py menuconfig` under OwlTunes, Display and
-touch); `tools/firmware.sh` makes the build's sdkconfig again when that file changes.
+Set these options in the board's `sdkconfig.board` (`firmware/boards/bsp_<board>/`):
+`tools/firmware.sh` makes the build's sdkconfig again whenever that file changes.

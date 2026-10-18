@@ -25,6 +25,8 @@ static const char *TAG = "owl_amoled";
 /* Lines per draw buffer: two buffers of 466 x 20 RGB565 pixels take 37 KB of internal RAM. */
 #define LINES 20
 #define I2C_TIMEOUT_MS 50
+/* A 20-line block takes under 2 ms at 40 MHz, so this only runs out if the SPI transfer is stuck. */
+#define FLUSH_TIMEOUT_MS 100
 
 typedef struct {
     esp_lcd_panel_io_handle_t io;
@@ -93,10 +95,15 @@ static void flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
     }
 }
 
+/* Bounded, so a stuck transfer shows as an error in the log instead of a frozen UI loop. A late
+ * completion after a timeout leaves one stale give behind; by then the panel needs looking at. */
 static void wait_sent(lv_display_t *disp)
 {
     panel_t *p = lv_display_get_user_data(disp);
-    xSemaphoreTake(p->sent, portMAX_DELAY);
+    if (xSemaphoreTake(p->sent, pdMS_TO_TICKS(FLUSH_TIMEOUT_MS)) != pdTRUE) {
+        ESP_LOGE(TAG, "pixel transfer not done after %d ms", FLUSH_TIMEOUT_MS);
+    }
+    lv_display_flush_ready(disp);
 }
 
 /* The CO5300's 2-pixel window rule, applied to every invalidated area (see owl_co5300_round_area).
@@ -204,13 +211,18 @@ static esp_err_t read_cst9217(touch_t *t, bool *down, int *x, int *y)
     return err;
 }
 
-/* Reads only after an INT edge or while a finger is down: the CST816S family sleeps when idle and
- * does not answer on I2C then, and an idle bus keeps the read callback cheap. Nothing is read before
- * the controller's reset wait is over; an edge from that time is kept for the first read. */
+/* Reads after an INT edge, never before the controller's reset wait is over (an edge from that time
+ * is kept for the first read). The CST816S family is also read while a finger is down, so a missed
+ * edge on the lift report cannot leave the pointer pressed; it answers on I2C while touched and
+ * may sleep and stop answering when idle, so it is never polled then. The CST9217 is read only
+ * after an edge, as Waveshare's LVGL adapter does: a frame read between reports lacks the 0xAB
+ * marker or has a status other than 6 and decodes as finger up, which would break a drag or a long
+ * press into clicks. */
 static void touch_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
     touch_t *t = lv_indev_get_user_data(indev);
-    if (esp_timer_get_time() >= t->cfg.ready_at_us && (atomic_exchange(&t->reported, false) || t->down)) {
+    bool poll = t->down && t->cfg.chip == OWL_TOUCH_CST816;
+    if (esp_timer_get_time() >= t->cfg.ready_at_us && (atomic_exchange(&t->reported, false) || poll)) {
         bool down = false;
         int rx = 0;
         int ry = 0;
@@ -225,6 +237,7 @@ static void touch_read(lv_indev_t *indev, lv_indev_data_t *data)
             t->failures = 0;
             if (down) {
                 owl_touch_map(t->orient, OWL_CO5300_RES, rx, ry, &t->x, &t->y);
+                ESP_LOGD(TAG, "touch raw %d,%d -> %d,%d", rx, ry, t->x, t->y);
             }
         }
         t->down = down;

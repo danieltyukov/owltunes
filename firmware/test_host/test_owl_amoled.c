@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "owl_co5300.h"
 #include "owl_touch.h"
@@ -68,15 +70,49 @@ static void check_table(const owl_co5300_cmd_t *table, size_t len, int32_t col_o
     TEST_ASSERT_TRUE(table[len - 2].delay_ms >= 60);
 }
 
+/* The text sequence in VIEWE's init code of 17 October 2026, one line per register write as VIEWE
+ * wrote it, without the R prefix. */
+static const char *const viewe_text[] = {
+    "FE 00", "C4 80",          "3A 55",          "35 00", "53 20",    "51 FF",
+    "63 FF", "2A 00 06 01 D7", "2B 00 00 01 D1", "11",    "delay 60", "29",
+};
+
+static void test_viewe_table_is_viewes_text(void)
+{
+    owl_co5300_cmd_t want[16] = {0};
+    size_t n = 0;
+    for (size_t i = 0; i < sizeof viewe_text / sizeof viewe_text[0]; i++) {
+        const char *line = viewe_text[i];
+        if (strncmp(line, "delay ", 6) == 0) {
+            want[n - 1].delay_ms = (uint16_t)strtoul(line + 6, NULL, 10);
+            continue;
+        }
+        char *end = NULL;
+        want[n].cmd = (uint8_t)strtoul(line, &end, 16);
+        while (*end != '\0') {
+            TEST_ASSERT_TRUE(want[n].len < sizeof want[n].data);
+            want[n].data[want[n].len++] = (uint8_t)strtoul(end, &end, 16);
+        }
+        n++;
+    }
+    TEST_ASSERT_EQUAL(n, owl_co5300_init_viewe_len);
+    for (size_t i = 0; i < n; i++) {
+        const owl_co5300_cmd_t *got = &owl_co5300_init_viewe[i];
+        TEST_ASSERT_EQUAL_HEX8(want[i].cmd, got->cmd);
+        TEST_ASSERT_EQUAL_MESSAGE(want[i].len, got->len, "parameter count");
+        if (want[i].len > 0) {
+            TEST_ASSERT_EQUAL_HEX8_ARRAY(want[i].data, got->data, want[i].len);
+        }
+        TEST_ASSERT_EQUAL_MESSAGE(want[i].delay_ms, got->delay_ms, "delay");
+    }
+}
+
 static void test_viewe_table(void)
 {
     check_table(owl_co5300_init_viewe, owl_co5300_init_viewe_len, OWL_CO5300_VIEWE_COL_OFFSET);
-    TEST_ASSERT_EQUAL(11, owl_co5300_init_viewe_len);
     /* 01 D7, not the 01 DD of VIEWE's C array. */
     const owl_co5300_cmd_t *caset = find(owl_co5300_init_viewe, owl_co5300_init_viewe_len, OWL_CO5300_CASET);
     TEST_ASSERT_EQUAL_HEX8(0xD7, caset->data[3]);
-    TEST_ASSERT_EQUAL_HEX8(0xFE, owl_co5300_init_viewe[0].cmd);
-    TEST_ASSERT_EQUAL_HEX8(0x00, owl_co5300_init_viewe[0].data[0]);
 }
 
 static void test_waveshare_table(void)
@@ -212,6 +248,7 @@ int main(void)
     UNITY_BEGIN();
     RUN_TEST(test_command_words_frame_the_command_in_the_middle_bytes);
     RUN_TEST(test_window_shifts_columns_by_the_offset);
+    RUN_TEST(test_viewe_table_is_viewes_text);
     RUN_TEST(test_viewe_table);
     RUN_TEST(test_waveshare_table);
     RUN_TEST(test_offsets_keep_windows_even);

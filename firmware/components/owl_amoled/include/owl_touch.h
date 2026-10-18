@@ -18,7 +18,8 @@ typedef struct {
     bool mirror_y;
 } owl_touch_orient_t;
 
-/* Map a raw point onto a res x res frame: clamp each axis to 0 to res - 1, mirror, then swap. */
+/* Map a raw point onto a res x res frame: clamp each axis to 0 to res - 1, mirror, then swap.
+ * owl_amoled logs every raw point and its mapping at debug level ("touch raw x,y -> x,y"). */
 void owl_touch_map(owl_touch_orient_t orient, int res, int raw_x, int raw_y, int *x, int *y);
 
 /* CST816S family (the CST820 on rev A): five registers from 0x02, the finger count, then X and Y

@@ -28,9 +28,11 @@ void owl_co5300_round_area(int32_t *x1, int32_t *y1, int32_t *x2, int32_t *y2)
     *y2 |= 1;
 }
 
-/* The text sequence in VIEWE's init code (email of 17 October 2026). The C array in the same file ends the
- * CASET at 01 DD (472 columns), a typo: 01 D7 is column 471, so 466 columns from column 6. The text
- * sends FE and 35 with one parameter each, as the CO5300 command set has them. */
+/* The text sequence in VIEWE's init code (email of 17 October 2026). The C array in the same file ends
+ * the CASET at 01 DD (472 columns), a typo: 01 D7 is column 471, so 466 columns from column 6. The
+ * text sends FE and 35 with one parameter each, as the CO5300 command set has them. The C array also
+ * waits 10 ms after 35, 53, 51 and 63; those waits are left out here, following the text. If the
+ * panel misbehaves at first light, adding them back is the first thing to try. */
 const owl_co5300_cmd_t owl_co5300_init_viewe[] = {
     {0xFE, 1, {0x00}, 0},                   /* user command page */
     {0xC4, 1, {0x80}, 0},                   /* SPI mode */
