@@ -70,7 +70,8 @@ mechanical contract in CI.
 
 The renders on this page are made from the same files: the enclosure and board meshes go into
 Blender with `tools/render.sh`, and the screen shows the simulator's output. The album art is a
-generated placeholder.
+generated placeholder. The renders were computed on the DelftBlue supercomputer of the Delft High
+Performance Computing Centre (DHPC, https://www.tudelft.nl/dhpc).
 
 ## Status
 
