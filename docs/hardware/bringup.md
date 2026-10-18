@@ -60,3 +60,36 @@ choice.
     fitted on J202, check that it rests open at its detents (a closed channel adds 0.33 mA).
 12. **RTC.** Compare the 32.768 kHz clock with the main crystal over 10 minutes; drift above
     20 ppm means changing C204 and C205.
+
+## Display and touch at first light
+
+The same checks apply to the Waveshare ESP32-S3-Touch-AMOLED-1.75 kit (`waveshare_amoled_175`),
+which has the same CO5300 panel and a CST9217 touch controller. None of this has run on hardware
+yet, so expect to adjust it.
+
+1. Build and flash: `tools/firmware.sh flash owltunes_reva`, then `tools/firmware.sh monitor
+   owltunes_reva`. The log shows `CO5300 up: 11 init commands, column offset 6` and the screen shows
+   the setup page (compare with `sim/golden/setup_welcome.png`).
+2. **Column offset.** The panel's frame starts at RAM column 6 (VIEWE's init sets columns 6 to
+   471), and every window the driver sets adds 6. If the picture sits a few pixels to one side with
+   a stripe of noise at the left or right edge, the offset is wrong:
+   `OWL_CO5300_VIEWE_COL_OFFSET` in `firmware/components/owl_amoled/include/owl_co5300.h` and the
+   CASET line of the init table in `owl_co5300.c` must change together (the host test checks that
+   they agree).
+3. **Colours.** The title and the QR code's background are a warm cream. If they look cold and
+   bluish white, red and blue are exchanged: turn on `OWL_LCD_BGR`. If every colour is wrong and
+   text edges look speckled, the RGB565 byte order is wrong (the driver sends each pixel high byte
+   first, `flush` in `owl_amoled.c`).
+4. **Alignment.** The driver widens every redrawn area to start on an even column and row and end
+   on an odd one, as the CO5300 needs. Thin lines or text that break up at the edges of redrawn
+   areas mean the panel wants something else.
+5. **Touch.** Tap near the top, bottom, left and right edges of the screen. If a tap lands on the
+   opposite side, turn on `OWL_TOUCH_MIRROR_X` or `OWL_TOUCH_MIRROR_Y`; if moving along one axis
+   moves the point along the other, turn on `OWL_TOUCH_SWAP_XY` (the mirrors act on the
+   controller's axes, before the swap). All three are off on rev A; the Waveshare kit has both
+   mirrors on, as in Waveshare's BSP. If touch does nothing, look for `touch read failed` in the
+   log, then check that TP_INT falls when you touch and that 0x15 acknowledges on GPIO47 and 48
+   (on the kit: GPIO11, and 0x5A on GPIO15 and 14).
+
+The options are in the board's `sdkconfig.board` (or `idf.py menuconfig` under OwlTunes, Display and
+touch); `tools/firmware.sh` makes the build's sdkconfig again when that file changes.

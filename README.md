@@ -105,6 +105,7 @@ The [setup guide](docs/setup-guide.md) walks through every step.
 | Interactive simulator (needs `libsdl2-dev`) | `cmake -S sim -B build/sim-sdl -G Ninja -DOWL_SIM_SDL=ON && cmake --build build/sim-sdl && build/sim-sdl/owl_sim sdl` |
 | Firmware (ESP-IDF v6.1 activated) | `tools/firmware.sh build` |
 | Firmware for the Arduino Nano ESP32, and flashing it | `tools/firmware.sh build nano_esp32`, then `tools/firmware.sh flash nano_esp32` |
+| Firmware for the owl's rev A board or the Waveshare ESP32-S3-Touch-AMOLED-1.75 kit (display and touch; not yet run on hardware) | `tools/firmware.sh build owltunes_reva` or `tools/firmware.sh build waveshare_amoled_175`, then `flash` with the same board name |
 | Hardware tests on the Nano ESP32 (board on USB) | `tools/hil_nano.py --wifi`; with a linked board and your consent, `tools/hil_spotify.py --real-account` |
 | Firmware in the QEMU emulator | `tools/qemu_smoke.sh` |
 | Setup protocol in QEMU, including a real HTTPS call to Spotify | `tools/qemu_prov_test.py` |
