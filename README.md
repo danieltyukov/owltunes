@@ -76,9 +76,11 @@ Performance Computing Centre (DHPC, https://www.tudelft.nl/dhpc).
 ## Status
 
 - **Firmware:** Wi-Fi setup, Spotify linking and playback control run on an ESP32-S3 dev board
-  against a real Spotify account, and are tested on the host and in QEMU.
+  against a real Spotify account, and are tested on the host and in QEMU. Display and touch
+  drivers for the rev A board and the Waveshare AMOLED kit build in CI and wait for first light.
 - **Hardware rev A:** main board and perch board designed and checked, ready to order.
-- **Enclosure v1:** owl, ring, bezel and perch ready for printing.
+- **Enclosure v1:** owl, ring, bezel and perch ready for printing, with the face built around the
+  panel's 52.6 mm cover glass.
 - **Next:** first assembled units, bring-up, then tuning the ring and haptics.
 
 Read the [system design](docs/design/2026-10-04-owltunes-system-design.md) for the full picture
