@@ -16,18 +16,61 @@ menu "OwlTunes"
         config OWL_BOARD_NANO_ESP32
             bool "Arduino Nano ESP32 (no display, RGB status LED, Wi-Fi)"
             select OWL_NET_WIFI
+
+        config OWL_BOARD_OWLTUNES_REVA
+            bool "OwlTunes main board rev A (round AMOLED, CST820 touch, Wi-Fi)"
+            select OWL_NET_WIFI
+            select OWL_AMOLED
+
+        config OWL_BOARD_WAVESHARE_AMOLED_175
+            bool "Waveshare ESP32-S3-Touch-AMOLED-1.75 (round AMOLED, CST9217 touch, Wi-Fi)"
+            select OWL_NET_WIFI
+            select OWL_AMOLED
     endchoice
 
     config OWL_BOARD_NAME
         string
         default "qemu" if OWL_BOARD_QEMU
         default "nano_esp32" if OWL_BOARD_NANO_ESP32
+        default "owltunes_reva" if OWL_BOARD_OWLTUNES_REVA
+        default "waveshare_amoled_175" if OWL_BOARD_WAVESHARE_AMOLED_175
 
     config OWL_NET_ETH_QEMU
         bool
 
     config OWL_NET_WIFI
         bool
+
+    config OWL_AMOLED
+        bool
+
+    menu "Display and touch"
+        depends on OWL_AMOLED
+
+        config OWL_TOUCH_SWAP_XY
+            bool "Swap the touch X and Y axes"
+            help
+                Turn this on if moving a finger along one axis moves the touch point along the
+                other. The swap applies after the mirrors below.
+
+        config OWL_TOUCH_MIRROR_X
+            bool "Mirror the touch controller's X axis"
+            help
+                Turn this on if a touch lands on the opposite side of the screen in X. It acts on
+                the controller's own X axis, before any swap.
+
+        config OWL_TOUCH_MIRROR_Y
+            bool "Mirror the touch controller's Y axis"
+            help
+                Turn this on if a touch lands on the opposite side of the screen in Y. It acts on
+                the controller's own Y axis, before any swap.
+
+        config OWL_LCD_BGR
+            bool "Panel shows red and blue swapped"
+            help
+                Sends MADCTL with the BGR bit after the panel's init sequence. Leave it off unless
+                red and blue are exchanged on the real panel.
+    endmenu
 
     config OWL_SETUP_URL
         string "Setup page address"

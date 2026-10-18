@@ -17,6 +17,6 @@ for board in owl-mainboard perch-dock; do
         python3 tools/hw/hw_contract.py check "$board"
     fi
 done
-if [ -f firmware/main/board_owltunes_reva.h ]; then
+if [ -f firmware/boards/bsp_owltunes_reva/board_owltunes_reva.h ]; then
     python3 tools/hw/hw_pinmap.py
 fi

@@ -86,6 +86,8 @@ jobs:
           . "$IDF_PATH/export.sh"
           tools/firmware.sh build
           tools/firmware.sh build nano_esp32
+          tools/firmware.sh build owltunes_reva
+          tools/firmware.sh build waveshare_amoled_175
       - name: Install QEMU
         shell: bash
         run: |

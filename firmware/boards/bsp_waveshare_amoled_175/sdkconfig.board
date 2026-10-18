@@ -1,0 +1,26 @@
+# Waveshare ESP32-S3-Touch-AMOLED-1.75 (ESP32-S3R8: 16 MB quad flash, 8 MB octal PSRAM, native USB).
+# Layered over sdkconfig.defaults by firmware/CMakeLists.txt when OWL_BOARD is waveshare_amoled_175.
+CONFIG_OWL_BOARD_WAVESHARE_AMOLED_175=y
+
+# Flash in QIO mode, as Waveshare's ESP-IDF examples
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+
+# The console, and the setup page's Web Serial link, use the native USB port (USB-Serial/JTAG)
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+
+# 8 MB octal PSRAM, as on the Nano ESP32 (same ESP32-S3R8). Large buffers, Wi-Fi and lwIP buffers
+# and TLS sessions go there so internal RAM stays free for the display's DMA buffers.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
+
+# Keep a crash's core dump in flash for idf.py coredump-info
+CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH=y
+
+# The CST9217's axes run opposite to the panel's in X and Y: Waveshare's BSP (bsp_display_start)
+# and its LVGL demo both mirror X and Y
+CONFIG_OWL_TOUCH_MIRROR_X=y
+CONFIG_OWL_TOUCH_MIRROR_Y=y

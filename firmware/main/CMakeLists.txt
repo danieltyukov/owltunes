@@ -11,6 +11,7 @@ endif()
 idf_component_register(SRCS ${srcs}
                        INCLUDE_DIRS .
                        REQUIRES owl_core spotify owl_ui owl_shell provisioning bsp bsp_qemu bsp_nano_esp32
+                                bsp_owltunes_reva bsp_waveshare_amoled_175
                                 esp_timer esp_app_format esp_event esp_netif esp_eth esp_wifi nvs_flash
                                 esp_http_client esp_http_server mbedtls esp_driver_uart
                                 esp_driver_usb_serial_jtag esp_psram app_update spi_flash heap)
