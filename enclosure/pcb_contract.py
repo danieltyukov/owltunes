@@ -105,7 +105,7 @@ PLACEMENTS = (
     # rot 270: the FH26W takes the FPC from footprint +v, which then faces 9 o clock, towards the
     # panel's connector at (P.PANEL_CONN_X, P.PANEL_CONN_Y), with pin 1 at the +y end. VIEWE's
     # standard adapter comes back to it after one U-turn, so J301 pin k meets panel pin 32 - k, and at
-    # x -5.0 it has 0.77 mm to spare (test_display_adapter_reaches_j301).
+    # x -5.0 it has 1.09 mm to spare (test_display_adapter_reaches_j301).
     Placement("J301", -5.0, 4.22, 270.0, "front", 11.5, 5.6, 1.0,
               "display FPC, entry faces 9 o clock: VIEWE adapter, one U-turn and an S-bend (owl_params ADAPTER_*)", cv=1.0),
     Placement("J101", 22.0, 18.0, 90.0, "back", 9.9, 7.6, 4.8, "battery connector, wires run down to the pack", cv=0.6),
@@ -241,7 +241,7 @@ def lug_polygon(x: float, y: float, margin: float = BOSS_CLEAR) -> list[tuple[fl
 def keepouts() -> list[dict]:
     """Board areas no part may cover, in owl coordinates. Back: the cover boss behind every hole.
     Front: the body bosses at H5 to H8, the bezel lugs at H1 to H4, the annulus under the bezel
-    tube, magnet carrier and ring (the carrier flange runs 0.3 mm in front of the board), and the
+    tube, magnet carrier and ring (the board front sits 1.0 mm behind the carrier), and the
     display adapter's way down to J301 (J301 itself is exempt). Both sides: the strips beside the
     antenna notch edges (U201 itself is exempt)."""
     out = []
