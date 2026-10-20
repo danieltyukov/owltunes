@@ -78,10 +78,12 @@ Performance Computing Centre (DHPC, https://www.tudelft.nl/dhpc).
 - **Firmware:** Wi-Fi setup, Spotify linking and playback control run on an ESP32-S3 dev board
   against a real Spotify account, and are tested on the host and in QEMU. Display and touch
   drivers for the rev A board and the Waveshare AMOLED kit build in CI and wait for first light.
-- **Hardware rev A:** main board and perch board designed and checked, ready to order.
+- **Owl v0:** the owl built round the Waveshare AMOLED kit, with the ring, ear and beak buttons
+  and a 400 mAh cell, ready to order and print ([kit-owl.md](docs/hardware/kit-owl.md)).
+- **Hardware rev A:** main board and perch board designed and checked; ordered after owl v0.
 - **Enclosure v1:** owl, ring, bezel and perch ready for printing, with the face built around the
   panel's 52.6 mm cover glass.
-- **Next:** first assembled units, bring-up, then tuning the ring and haptics.
+- **Next:** owl v0 assembled and brought up, the button and ring drivers, then rev A.
 
 Read the [system design](docs/design/2026-10-04-owltunes-system-design.md) for the full picture
 and [docs/hardware](docs/hardware/README.md) for the boards.
@@ -126,7 +128,7 @@ The [setup guide](docs/setup-guide.md) walks through every step.
 | `firmware/` | ESP-IDF firmware; shared C code in `firmware/components/`, board support in `firmware/boards/` |
 | `sim/` | Desktop simulator and golden screenshots |
 | `web/` | The setup site (TypeScript and Vite), published on GitHub Pages |
-| `enclosure/` | build123d sources for the owl, the ring and the perch |
+| `enclosure/` | build123d sources for the owl, owl v0 on the Waveshare kit, the ring and the perch |
 | `hardware/` | KiCad 10 projects for the owl main board and the perch board |
 | `docs/` | Design documents, hardware notes, setup and protocol guides |
 | `tools/` | Build, test, style, render and font scripts |
