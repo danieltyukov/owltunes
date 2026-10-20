@@ -12,8 +12,10 @@
  *     the panel driver Waveshare's BSP uses, for the panel reset timing.
  *
  * Power: Waveshare's BSP and its demos bring up the display and touch without any AXP2101 or TCA9554
- * transaction (the panel runs on the AXP2101's power-on rails), so this does neither. The PWR button,
- * battery, audio, IMU, RTC and SD card are not driven. The kit has no status LED.
+ * transaction (the panel runs on the AXP2101's power-on rails), so this does neither, except for one
+ * write: the AXP2101's charge current comes from a factory efuse that Waveshare does not document,
+ * so it is set to 200 mA, 0.5 C of owl v0's 400 mAh cell (docs/hardware/kit-owl.md). The PWR button,
+ * audio, IMU, RTC and SD card are not driven. The kit has no status LED.
  *
  * Not yet run on the kit. The touch mirrors (both on) are the BSP's defaults and live in this
  * board's sdkconfig.board, so they can be changed like rev A's. */
@@ -22,8 +24,10 @@
 #include <stdint.h>
 
 #include "driver/gpio.h"
+#include "driver/i2c_master.h"
 #include "driver/i2c_types.h"
 #include "esp_err.h"
+#include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -45,10 +49,18 @@ _Static_assert(OWL_UI_RES == OWL_CO5300_RES, "the UI is laid out for the 466 x 4
 #define PIN_I2C_SCL 14
 #define PIN_I2C_SDA 15
 #define I2C_ADDR_CST9217 0x5A
+#define I2C_ADDR_AXP2101 0x34
 /* GPIO13 is the panel's TE output; not used yet. */
 
 #define LCD_QSPI_HZ 40000000 /* CO5300_PANEL_IO_QSPI_CONFIG in esp_lcd_co5300 */
 #define I2C_HZ 400000        /* the BSP's CONFIG_BSP_I2C_CLK_SPEED_HZ */
+
+/* AXP2101 datasheet V1.0, REG 62H "ICC charger setting": bits 4:0 give 25 mA steps up to 200 mA
+ * (01000), then 100 mA steps; bits 7:5 read as 0. */
+#define AXP2101_REG_ICC 0x62
+#define AXP2101_ICC_200MA 0x08
+
+static const char *TAG = "bsp_waveshare";
 
 static void wait_ms(uint32_t ms)
 {
@@ -66,6 +78,27 @@ static void output(int pin, int level)
         .intr_type = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK(gpio_config(&config));
+}
+
+/* On the touch controller's bus, which owl_amoled_touch_create has just made on I2C0. A failed write
+ * leaves the efuse default in place, so it is logged and the display carries on. */
+static void limit_charge_current(void)
+{
+    i2c_master_bus_handle_t bus = NULL;
+    ESP_ERROR_CHECK(i2c_master_get_bus_handle(I2C_NUM_0, &bus));
+    const i2c_device_config_t dev_config = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = I2C_ADDR_AXP2101,
+        .scl_speed_hz = I2C_HZ,
+    };
+    i2c_master_dev_handle_t axp = NULL;
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &dev_config, &axp));
+    const uint8_t write[2] = {AXP2101_REG_ICC, AXP2101_ICC_200MA};
+    esp_err_t err = i2c_master_transmit(axp, write, sizeof(write), 100);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "AXP2101 charge current not set: %s", esp_err_to_name(err));
+    }
+    ESP_ERROR_CHECK(i2c_master_bus_rm_device(axp));
 }
 
 lv_display_t *bsp_display_init(void)
@@ -110,6 +143,7 @@ lv_display_t *bsp_display_init(void)
         .ready_at_us = released + 50 * 1000LL,
     };
     owl_amoled_touch_create(disp, &touch);
+    limit_charge_current();
     return disp;
 }
 
