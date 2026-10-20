@@ -4,9 +4,9 @@ Run through tools/render.sh, which exports the meshes first. Blender runs this f
 
     blender -b --factory-startup -P tools/render/owl_render.py -- SCENE OUT.jpg [--samples N] [--size WxH]
 
-SCENE is one of: hero, desk, pocket, exploded. Meshes come from build/render/ (enclosure/render_export.py
-and the KiCad GLB export), the screen image from docs/img/now_playing.png (the simulator's golden
-screenshot). Units are metres; the meshes are in millimetres and are scaled on import. Everything
+SCENE is one of: hero, desk, pocket, exploded, and kit and kit-exploded for owl v0 (the owl on the
+Waveshare AMOLED kit). Meshes come from build/render/ (enclosure/render_export.py and the KiCad GLB
+export), the screen image from docs/img/now_playing.png (the simulator's golden screenshot). Units are metres; the meshes are in millimetres and are scaled on import. Everything
 else in a scene (desk, denim, props) is built here. Licence: MIT (LICENSE).
 """
 
@@ -28,6 +28,10 @@ MM = 0.001
 VIEW_D = 44.16  # display viewing area, owl_params.VIEW_D
 OWL_BACK_Z = -22.2  # back face of the back cover, owl_v1.BACK_Z
 OWL_PARTS = ("back_cover", "body", "ring", "bezel", "beak_key", "ear_key_left", "ear_key_right")
+KIT_MESHES = MESHES / "kit"
+KIT_VIEW_D = 44.45  # the kit's 1.75 inch round panel
+KIT_BOTTOM_Y = -39.0  # bottom edge of the body, pcb_contract BODY_CY - BODY_H / 2
+KIT_FRONT = ("glass", "screen", "panel", "pcb", "usb", "header", "standoffs", "sockets")  # the kit itself
 
 
 # ---------------------------------------------------------------------------------------------
@@ -307,6 +311,38 @@ def owl(matrix: Matrix = Matrix.Identity(4), screen_strength: float = 2.4) -> di
     return objs
 
 
+def kit_owl(matrix: Matrix = Matrix.Identity(4), screen_strength: float = 2.4) -> dict[str, bpy.types.Object]:
+    """Owl v0 assembled in owl coordinates, then placed by `matrix` (world metres): the six prints,
+    the Waveshare kit (glass, panel, board and the parts on its back) and the bought parts."""
+    shell = mjf_black("mjf_black")
+    mats = {
+        "ring": mjf_black("mjf_black_ring", rough=0.32, tone=0.009),
+        "beak_key": mjf_black("mjf_black_keys", rough=0.36, tone=0.01),
+        "glass": cover_glass(),
+        "panel": simple("panel", (0.004, 0.004, 0.005), 0.15),
+        "pcb": simple("waveshare_blue", (0.02, 0.12, 0.42), 0.3, coat=0.4),
+        "usb": simple("steel", (0.8, 0.8, 0.82), 0.25, metal=1.0),
+        "header": simple("header", (0.015, 0.015, 0.015), 0.5),
+        "standoffs": simple("brass", (0.78, 0.56, 0.26), 0.3, metal=1.0),
+        "sockets": simple("socket", (0.86, 0.83, 0.74), 0.5),
+        "tmag": simple("module_blue", (0.02, 0.08, 0.32), 0.35, coat=0.3),
+        "switches": simple("switch", (0.03, 0.03, 0.03), 0.4),
+        "magnets": simple("nickel", (0.72, 0.72, 0.74), 0.2, metal=1.0),
+        "battery": simple("pouch", (0.62, 0.63, 0.66), 0.32, metal=0.7),
+    }
+    objs = {p.stem: import_stl(p, mats.get(p.stem, shell)) for p in sorted(KIT_MESHES.glob("*.stl"))}
+    z_back = min((objs["glass"].matrix_world @ Vector(c)).z for c in objs["glass"].bound_box)
+    objs["screen"] = disc("screen", KIT_VIEW_D / 2 * MM, z_back - 0.03 * MM, screen(screen_strength))
+    for obj in objs.values():
+        obj.matrix_world = matrix @ obj.matrix_world
+    return objs
+
+
+def standing() -> Matrix:
+    """Owl v0 has no perch: upright on the flat bottom of its body, face towards -Y."""
+    return Matrix.Translation((0.0, 0.0, -KIT_BOTTOM_Y * MM)) @ Matrix.Rotation(math.radians(90), 4, "X")
+
+
 def disc(name: str, r: float, z: float, mat: bpy.types.Material) -> bpy.types.Object:
     """A filled circle at height z whose UV square spans its diameter (for the round screen)."""
     mesh = bpy.data.meshes.new(name)
@@ -422,9 +458,8 @@ def scene_hero() -> None:
     camera((0.07, -0.56, 0.13), (0.0, 0.0, 0.052), 85, fstop=5.6)
 
 
-def scene_desk() -> None:
-    """Docked on a light oak desk by a window, a mug, a phone and a notebook out of focus."""
-    owl(perch())
+def desk() -> None:
+    """A light oak desk by a window, a mug, a phone and a notebook."""
     plane(oak(), 3.0)
     plane(simple("wall", (0.62, 0.58, 0.52), 0.95), 3.0, (0, 0.45, 1.0), (math.radians(90), 0, 0))
     mug(0.20, 0.20)
@@ -436,7 +471,20 @@ def scene_desk() -> None:
     area_light("window", (-0.7, -0.15, 0.45), (0, 0.02, 0.05), 1.0, 26, (1.0, 0.88, 0.74))
     area_light("fill", (0.6, -0.5, 0.25), (0, 0, 0.05), 0.8, 5, (0.85, 0.9, 1.0))
     area_light("rim", (0.25, 0.35, 0.30), (0, 0, 0.06), 0.3, 6)
+
+
+def scene_desk() -> None:
+    """Docked on the desk, the props out of focus."""
+    owl(perch())
+    desk()
     camera((0.19, -0.47, 0.16), (0.025, 0.03, 0.045), 60, fstop=2.4, focus=(0.0, 0.0, 0.05))
+
+
+def scene_kit() -> None:
+    """Owl v0 standing on the desk, turned a little towards the camera."""
+    kit_owl(Matrix.Rotation(math.radians(5), 4, "Z") @ standing())
+    desk()
+    camera((0.13, -0.33, 0.105), (0.012, 0.0, 0.038), 60, fstop=2.4, focus=(0.0, -0.005, 0.04))
 
 
 def pocket_drape(w: float, h: float, top: float, lift: float, spin: float, mat: bpy.types.Material) -> bpy.types.Object:
@@ -493,11 +541,28 @@ def scene_exploded() -> None:
         obj.location.z += lift.get(name, 0.0)
     for obj in pcb:
         obj.location.z -= 0.024
+    exploded_studio(list(objs.values()) + pcb)
+
+
+def scene_kit_exploded() -> None:
+    """Owl v0 exploded the same way: cover, battery, hub with the sensor and switches, body, ring,
+    bezel, then the kit, which slides in through the bezel."""
+    objs = kit_owl(screen_strength=2.0)
+    lift = {"back_cover": -0.072, "battery": -0.052, "hub": -0.030, "tmag": -0.030, "switches": -0.030,
+            "beak_key": 0.012, "ring": 0.022, "magnets": 0.022, "bezel": 0.040}
+    lift.update(dict.fromkeys(KIT_FRONT, 0.062))
+    for name, obj in objs.items():
+        obj.location.z += lift.get(name, 0.0)
+    exploded_studio(list(objs.values()))
+
+
+def exploded_studio(objs: list[bpy.types.Object]) -> None:
+    """Tilt an exploded stack so its face is towards the camera's left and a little up, and the
+    parts fan out across the frame, on a light grey sweep."""
     bpy.context.view_layer.update()
-    # Face towards the camera's left and a little up, so the stack fans out across the frame.
     tilt = (Matrix.Translation((0.0, 0.0, 0.085)) @ Matrix.Rotation(math.radians(-62), 4, "Z")
             @ Matrix.Rotation(math.radians(78), 4, "X"))
-    for obj in list(objs.values()) + pcb:
+    for obj in objs:
         obj.matrix_world = tilt @ obj.matrix_world
     cyclorama(simple("paper", (0.80, 0.80, 0.81), 0.85), back_y=0.4, radius=0.3)
     world_color((0.9, 0.9, 0.92), 0.25)
@@ -507,7 +572,8 @@ def scene_exploded() -> None:
     camera((0.04, -0.50, 0.14), (0.0, 0.0, 0.085), 60)
 
 
-SCENES = {"hero": scene_hero, "desk": scene_desk, "pocket": scene_pocket, "exploded": scene_exploded}
+SCENES = {"hero": scene_hero, "desk": scene_desk, "pocket": scene_pocket, "exploded": scene_exploded,
+          "kit": scene_kit, "kit-exploded": scene_kit_exploded}
 
 
 def main(argv: list[str]) -> int:

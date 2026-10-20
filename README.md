@@ -71,17 +71,33 @@ mechanical contract in CI.
 The renders on this page are made from the same files: the enclosure and board meshes go into
 Blender with `tools/render.sh`, and the screen shows the simulator's output. The album art is a
 generated placeholder. The renders were computed on the DelftBlue supercomputer of the Delft High
-Performance Computing Centre (DHPC, https://www.tudelft.nl/dhpc).
+Performance Computing Centre (DHPC, https://www.tudelft.nl/dhpc), and the owl v0 renders on a TU
+Delft EWI compute server.
+
+## Owl v0
+
+| Owl v0 | Inside owl v0 |
+|---|---|
+| ![Owl v0 standing on a desk](docs/img/render-kit.jpg) | ![Owl v0 exploded](docs/img/render-kit-exploded.jpg) |
+
+The first owl to be built is owl v0: the same face, ring, ears and beak, built round Waveshare's
+ESP32-S3-Touch-AMOLED-1.75 kit, which brings the display, the ESP32-S3, USB-C and the battery
+charger, so there is no board to order. Six nylon prints hold it, a Hall sensor module reads the
+ring's magnets, and tact switches sit under the ears and the beak. It has no perch, haptics or light
+sensor yet, and it is 19.7 mm deep. [kit-owl.md](docs/hardware/kit-owl.md) has the parts, wiring
+and assembly.
 
 ## Status
 
 - **Firmware:** Wi-Fi setup, Spotify linking and playback control run on an ESP32-S3 dev board
   against a real Spotify account, and are tested on the host and in QEMU. Display and touch
   drivers for the rev A board and the Waveshare AMOLED kit build in CI and wait for first light.
-- **Hardware rev A:** main board and perch board designed and checked, ready to order.
+- **Owl v0:** the owl built round the Waveshare AMOLED kit, with the ring, ear and beak buttons
+  and a 400 mAh cell, ready to order and print ([kit-owl.md](docs/hardware/kit-owl.md)).
+- **Hardware rev A:** main board and perch board designed and checked; ordered after owl v0.
 - **Enclosure v1:** owl, ring, bezel and perch ready for printing, with the face built around the
   panel's 52.6 mm cover glass.
-- **Next:** first assembled units, bring-up, then tuning the ring and haptics.
+- **Next:** owl v0 assembled and brought up, the button and ring drivers, then rev A.
 
 Read the [system design](docs/design/2026-10-04-owltunes-system-design.md) for the full picture
 and [docs/hardware](docs/hardware/README.md) for the boards.
@@ -126,7 +142,7 @@ The [setup guide](docs/setup-guide.md) walks through every step.
 | `firmware/` | ESP-IDF firmware; shared C code in `firmware/components/`, board support in `firmware/boards/` |
 | `sim/` | Desktop simulator and golden screenshots |
 | `web/` | The setup site (TypeScript and Vite), published on GitHub Pages |
-| `enclosure/` | build123d sources for the owl, the ring and the perch |
+| `enclosure/` | build123d sources for the owl, owl v0 on the Waveshare kit, the ring and the perch |
 | `hardware/` | KiCad 10 projects for the owl main board and the perch board |
 | `docs/` | Design documents, hardware notes, setup and protocol guides |
 | `tools/` | Build, test, style, render and font scripts |
