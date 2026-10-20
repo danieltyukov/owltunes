@@ -1,6 +1,7 @@
 # OwlTunes enclosure
 
-build123d sources for the ring test prints, enclosure v1 and the perch. All dimensions live in
+build123d sources for the ring test prints, enclosure v1, the perch and owl v0 (the owl on the
+Waveshare ESP32-S3-Touch-AMOLED-1.75 kit, docs/hardware/kit-owl.md). All dimensions live in
 `owl_params.py`; every other module reads them from there.
 
 | Command | What it does |
@@ -11,6 +12,7 @@ build123d sources for the ring test prints, enclosure v1 and the perch. All dime
 | `uv run --project enclosure python enclosure/pcb_contract.py` | Writes the board outline and fixed part positions to `hardware/owl-mainboard/mech/contract.json` |
 | `uv run --project enclosure python enclosure/owl_v1.py` | Exports enclosure v1 to `build/enclosure/v1/` |
 | `uv run --project enclosure python enclosure/perch_v1.py` | Exports the perch v1 body to `build/enclosure/perch-v1/` |
+| `uv run --project enclosure python enclosure/owl_kit.py` | Exports owl v0, the owl on the Waveshare AMOLED kit, to `build/enclosure/kit/` |
 
 The owner mark debossed into the back cover and the perch is set in Inter Bold from the
 `fonts-inter` package (`sudo apt install fonts-inter`); those two parts do not build without it.
@@ -37,3 +39,13 @@ Exports go to `build/`, which is not tracked. Licence: CERN-OHL-P-2.0 (`LICENSE-
   reach back to 0.3 mm from the board without touching the Hall gap.
 - Screws are ISO 7380 M2 button heads (black): M2 x 6 from the front through the bezel lugs, M2 x 14
   from the back. The back heads sit 0.2 mm below the cover's back face.
+
+## Owner review points (owl v0)
+
+- The ring turns on the hub's tube, nylon on nylon with 0.25 mm radial and 0.2 mm axial clearance,
+  between the glued bezel and the hub's front face. No bearing and no detents: if it feels loose,
+  silicone grease on the tube; if it binds, a light sanding of the tube.
+- The kit's position comes from Waveshare's drawing and photos (owl_params `KIT_*`). Check the glass
+  diameter, the standoff depth and the USB-C position on the real kit before any glue goes on.
+- The ear tufts are flexures cut into the head's top wall: a press moves the tip 0.4 mm onto the
+  switch. If a switch fires too early or too late, shim it or sand its seat.

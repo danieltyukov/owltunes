@@ -268,3 +268,49 @@ MARK_DEPTH = 0.5
 MARK_MIN_DETAIL = 0.6
 MARK_ROUND = MARK_MIN_DETAIL / 2  # every glyph is closed by this radius: inside corners rounded, notches under 0.6 filled
 MARK_TRACK = 0.15  # extra space between neighbouring letters
+
+
+# Owl v0: the low-cost owl around the Waveshare ESP32-S3-Touch-AMOLED-1.75 kit (SKU 31261,
+# enclosure/owl_kit.py). From Waveshare's dimension drawing and labelled photos
+# (docs.waveshare.com/ESP32-S3-Touch-AMOLED-1.75, fetched 20 October 2026); values marked "est."
+# are read off the photos (about 0.3 mm) and carry margin. Owl coordinates as above, with the kit's
+# glass front at z = 0. Seen from the front with the screen upright: the USB-C port is on the left
+# edge, PWR, BOOT and the TF slot on the right edge, the 8-pin header at the bottom and the battery
+# and speaker sockets at the top, all on the board's back.
+KIT_GLASS_D = 48.96  # cover glass outline
+KIT_GLASS_D_TOL = 0.15  # assumed: the drawing gives no tolerance
+KIT_STACK_T = 2.05  # cover glass and panel
+KIT_BODY_R = 23.3  # est.: panel frame and the 46.0 mm board behind the glass, with margin
+KIT_PCB_BACK_DEPTH = 6.90  # glass front to the board's back face
+KIT_PCB_T = 1.2  # est.
+KIT_STANDOFF_DEPTH = 10.40  # ends of the three M2 threaded standoffs ("M2.00-H3.5")
+KIT_STANDOFFS = ((0.0, 20.5), (-13.75, -14.7), (13.75, -14.7))
+KIT_STANDOFF_OD = 3.5  # est.
+KIT_USB_MOUTH_X = -23.8  # Type-C receptacle mouth ("23.80"), centred on y = 0, on the board's back
+KIT_USB = (7.35, 8.94, 3.26)  # receptacle length (into the board), width (y) and height (z)
+KIT_HEADER_Y = -18.7  # 8-pin 2.54 mm female header, centred on x = 0
+KIT_HEADER = (21.0, 2.6, 6.2)  # est.: body x, y and height above the board's back (the photo gives 5.9)
+KIT_SOCKETS_X = ((-8.7, -2.9), (3.5, 9.3))  # est.: BAT and SPK MX1.25 sockets
+KIT_SOCKETS_Y = (12.8, 18.0)  # est.
+KIT_SOCKET_H = 5.2  # est.: socket height above the board's back
+KIT_BACK_PARTS_H = 1.7  # est.: every other part on the board's back
+KIT_SIDE_BUTTONS_DEG = (30.0, -33.0)  # est.: PWR and BOOT, pressed outwards at the right edge
+
+# TMAG5273 module (AliExpress, MJKDZ "3D Hall Sensor", 15 x 20 mm, 1.6 mm FR4): the sensor sits
+# 2.4 mm below one short edge, centred across the board; a 2.7 mm hole 9.5 mm from the sensor;
+# five pads (GND, INT, SCL, SDA, VCC) 0.9 mm from the other short edge. Parts up to 1.25 mm tall
+# on the sensor side. Measured on the seller's dimensioned photo (20 October 2026).
+TMAG_MODULE = (20.0, 15.0, 1.6)  # length (sensor end to pad end), width, thickness
+TMAG_SENSOR_INSET = 2.4  # sensor centre from the sensor end
+TMAG_HOLE_FROM_SENSOR = 9.5
+TMAG_HOLE_D = 2.7
+TMAG_PARTS_H = 1.25
+
+# Tact switch 3 x 6 x 2.5 mm, two SMD legs: body 6.0 x 3.0 (legs to 7.6 long), 2.5 tall with the
+# plunger, which is 1.5 x 1.2 at the centre and travels 0.25 mm.
+SWITCH_3X6 = (6.0, 3.0, 2.5)
+SWITCH_3X6_LEGS = 7.6
+SWITCH_3X6_TRAVEL = 0.25
+
+# LiPo 602040: 6 x 20 x 40 mm; the protection board end makes it up to 43 mm long.
+KIT_BATTERY = (43.0, 20.5, 6.0)  # x, y, z with the protection board end
