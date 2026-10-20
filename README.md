@@ -71,7 +71,21 @@ mechanical contract in CI.
 The renders on this page are made from the same files: the enclosure and board meshes go into
 Blender with `tools/render.sh`, and the screen shows the simulator's output. The album art is a
 generated placeholder. The renders were computed on the DelftBlue supercomputer of the Delft High
-Performance Computing Centre (DHPC, https://www.tudelft.nl/dhpc).
+Performance Computing Centre (DHPC, https://www.tudelft.nl/dhpc), and the owl v0 renders on a TU
+Delft EWI compute server.
+
+## Owl v0
+
+| Owl v0 | Inside owl v0 |
+|---|---|
+| ![Owl v0 standing on a desk](docs/img/render-kit.jpg) | ![Owl v0 exploded](docs/img/render-kit-exploded.jpg) |
+
+The first owl to be built is owl v0: the same face, ring, ears and beak, built round Waveshare's
+ESP32-S3-Touch-AMOLED-1.75 kit, which brings the display, the ESP32-S3, USB-C and the battery
+charger, so there is no board to order. Six nylon prints hold it, a Hall sensor module reads the
+ring's magnets, and tact switches sit under the ears and the beak. It has no perch, haptics or light
+sensor yet, and it is 19.7 mm deep. [kit-owl.md](docs/hardware/kit-owl.md) has the parts, wiring
+and assembly.
 
 ## Status
 

@@ -10,6 +10,13 @@ The firmware is the same; the kit's board support is `firmware/boards/bsp_wavesh
 The enclosure is `enclosure/owl_kit.py` (66 x 84 x 19.7 mm, the v1 silhouette), checked by
 `enclosure/tests/test_owl_kit.py` against envelopes of every bought part.
 
+![Owl v0 standing on a desk](../img/render-kit.jpg)
+
+![Owl v0 exploded: kit, bezel, ring, body, hub, battery and back cover](../img/render-kit-exploded.jpg)
+
+The renders come from the same files (`tools/render.sh kit kit-exploded`); the kit, the module and
+the battery are drawn from the envelopes the tests use.
+
 ![Section through the middle of owl v0](../img/kit-owl-section.png)
 
 ## Parts
